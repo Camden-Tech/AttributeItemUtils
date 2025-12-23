@@ -4,8 +4,10 @@ import com.baddcamdne.attributeitemutils.config.AttributeConfig;
 import org.bukkit.attribute.Attribute;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -47,6 +49,52 @@ class AttributeServiceTest {
 
         double normalAmount = service.resolveAmount(Attribute.GENERIC_ATTACK_DAMAGE, 0.05);
         assertEquals(0.05, normalAmount, 1.0e-9);
+    }
+
+    @Test
+    void candidatesExposeAllConfiguredAttributes() throws Exception {
+        List<Attribute> expected = List.of(
+                Attribute.GENERIC_MAX_HEALTH,
+                Attribute.GENERIC_ARMOR,
+                Attribute.GENERIC_ARMOR_TOUGHNESS,
+                Attribute.GENERIC_ATTACK_DAMAGE,
+                Attribute.GENERIC_ATTACK_SPEED,
+                Attribute.GENERIC_ATTACK_KNOCKBACK,
+                Attribute.GENERIC_MOVEMENT_SPEED,
+                Attribute.GENERIC_FLYING_SPEED,
+                Attribute.GENERIC_KNOCKBACK_RESISTANCE,
+                Attribute.GENERIC_LUCK,
+                Attribute.GENERIC_FOLLOW_RANGE,
+                Attribute.GENERIC_BLOCK_INTERACTION_RANGE,
+                Attribute.GENERIC_ENTITY_INTERACTION_RANGE,
+                Attribute.GENERIC_MINING_EFFICIENCY,
+                Attribute.GENERIC_MAX_ABSORPTION,
+                Attribute.GENERIC_STEP_HEIGHT,
+                Attribute.GENERIC_SAFE_FALL_DISTANCE,
+                Attribute.GENERIC_SCALE,
+                Attribute.GENERIC_JUMP_STRENGTH,
+                Attribute.GENERIC_GRAVITY,
+                Attribute.GENERIC_FALL_DAMAGE_MULTIPLIER
+        );
+
+        var candidatesField = AttributeService.class.getDeclaredField("CANDIDATE_ATTRIBUTES");
+        var prefixesField = AttributeService.class.getDeclaredField("PREFIXES");
+        var suffixesField = AttributeService.class.getDeclaredField("SUFFIXES");
+
+        assertTrue(candidatesField.trySetAccessible());
+        assertTrue(prefixesField.trySetAccessible());
+        assertTrue(suffixesField.trySetAccessible());
+
+        @SuppressWarnings("unchecked")
+        List<Attribute> candidates = (List<Attribute>) candidatesField.get(null);
+        @SuppressWarnings("unchecked")
+        Map<Attribute, String> prefixes = (Map<Attribute, String>) prefixesField.get(null);
+        @SuppressWarnings("unchecked")
+        Map<Attribute, String> suffixes = (Map<Attribute, String>) suffixesField.get(null);
+
+        assertIterableEquals(expected, candidates);
+        assertTrue(prefixes.keySet().containsAll(expected));
+        assertTrue(suffixes.keySet().containsAll(expected));
     }
 
     private static final class StubRandom extends java.util.Random {
