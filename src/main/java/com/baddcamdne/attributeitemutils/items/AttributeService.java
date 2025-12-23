@@ -19,10 +19,19 @@ public class AttributeService {
             Map.entry(Attribute.GENERIC_ATTACK_SPEED, "Speedster "),
             Map.entry(Attribute.GENERIC_ATTACK_KNOCKBACK, "Forceful "),
             Map.entry(Attribute.GENERIC_MOVEMENT_SPEED, "Fast "),
+            Map.entry(Attribute.GENERIC_FLYING_SPEED, "Soaring "),
             Map.entry(Attribute.GENERIC_KNOCKBACK_RESISTANCE, "Immovable "),
             Map.entry(Attribute.GENERIC_LUCK, "Lucky "),
             Map.entry(Attribute.GENERIC_FOLLOW_RANGE, "Watchful "),
+            Map.entry(Attribute.GENERIC_BLOCK_INTERACTION_RANGE, "Long-Armed "),
+            Map.entry(Attribute.GENERIC_ENTITY_INTERACTION_RANGE, "Stretching "),
+            Map.entry(Attribute.GENERIC_MINING_EFFICIENCY, "Industrious "),
+            Map.entry(Attribute.GENERIC_MAX_ABSORPTION, "Absorbing "),
+            Map.entry(Attribute.GENERIC_STEP_HEIGHT, "Stilted "),
+            Map.entry(Attribute.GENERIC_SAFE_FALL_DISTANCE, "Springy "),
             Map.entry(Attribute.GENERIC_SCALE, "Giant "),
+            Map.entry(Attribute.GENERIC_JUMP_STRENGTH, "Bounding "),
+            Map.entry(Attribute.GENERIC_GRAVITY, "Weightless "),
             Map.entry(Attribute.GENERIC_FALL_DAMAGE_MULTIPLIER, "Featherweight ")
     );
 
@@ -34,10 +43,19 @@ public class AttributeService {
             Map.entry(Attribute.GENERIC_ATTACK_KNOCKBACK, " of the Boxer"),
             Map.entry(Attribute.GENERIC_ATTACK_SPEED, " of Dexterity"),
             Map.entry(Attribute.GENERIC_MOVEMENT_SPEED, " of the Runner"),
+            Map.entry(Attribute.GENERIC_FLYING_SPEED, " of the Skystrider"),
             Map.entry(Attribute.GENERIC_KNOCKBACK_RESISTANCE, " of Obesity"),
             Map.entry(Attribute.GENERIC_LUCK, " of Fortune"),
             Map.entry(Attribute.GENERIC_FOLLOW_RANGE, " of the Lookout"),
+            Map.entry(Attribute.GENERIC_BLOCK_INTERACTION_RANGE, " of the Reacher"),
+            Map.entry(Attribute.GENERIC_ENTITY_INTERACTION_RANGE, " of the Longarm"),
+            Map.entry(Attribute.GENERIC_MINING_EFFICIENCY, " of the Miner"),
+            Map.entry(Attribute.GENERIC_MAX_ABSORPTION, " of the Sponge"),
+            Map.entry(Attribute.GENERIC_STEP_HEIGHT, " of the Climber"),
+            Map.entry(Attribute.GENERIC_SAFE_FALL_DISTANCE, " of the Acrobat"),
             Map.entry(Attribute.GENERIC_SCALE, " of the Giant"),
+            Map.entry(Attribute.GENERIC_JUMP_STRENGTH, " of the Hopper"),
+            Map.entry(Attribute.GENERIC_GRAVITY, " of the Moonwalker"),
             Map.entry(Attribute.GENERIC_FALL_DAMAGE_MULTIPLIER, " of Soft Landings")
     );
 
@@ -49,10 +67,19 @@ public class AttributeService {
             Attribute.GENERIC_ATTACK_SPEED,
             Attribute.GENERIC_ATTACK_KNOCKBACK,
             Attribute.GENERIC_MOVEMENT_SPEED,
+            Attribute.GENERIC_FLYING_SPEED,
             Attribute.GENERIC_KNOCKBACK_RESISTANCE,
             Attribute.GENERIC_LUCK,
             Attribute.GENERIC_FOLLOW_RANGE,
+            Attribute.GENERIC_BLOCK_INTERACTION_RANGE,
+            Attribute.GENERIC_ENTITY_INTERACTION_RANGE,
+            Attribute.GENERIC_MINING_EFFICIENCY,
+            Attribute.GENERIC_MAX_ABSORPTION,
+            Attribute.GENERIC_STEP_HEIGHT,
+            Attribute.GENERIC_SAFE_FALL_DISTANCE,
             Attribute.GENERIC_SCALE,
+            Attribute.GENERIC_JUMP_STRENGTH,
+            Attribute.GENERIC_GRAVITY,
             Attribute.GENERIC_FALL_DAMAGE_MULTIPLIER
     );
 
