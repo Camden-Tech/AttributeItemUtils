@@ -2,6 +2,7 @@ package com.baddcamdne.attributeitemutils.items;
 
 import com.baddcamdne.attributeitemutils.config.AttributeConfig;
 import com.baddcamdne.attributeitemutils.config.EnchantmentConfig;
+import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.enchantments.Enchantment;
@@ -78,9 +79,10 @@ public class AttributeService {
         if (meta == null) return stack;
         Map<Attribute, Double> bonuses = collectAttributeBonuses(nightSupplier);
         if (!bonuses.isEmpty()) {
+            EquipmentSlot slot = determineSlot(stack);
             for (Map.Entry<Attribute, Double> entry : bonuses.entrySet()) {
                 double amount = resolveAmount(entry.getKey(), entry.getValue());
-                AttributeModifier modifier = new AttributeModifier(UUID.randomUUID(), "attributeitemutils", amount, AttributeModifier.Operation.MULTIPLY_SCALAR_1, EquipmentSlot.HAND);
+                AttributeModifier modifier = new AttributeModifier(UUID.randomUUID(), "attributeitemutils", amount, AttributeModifier.Operation.MULTIPLY_SCALAR_1, slot);
                 meta.addAttributeModifier(entry.getKey(), modifier);
             }
             Attribute decoratedAttribute = bonuses.keySet().iterator().next();
@@ -132,6 +134,29 @@ public class AttributeService {
 
     private Attribute randomAttribute() {
         return CANDIDATE_ATTRIBUTES.get(random.nextInt(CANDIDATE_ATTRIBUTES.size()));
+    }
+
+    EquipmentSlot determineSlot(ItemStack stack) {
+        Material type = stack.getType();
+        String name = type.name();
+
+        if (name.endsWith("_HELMET") || type == Material.TURTLE_HELMET || type == Material.CARVED_PUMPKIN) {
+            return EquipmentSlot.HEAD;
+        }
+        if (name.endsWith("_CHESTPLATE") || type == Material.ELYTRA) {
+            return EquipmentSlot.CHEST;
+        }
+        if (name.endsWith("_LEGGINGS")) {
+            return EquipmentSlot.LEGS;
+        }
+        if (name.endsWith("_BOOTS")) {
+            return EquipmentSlot.FEET;
+        }
+        if (type == Material.SHIELD || type == Material.TOTEM_OF_UNDYING) {
+            return EquipmentSlot.OFF_HAND;
+        }
+
+        return EquipmentSlot.HAND;
     }
 
     Map<Attribute, Double> collectAttributeBonuses(Supplier<Integer> nightSupplier) {
