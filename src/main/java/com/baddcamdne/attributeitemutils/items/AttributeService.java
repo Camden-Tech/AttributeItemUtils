@@ -128,6 +128,10 @@ public class AttributeService {
 
     Map<Attribute, Double> collectAttributeBonuses(AttributeConfig config, int nights) {
         Map<Attribute, Double> bonuses = new LinkedHashMap<>();
+        if (!roll(config, nights)) {
+            return bonuses;
+        }
+
         do {
             Attribute attribute = randomAttribute();
             bonuses.merge(attribute, config.bonusPercent(), Double::sum);
