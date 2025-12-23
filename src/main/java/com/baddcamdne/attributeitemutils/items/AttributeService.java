@@ -14,7 +14,7 @@ public class AttributeService {
     private final Map<Attribute, String> prefixes;
     private final Map<Attribute, String> suffixes;
     private static final List<Attribute> CANDIDATE_ATTRIBUTES = List.of(
-            Attribute.GENERIC_MAX_HEALTH,
+            Attribute.MAX_HEALTH,
             Attribute.GENERIC_ARMOR,
             Attribute.GENERIC_ARMOR_TOUGHNESS,
             Attribute.GENERIC_ATTACK_DAMAGE,
