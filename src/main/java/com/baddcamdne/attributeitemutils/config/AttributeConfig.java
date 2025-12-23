@@ -10,14 +10,18 @@ public record AttributeConfig(double baseChance,
 
     public static AttributeConfig fromConfig(FileConfiguration config) {
         ConfigurationSection section = config.getConfigurationSection("attributes");
+        return fromSection(section, new AttributeConfig(0.02, 0.0, 0.05, 0.95));
+    }
+
+    public static AttributeConfig fromSection(ConfigurationSection section, AttributeConfig defaultConfig) {
         if (section == null) {
-            return new AttributeConfig(0.02, 0.0, 0.05, 0.95);
+            return defaultConfig;
         }
         return new AttributeConfig(
-                section.getDouble("base-chance", 0.02),
-                section.getDouble("nightly-increase", 0.0),
-                section.getDouble("bonus-percent", 0.05),
-                section.getDouble("max-chance", 0.95)
+                section.getDouble("base-chance", defaultConfig.baseChance),
+                section.getDouble("nightly-increase", defaultConfig.nightlyIncrease),
+                section.getDouble("bonus-percent", defaultConfig.bonusPercent),
+                section.getDouble("max-chance", defaultConfig.maxChance)
         );
     }
 }

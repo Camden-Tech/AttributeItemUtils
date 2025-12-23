@@ -1,5 +1,9 @@
 package com.baddcamdne.attributeitemutils.items;
 
+import com.baddcamdne.attributeitemutils.config.AttributeConfig;
+import com.baddcamdne.attributeitemutils.config.AttributeConfigSource;
+import com.baddcamdne.attributeitemutils.config.EnchantmentConfig;
+import com.baddcamdne.attributeitemutils.config.EnchantmentConfigSource;
 import com.baddcamdne.attributeitemutils.gear.GearConfigLoader;
 import com.baddcamdne.attributeitemutils.gear.GearSlot;
 import com.baddcamdne.attributeitemutils.gear.KitConfig;
@@ -17,10 +21,20 @@ import java.util.Optional;
 public class GearService {
     private final GearConfigLoader loader;
     private final AttributeService attributeService;
+    private final EnchantmentService enchantmentService;
+    private final AttributeConfigSource attributeConfigSource;
+    private final EnchantmentConfigSource enchantmentConfigSource;
     private final BellCurveSelector selector = new BellCurveSelector();
-    public GearService(GearConfigLoader loader, AttributeService attributeService) {
+    public GearService(GearConfigLoader loader,
+                       AttributeService attributeService,
+                       EnchantmentService enchantmentService,
+                       AttributeConfigSource attributeConfigSource,
+                       EnchantmentConfigSource enchantmentConfigSource) {
         this.loader = loader;
         this.attributeService = attributeService;
+        this.enchantmentService = enchantmentService;
+        this.attributeConfigSource = attributeConfigSource;
+        this.enchantmentConfigSource = enchantmentConfigSource;
     }
 
     public Optional<KitConfig> getKit(String name) {
@@ -28,14 +42,17 @@ public class GearService {
     }
 
     public void applyKit(LivingEntity entity, KitConfig kit) {
+        int nights = (int) (entity.getWorld().getFullTime() / 24000L);
+        AttributeConfig attributeConfig = attributeConfigSource.configFor(entity.getType());
+        EnchantmentConfig enchantmentConfig = enchantmentConfigSource.configFor(entity.getType());
         Map<EquipmentSlot, ItemStack> equipment = new EnumMap<>(EquipmentSlot.class);
         for (GearSlot slot : GearSlot.values()) {
             WeightedItem selection = selector.select(kit.items().getOrDefault(slot, java.util.List.of()), kit.targetWeight(), kit.steepness(), kit.range());
             Material material = selection == null ? Material.AIR : selection.material();
             ItemStack stack = material == Material.AIR ? null : new ItemStack(material);
             if (stack != null) {
-                stack = attributeService.applyAttributes(stack, () -> 0);
-                stack = attributeService.applyEnchants(stack, () -> 0);
+                stack = attributeService.applyAttributes(stack, attributeConfig, nights);
+                stack = enchantmentService.applyEnchants(stack, enchantmentConfig, nights);
             }
             switch (slot) {
                 case HELMET -> equipment.put(EquipmentSlot.HEAD, stack);

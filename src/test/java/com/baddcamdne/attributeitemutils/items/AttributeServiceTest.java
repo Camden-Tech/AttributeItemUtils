@@ -1,7 +1,6 @@
 package com.baddcamdne.attributeitemutils.items;
 
 import com.baddcamdne.attributeitemutils.config.AttributeConfig;
-import com.baddcamdne.attributeitemutils.config.EnchantmentConfig;
 import org.bukkit.attribute.Attribute;
 import org.junit.jupiter.api.Test;
 
@@ -14,11 +13,10 @@ class AttributeServiceTest {
     @Test
     void collectAttributeBonusesAggregatesDuplicates() {
         AttributeConfig attributeConfig = new AttributeConfig(1.0, 0.0, 0.05, 1.0);
-        EnchantmentConfig enchantmentConfig = new EnchantmentConfig(0.0, 0.0, 0, 0.0);
         StubRandom random = new StubRandom(new int[]{0, 0}, new double[]{0.0, 1.0});
-        AttributeService service = new AttributeService(attributeConfig, enchantmentConfig, random);
+        AttributeService service = new AttributeService(random);
 
-        Map<Attribute, Double> bonuses = service.collectAttributeBonuses(() -> 0);
+        Map<Attribute, Double> bonuses = service.collectAttributeBonuses(attributeConfig, 0);
 
         assertEquals(1, bonuses.size());
         assertEquals(0.10, bonuses.get(Attribute.GENERIC_MAX_HEALTH), 0.00001);
@@ -27,8 +25,7 @@ class AttributeServiceTest {
     @Test
     void resolveAmountHandlesSpecialCases() {
         AttributeConfig attributeConfig = new AttributeConfig(1.0, 0.0, 0.05, 1.0);
-        EnchantmentConfig enchantmentConfig = new EnchantmentConfig(0.0, 0.0, 0, 0.0);
-        AttributeService service = new AttributeService(attributeConfig, enchantmentConfig, new StubRandom(new int[]{0}, new double[]{1.0}));
+        AttributeService service = new AttributeService(new StubRandom(new int[]{0}, new double[]{1.0}));
 
         double scaleAmount = service.resolveAmount(Attribute.GENERIC_SCALE, 0.05);
         assertEquals(Math.cbrt(1.05) - 1, scaleAmount, 1.0e-9);

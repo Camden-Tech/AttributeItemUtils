@@ -10,14 +10,18 @@ public record EnchantmentConfig(double baseChance,
 
     public static EnchantmentConfig fromConfig(FileConfiguration config) {
         ConfigurationSection section = config.getConfigurationSection("enchants");
+        return fromSection(section, new EnchantmentConfig(0.02, 0.0, 1, 0.95));
+    }
+
+    public static EnchantmentConfig fromSection(ConfigurationSection section, EnchantmentConfig defaultConfig) {
         if (section == null) {
-            return new EnchantmentConfig(0.02, 0.0, 1, 0.95);
+            return defaultConfig;
         }
         return new EnchantmentConfig(
-                section.getDouble("base-chance", 0.02),
-                section.getDouble("nightly-increase", 0.0),
-                section.getInt("level-bonus", 1),
-                section.getDouble("max-chance", 0.95)
+                section.getDouble("base-chance", defaultConfig.baseChance),
+                section.getDouble("nightly-increase", defaultConfig.nightlyIncrease),
+                section.getInt("level-bonus", defaultConfig.levelBonus),
+                section.getDouble("max-chance", defaultConfig.maxChance)
         );
     }
 }
