@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AttributeServiceTest {
 
@@ -20,6 +21,17 @@ class AttributeServiceTest {
 
         assertEquals(1, bonuses.size());
         assertEquals(0.10, bonuses.get(Attribute.GENERIC_MAX_HEALTH), 0.00001);
+    }
+
+    @Test
+    void collectAttributeBonusesReturnsEmptyWhenFirstRollFails() {
+        AttributeConfig attributeConfig = new AttributeConfig(0.0, 0.0, 0.05, 1.0);
+        StubRandom random = new StubRandom(new int[]{}, new double[]{1.0});
+        AttributeService service = new AttributeService(random);
+
+        Map<Attribute, Double> bonuses = service.collectAttributeBonuses(attributeConfig, 0);
+
+        assertTrue(bonuses.isEmpty());
     }
 
     @Test
