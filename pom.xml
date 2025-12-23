@@ -4,19 +4,18 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.baddcamdne.attributeitemutils</groupId>
-    <artifactId>attributeitemutils</artifactId>
+    <groupId>com.baddcamdne</groupId>
+    <artifactId>attribute-item-utils</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>AttributeItemUtils</name>
-    <description>Attribute driven item and kit utilities plugin for Spigot/Bukkit 1.21.10 by BaddCamdne.</description>
+    <description>Attribute driven item and kit utilities plugin for Spigot/Bukkit.</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-        <maven.compiler.release>21</maven.compiler.release>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
     </properties>
 
     <developers>
@@ -60,7 +59,14 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.13.0</version>
                 <configuration>
-                    <release>21</release>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                    <compilerArgs>
+                        <arg>--enable-preview</arg>
+                    </compilerArgs>
+                    <testCompilerArgs>
+                        <arg>--enable-preview</arg>
+                    </testCompilerArgs>
                 </configuration>
             </plugin>
             <plugin>
@@ -69,6 +75,7 @@
                 <version>3.2.5</version>
                 <configuration>
                     <useSystemClassLoader>false</useSystemClassLoader>
+                    <argLine>--enable-preview</argLine>
                 </configuration>
             </plugin>
         </plugins>
