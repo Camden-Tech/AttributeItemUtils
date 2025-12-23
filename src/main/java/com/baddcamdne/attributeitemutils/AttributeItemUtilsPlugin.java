@@ -1,6 +1,7 @@
 package com.baddcamdne.attributeitemutils;
 
 import com.baddcamdne.attributeitemutils.config.AttributeConfigSource;
+import com.baddcamdne.attributeitemutils.config.DropChanceConfigSource;
 import com.baddcamdne.attributeitemutils.config.EnchantmentConfigSource;
 import com.baddcamdne.attributeitemutils.gear.GearConfigLoader;
 import com.baddcamdne.attributeitemutils.gear.KitConfig;
@@ -25,8 +26,9 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
 
         AttributeConfigSource attributeConfigSource = AttributeConfigSource.fromConfig(getConfig(), getLogger());
         EnchantmentConfigSource enchantmentConfigSource = EnchantmentConfigSource.fromConfig(getConfig(), getLogger());
+        DropChanceConfigSource dropChanceConfigSource = DropChanceConfigSource.fromConfig(getConfig(), getLogger());
 
-        gearService = new GearService(loader, new AttributeService(), new EnchantmentService(), attributeConfigSource, enchantmentConfigSource);
+        gearService = new GearService(loader, new AttributeService(), new EnchantmentService(), attributeConfigSource, enchantmentConfigSource, dropChanceConfigSource);
         getLogger().info("AttributeItemUtils enabled");
     }
 
