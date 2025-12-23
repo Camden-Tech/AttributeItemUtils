@@ -55,10 +55,15 @@ kits:
     hand:
       - AIR:0
       - WOODEN_SWORD:2
+      - WOODEN_AXE:2
       - STONE_SWORD:3
+      - STONE_AXE:3
       - IRON_SWORD:5
+      - IRON_AXE:5
       - DIAMOND_SWORD:7
+      - DIAMOND_AXE:7
       - NETHERITE_SWORD:10
+      - NETHERITE_AXE:10
       - SHIELD:6
       - TOTEM_OF_UNDYING:4
     off_hand:
@@ -66,7 +71,15 @@ kits:
       - SHIELD:6
       - TOTEM_OF_UNDYING:4
       - WOODEN_SWORD:2
+      - WOODEN_AXE:2
+      - STONE_SWORD:3
+      - STONE_AXE:3
       - IRON_SWORD:5
+      - IRON_AXE:5
+      - DIAMOND_SWORD:7
+      - DIAMOND_AXE:7
+      - NETHERITE_SWORD:10
+      - NETHERITE_AXE:10
   defaultArcherDistribution:
     target-weight: 5.0
     steepness: 1.5
@@ -96,6 +109,7 @@ kits:
       - DIAMOND_BOOTS:8
       - NETHERITE_BOOTS:10
     hand:
+      - AIR:0
       - BOW:7
       - CROSSBOW:9
     off_hand:
@@ -103,7 +117,15 @@ kits:
       - SHIELD:6
       - TOTEM_OF_UNDYING:4
       - WOODEN_SWORD:2
+      - WOODEN_AXE:2
+      - STONE_SWORD:3
+      - STONE_AXE:3
       - IRON_SWORD:5
+      - IRON_AXE:5
+      - DIAMOND_SWORD:7
+      - DIAMOND_AXE:7
+      - NETHERITE_SWORD:10
+      - NETHERITE_AXE:10
   defaultMinerDistribution:
     target-weight: 5.0
     steepness: 1.5
@@ -143,4 +165,12 @@ kits:
       - SHIELD:6
       - TOTEM_OF_UNDYING:4
       - WOODEN_SWORD:2
+      - WOODEN_AXE:2
+      - STONE_SWORD:3
+      - STONE_AXE:3
       - IRON_SWORD:5
+      - IRON_AXE:5
+      - DIAMOND_SWORD:7
+      - DIAMOND_AXE:7
+      - NETHERITE_SWORD:10
+      - NETHERITE_AXE:10
