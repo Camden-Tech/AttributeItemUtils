@@ -3,11 +3,21 @@ attributes:
   nightly-increase: 0.01
   bonus-percent: 0.05
   max-chance: 0.95
+  entities:
+    ZOMBIE:
+      base-chance: 0.05
+      nightly-increase: 0.02
+      max-chance: 0.95
 enchants:
   base-chance: 0.02
   nightly-increase: 0.01
   level-bonus: 1
   max-chance: 0.95
+  entities:
+    ZOMBIE:
+      base-chance: 0.05
+      nightly-increase: 0.02
+      max-chance: 0.95
 kits:
   defaultGearDistribution:
     target-weight: 5.0

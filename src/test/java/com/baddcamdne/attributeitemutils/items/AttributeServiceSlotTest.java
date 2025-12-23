@@ -1,7 +1,5 @@
 package com.baddcamdne.attributeitemutils.items;
 
-import com.baddcamdne.attributeitemutils.config.AttributeConfig;
-import com.baddcamdne.attributeitemutils.config.EnchantmentConfig;
 import org.bukkit.Material;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -12,11 +10,7 @@ import java.util.Random;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class AttributeServiceSlotTest {
-    private final AttributeService service = new AttributeService(
-            new AttributeConfig(0.0, 0.0, 0.0, 0.0),
-            new EnchantmentConfig(0.0, 0.0, 0, 0.0),
-            new Random()
-    );
+    private final AttributeService service = new AttributeService(new Random());
 
     @Test
     void assignsHelmetSlot() {

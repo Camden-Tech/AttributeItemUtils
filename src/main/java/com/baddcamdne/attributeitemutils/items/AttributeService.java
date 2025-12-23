@@ -1,18 +1,14 @@
 package com.baddcamdne.attributeitemutils.items;
 
 import com.baddcamdne.attributeitemutils.config.AttributeConfig;
-import com.baddcamdne.attributeitemutils.config.EnchantmentConfig;
 import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.EquipmentSlot;
-import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.*;
-import java.util.function.Supplier;
 
 public class AttributeService {
     private static final Map<Attribute, String> PREFIXES = Map.ofEntries(
@@ -60,24 +56,20 @@ public class AttributeService {
             Attribute.GENERIC_FALL_DAMAGE_MULTIPLIER
     );
 
-    private final AttributeConfig attributeConfig;
-    private final EnchantmentConfig enchantmentConfig;
     private final Random random;
-    public AttributeService(AttributeConfig attributeConfig, EnchantmentConfig enchantmentConfig) {
-        this(attributeConfig, enchantmentConfig, new Random());
+    public AttributeService() {
+        this(new Random());
     }
 
-    AttributeService(AttributeConfig attributeConfig, EnchantmentConfig enchantmentConfig, Random random) {
-        this.attributeConfig = attributeConfig;
-        this.enchantmentConfig = enchantmentConfig;
+    AttributeService(Random random) {
         this.random = random;
     }
 
-    public ItemStack applyAttributes(ItemStack stack, Supplier<Integer> nightSupplier) {
+    public ItemStack applyAttributes(ItemStack stack, AttributeConfig config, int nights) {
         if (stack == null) return null;
         ItemMeta meta = stack.getItemMeta();
         if (meta == null) return stack;
-        Map<Attribute, Double> bonuses = collectAttributeBonuses(nightSupplier);
+        Map<Attribute, Double> bonuses = collectAttributeBonuses(config, nights);
         if (!bonuses.isEmpty()) {
             EquipmentSlot slot = determineSlot(stack);
             for (Map.Entry<Attribute, Double> entry : bonuses.entrySet()) {
@@ -92,32 +84,7 @@ public class AttributeService {
         return stack;
     }
 
-    public ItemStack applyEnchants(ItemStack stack, Supplier<Integer> nightSupplier) {
-        if (stack == null) return null;
-        ItemMeta meta = stack.getItemMeta();
-        if (meta == null) return stack;
-        boolean changed = false;
-        do {
-            Enchantment enchantment = randomEnchantment(stack);
-            if (enchantment == null) break;
-            int level = meta.getEnchantLevel(enchantment) + enchantmentConfig.levelBonus();
-            meta.addEnchant(enchantment, level, true);
-            changed = true;
-        } while (roll(enchantmentConfig, nightSupplier.get()));
-
-        if (changed) {
-            meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-            stack.setItemMeta(meta);
-        }
-        return stack;
-    }
-
-    private boolean roll(AttributeConfig config, int nights) {
-        double chance = Math.min(config.maxChance(), config.baseChance() + (config.nightlyIncrease() * nights));
-        return random.nextDouble() < chance;
-    }
-
-    private boolean roll(EnchantmentConfig config, int nights) {
+    boolean roll(AttributeConfig config, int nights) {
         double chance = Math.min(config.maxChance(), config.baseChance() + (config.nightlyIncrease() * nights));
         return random.nextDouble() < chance;
     }
@@ -159,12 +126,12 @@ public class AttributeService {
         return EquipmentSlot.HAND;
     }
 
-    Map<Attribute, Double> collectAttributeBonuses(Supplier<Integer> nightSupplier) {
+    Map<Attribute, Double> collectAttributeBonuses(AttributeConfig config, int nights) {
         Map<Attribute, Double> bonuses = new LinkedHashMap<>();
         do {
             Attribute attribute = randomAttribute();
-            bonuses.merge(attribute, attributeConfig.bonusPercent(), Double::sum);
-        } while (roll(attributeConfig, nightSupplier.get()));
+            bonuses.merge(attribute, config.bonusPercent(), Double::sum);
+        } while (roll(config, nights));
         return bonuses;
     }
 
@@ -178,11 +145,4 @@ public class AttributeService {
         return baseAmount;
     }
 
-    private Enchantment randomEnchantment(ItemStack stack) {
-        List<Enchantment> valid = Arrays.stream(Enchantment.values())
-                .filter(e -> e.canEnchantItem(stack))
-                .toList();
-        if (valid.isEmpty()) return null;
-        return valid.get(random.nextInt(valid.size()));
-    }
 }

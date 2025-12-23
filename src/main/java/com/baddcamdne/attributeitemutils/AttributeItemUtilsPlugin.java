@@ -1,10 +1,11 @@
 package com.baddcamdne.attributeitemutils;
 
-import com.baddcamdne.attributeitemutils.config.AttributeConfig;
-import com.baddcamdne.attributeitemutils.config.EnchantmentConfig;
+import com.baddcamdne.attributeitemutils.config.AttributeConfigSource;
+import com.baddcamdne.attributeitemutils.config.EnchantmentConfigSource;
 import com.baddcamdne.attributeitemutils.gear.GearConfigLoader;
 import com.baddcamdne.attributeitemutils.gear.KitConfig;
 import com.baddcamdne.attributeitemutils.items.AttributeService;
+import com.baddcamdne.attributeitemutils.items.EnchantmentService;
 import com.baddcamdne.attributeitemutils.items.GearService;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -22,10 +23,10 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
         GearConfigLoader loader = new GearConfigLoader(this);
         loader.reload();
 
-        AttributeConfig attributeConfig = AttributeConfig.fromConfig(getConfig());
-        EnchantmentConfig enchantmentConfig = EnchantmentConfig.fromConfig(getConfig());
+        AttributeConfigSource attributeConfigSource = AttributeConfigSource.fromConfig(getConfig(), getLogger());
+        EnchantmentConfigSource enchantmentConfigSource = EnchantmentConfigSource.fromConfig(getConfig(), getLogger());
 
-        gearService = new GearService(loader, new AttributeService(attributeConfig, enchantmentConfig));
+        gearService = new GearService(loader, new AttributeService(), new EnchantmentService(), attributeConfigSource, enchantmentConfigSource);
         getLogger().info("AttributeItemUtils enabled");
     }
 
