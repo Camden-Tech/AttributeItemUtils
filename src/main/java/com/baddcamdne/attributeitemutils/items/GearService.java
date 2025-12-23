@@ -2,6 +2,7 @@ package com.baddcamdne.attributeitemutils.items;
 
 import com.baddcamdne.attributeitemutils.config.AttributeConfig;
 import com.baddcamdne.attributeitemutils.config.AttributeConfigSource;
+import com.baddcamdne.attributeitemutils.config.DropChanceConfigSource;
 import com.baddcamdne.attributeitemutils.config.EnchantmentConfig;
 import com.baddcamdne.attributeitemutils.config.EnchantmentConfigSource;
 import com.baddcamdne.attributeitemutils.gear.GearConfigLoader;
@@ -11,6 +12,7 @@ import com.baddcamdne.attributeitemutils.gear.WeightedItem;
 import com.baddcamdne.attributeitemutils.util.BellCurveSelector;
 import org.bukkit.Material;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
@@ -24,17 +26,20 @@ public class GearService {
     private final EnchantmentService enchantmentService;
     private final AttributeConfigSource attributeConfigSource;
     private final EnchantmentConfigSource enchantmentConfigSource;
+    private final DropChanceConfigSource dropChanceConfigSource;
     private final BellCurveSelector selector = new BellCurveSelector();
     public GearService(GearConfigLoader loader,
                        AttributeService attributeService,
                        EnchantmentService enchantmentService,
                        AttributeConfigSource attributeConfigSource,
-                       EnchantmentConfigSource enchantmentConfigSource) {
+                       EnchantmentConfigSource enchantmentConfigSource,
+                       DropChanceConfigSource dropChanceConfigSource) {
         this.loader = loader;
         this.attributeService = attributeService;
         this.enchantmentService = enchantmentService;
         this.attributeConfigSource = attributeConfigSource;
         this.enchantmentConfigSource = enchantmentConfigSource;
+        this.dropChanceConfigSource = dropChanceConfigSource;
     }
 
     public Optional<KitConfig> getKit(String name) {
@@ -45,6 +50,7 @@ public class GearService {
         int nights = (int) (entity.getWorld().getFullTime() / 24000L);
         AttributeConfig attributeConfig = attributeConfigSource.configFor(entity.getType());
         EnchantmentConfig enchantmentConfig = enchantmentConfigSource.configFor(entity.getType());
+        double dropChance = dropChanceConfigSource.dropChanceFor(entity.getType());
         Map<EquipmentSlot, ItemStack> equipment = new EnumMap<>(EquipmentSlot.class);
         for (GearSlot slot : GearSlot.values()) {
             WeightedItem selection = selector.select(kit.items().getOrDefault(slot, java.util.List.of()), kit.targetWeight(), kit.steepness(), kit.range());
@@ -63,6 +69,26 @@ public class GearService {
                 case OFF_HAND -> equipment.put(EquipmentSlot.OFF_HAND, stack);
             }
         }
-        equipment.forEach((slot, item) -> entity.getEquipment().setItem(slot, item));
+        EntityEquipment entityEquipment = entity.getEquipment();
+        if (entityEquipment == null) {
+            return;
+        }
+        equipment.forEach((slot, item) -> {
+            entityEquipment.setItem(slot, item);
+            if (item != null && item.getType() != Material.AIR) {
+                setDropChance(entityEquipment, slot, (float) dropChance);
+            }
+        });
+    }
+
+    private void setDropChance(EntityEquipment equipment, EquipmentSlot slot, float chance) {
+        switch (slot) {
+            case HEAD -> equipment.setHelmetDropChance(chance);
+            case CHEST -> equipment.setChestplateDropChance(chance);
+            case LEGS -> equipment.setLeggingsDropChance(chance);
+            case FEET -> equipment.setBootsDropChance(chance);
+            case HAND -> equipment.setItemInMainHandDropChance(chance);
+            case OFF_HAND -> equipment.setItemInOffHandDropChance(chance);
+        }
     }
 }

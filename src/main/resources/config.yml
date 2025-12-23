@@ -18,6 +18,11 @@ enchants:
       base-chance: 0.05
       nightly-increase: 0.02
       max-chance: 0.95
+drops:
+  chance: 0.015
+  entities:
+    ZOMBIE:
+      chance: 0.02
 kits:
   defaultGearDistribution:
     target-weight: 5.0
