@@ -18,29 +18,25 @@ import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
 import java.util.Optional;
 
 public class AttributeItemUtilsPlugin extends JavaPlugin {
 
     private GearService gearService;
     private AttributeFacade attributeFacade;
+    private GearConfigLoader gearConfigLoader;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        saveDefaultGearConfig();
 
         attributeFacade = AttributeUtilitiesPlugin.getInstance().getAttributeFacade();
         registerAttributeUtilities();
 
-        GearConfigLoader loader = new GearConfigLoader(this);
-        loader.reload();
-
-        AttributeConfigSource attributeConfigSource = AttributeConfigSource.fromConfig(getConfig(), getLogger());
-        EnchantmentConfigSource enchantmentConfigSource = EnchantmentConfigSource.fromConfig(getConfig(), getLogger());
-        DropChanceConfigSource dropChanceConfigSource = DropChanceConfigSource.fromConfig(getConfig(), getLogger());
-        AttributeAffixConfig attributeAffixConfig = AttributeAffixConfig.load(this);
-
-        gearService = new GearService(loader, new AttributeService(attributeFacade, attributeAffixConfig.prefixes(), attributeAffixConfig.suffixes()), new EnchantmentService(attributeFacade), attributeConfigSource, enchantmentConfigSource, dropChanceConfigSource);
+        gearConfigLoader = new GearConfigLoader(this);
+        reloadPluginConfigs();
         getLogger().info("AttributeItemUtils enabled");
     }
 
@@ -60,5 +56,28 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
         }
         gearService.applyKit(entity, kit.get());
         return true;
+    }
+
+    public void reloadPluginConfigs() {
+        saveDefaultGearConfig();
+        reloadConfig();
+        gearConfigLoader.reload();
+
+        AttributeConfigSource attributeConfigSource = AttributeConfigSource.fromConfig(getConfig(), getLogger());
+        EnchantmentConfigSource enchantmentConfigSource = EnchantmentConfigSource.fromConfig(getConfig(), getLogger());
+        DropChanceConfigSource dropChanceConfigSource = DropChanceConfigSource.fromConfig(getConfig(), getLogger());
+        AttributeAffixConfig attributeAffixConfig = AttributeAffixConfig.load(this);
+
+        gearService = new GearService(gearConfigLoader, new AttributeService(attributeFacade, attributeAffixConfig.prefixes(), attributeAffixConfig.suffixes()), new EnchantmentService(attributeFacade), attributeConfigSource, enchantmentConfigSource, dropChanceConfigSource);
+    }
+
+    private void saveDefaultGearConfig() {
+        File gearFile = new File(getDataFolder(), "Gear.yml");
+        if (!gearFile.exists()) {
+            if (!getDataFolder().exists()) {
+                getDataFolder().mkdirs();
+            }
+            saveResource("Gear.yml", false);
+        }
     }
 }
