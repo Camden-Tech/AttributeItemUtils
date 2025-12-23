@@ -1,11 +1,13 @@
 package com.baddcamdne.attributeitemutils.items;
 
 import com.baddcamdne.attributeitemutils.config.AttributeConfig;
+import com.baddcamdne.attributeutils.AttributeFacade;
 import org.bukkit.attribute.Attribute;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -17,7 +19,7 @@ class AttributeServiceTest {
     void collectAttributeBonusesAggregatesDuplicates() {
         AttributeConfig attributeConfig = new AttributeConfig(1.0, 0.0, 0.05, 1.0);
         StubRandom random = new StubRandom(new int[]{0, 0}, new double[]{0.0, 1.0});
-        AttributeService service = new AttributeService(random);
+        AttributeService service = new AttributeService(new AttributeFacade(), affixes(), affixes(), random);
 
         Map<Attribute, Double> bonuses = service.collectAttributeBonuses(attributeConfig, 0);
 
@@ -29,7 +31,7 @@ class AttributeServiceTest {
     void collectAttributeBonusesReturnsEmptyWhenFirstRollFails() {
         AttributeConfig attributeConfig = new AttributeConfig(0.0, 0.0, 0.05, 1.0);
         StubRandom random = new StubRandom(new int[]{}, new double[]{1.0});
-        AttributeService service = new AttributeService(random);
+        AttributeService service = new AttributeService(new AttributeFacade(), affixes(), affixes(), random);
 
         Map<Attribute, Double> bonuses = service.collectAttributeBonuses(attributeConfig, 0);
 
@@ -39,7 +41,7 @@ class AttributeServiceTest {
     @Test
     void resolveAmountHandlesSpecialCases() {
         AttributeConfig attributeConfig = new AttributeConfig(1.0, 0.0, 0.05, 1.0);
-        AttributeService service = new AttributeService(new StubRandom(new int[]{0}, new double[]{1.0}));
+        AttributeService service = new AttributeService(new AttributeFacade(), affixes(), affixes(), new StubRandom(new int[]{0}, new double[]{1.0}));
 
         double scaleAmount = service.resolveAmount(Attribute.GENERIC_SCALE, 0.05);
         assertEquals(Math.cbrt(1.05) - 1, scaleAmount, 1.0e-9);
@@ -78,23 +80,17 @@ class AttributeServiceTest {
         );
 
         var candidatesField = AttributeService.class.getDeclaredField("CANDIDATE_ATTRIBUTES");
-        var prefixesField = AttributeService.class.getDeclaredField("PREFIXES");
-        var suffixesField = AttributeService.class.getDeclaredField("SUFFIXES");
-
         assertTrue(candidatesField.trySetAccessible());
-        assertTrue(prefixesField.trySetAccessible());
-        assertTrue(suffixesField.trySetAccessible());
 
         @SuppressWarnings("unchecked")
         List<Attribute> candidates = (List<Attribute>) candidatesField.get(null);
-        @SuppressWarnings("unchecked")
-        Map<Attribute, String> prefixes = (Map<Attribute, String>) prefixesField.get(null);
-        @SuppressWarnings("unchecked")
-        Map<Attribute, String> suffixes = (Map<Attribute, String>) suffixesField.get(null);
 
         assertIterableEquals(expected, candidates);
-        assertTrue(prefixes.keySet().containsAll(expected));
-        assertTrue(suffixes.keySet().containsAll(expected));
+    }
+
+    private Map<Attribute, String> affixes() {
+        return AttributeService.CANDIDATE_ATTRIBUTES.stream()
+                .collect(Collectors.toMap(attribute -> attribute, attribute -> ""));
     }
 
     private static final class StubRandom extends java.util.Random {

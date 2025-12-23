@@ -1,19 +1,23 @@
 package com.baddcamdne.attributeitemutils.items;
 
 import com.baddcamdne.attributeitemutils.config.AttributeConfig;
+import com.baddcamdne.attributeutils.AttributeFacade;
 import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
-import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Random;
 
 public class AttributeService {
     private final Map<Attribute, String> prefixes;
     private final Map<Attribute, String> suffixes;
-    private static final List<Attribute> CANDIDATE_ATTRIBUTES = List.of(
+    public static final List<Attribute> CANDIDATE_ATTRIBUTES = List.of(
             Attribute.MAX_HEALTH,
             Attribute.GENERIC_ARMOR,
             Attribute.GENERIC_ARMOR_TOUGHNESS,
@@ -37,12 +41,14 @@ public class AttributeService {
             Attribute.GENERIC_FALL_DAMAGE_MULTIPLIER
     );
 
+    private final AttributeFacade attributeFacade;
     private final Random random;
-    public AttributeService(Map<Attribute, String> prefixes, Map<Attribute, String> suffixes) {
-        this(prefixes, suffixes, new Random());
+    public AttributeService(AttributeFacade attributeFacade, Map<Attribute, String> prefixes, Map<Attribute, String> suffixes) {
+        this(attributeFacade, prefixes, suffixes, new Random());
     }
 
-    AttributeService(Map<Attribute, String> prefixes, Map<Attribute, String> suffixes, Random random) {
+    AttributeService(AttributeFacade attributeFacade, Map<Attribute, String> prefixes, Map<Attribute, String> suffixes, Random random) {
+        this.attributeFacade = attributeFacade;
         this.prefixes = prefixes;
         this.suffixes = suffixes;
         this.random = random;
@@ -50,19 +56,20 @@ public class AttributeService {
 
     public ItemStack applyAttributes(ItemStack stack, AttributeConfig config, int nights) {
         if (stack == null) return null;
-        ItemMeta meta = stack.getItemMeta();
-        if (meta == null) return stack;
+        if (stack.getItemMeta() == null) return stack;
         Map<Attribute, Double> bonuses = collectAttributeBonuses(config, nights);
-        if (!bonuses.isEmpty()) {
-            EquipmentSlot slot = determineSlot(stack);
-            for (Map.Entry<Attribute, Double> entry : bonuses.entrySet()) {
-                double amount = resolveAmount(entry.getKey(), entry.getValue());
-                AttributeModifier modifier = new AttributeModifier(UUID.randomUUID(), "attributeitemutils", amount, AttributeModifier.Operation.MULTIPLY_SCALAR_1, slot);
-                meta.addAttributeModifier(entry.getKey(), modifier);
-            }
-            Attribute decoratedAttribute = bonuses.keySet().iterator().next();
-            decorateName(stack, meta, decoratedAttribute);
-            stack.setItemMeta(meta);
+        if (bonuses.isEmpty()) {
+            return stack;
+        }
+
+        EquipmentSlot slot = determineSlot(stack);
+        attributeFacade.refresh(stack, slot);
+        bonuses.forEach((attribute, amount) -> attributeFacade.mutate(stack, attribute, amount, slot));
+        Attribute decoratedAttribute = bonuses.keySet().iterator().next();
+        ItemMeta decoratedMeta = stack.getItemMeta();
+        if (decoratedMeta != null) {
+            decorateName(stack, decoratedMeta, decoratedAttribute);
+            stack.setItemMeta(decoratedMeta);
         }
         return stack;
     }
@@ -123,13 +130,7 @@ public class AttributeService {
     }
 
     double resolveAmount(Attribute attribute, double baseAmount) {
-        if (attribute == Attribute.GENERIC_SCALE) {
-            return Math.cbrt(1 + baseAmount) - 1;
-        }
-        if (attribute == Attribute.GENERIC_FALL_DAMAGE_MULTIPLIER) {
-            return -baseAmount;
-        }
-        return baseAmount;
+        return attributeFacade.computeAmount(attribute, baseAmount);
     }
 
 }

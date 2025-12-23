@@ -1,16 +1,18 @@
 package com.baddcamdne.attributeitemutils.items;
 
+import com.baddcamdne.attributeutils.AttributeFacade;
 import org.bukkit.Material;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
 import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class AttributeServiceSlotTest {
-    private final AttributeService service = new AttributeService(new Random());
+    private final AttributeService service = new AttributeService(new AttributeFacade(), Map.of(), Map.of(), new Random());
 
     @Test
     void assignsHelmetSlot() {
