@@ -2,8 +2,10 @@ package com.baddcamdne.attributeitemutils.gear;
 
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -13,15 +15,19 @@ import java.util.Optional;
 public class GearConfigLoader {
 
     private final JavaPlugin plugin;
+    private final File gearConfigFile;
     private final Map<String, KitConfig> kits = new HashMap<>();
+    private YamlConfiguration gearConfig;
 
     public GearConfigLoader(JavaPlugin plugin) {
         this.plugin = plugin;
+        this.gearConfigFile = new File(plugin.getDataFolder(), "Gear.yml");
     }
 
     public void reload() {
         kits.clear();
-        ConfigurationSection section = plugin.getConfig().getConfigurationSection("kits");
+        gearConfig = YamlConfiguration.loadConfiguration(gearConfigFile);
+        ConfigurationSection section = gearConfig.getConfigurationSection("kits");
         if (section == null) {
             return;
         }

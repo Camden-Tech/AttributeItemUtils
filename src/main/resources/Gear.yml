@@ -1,0 +1,151 @@
+kits:
+  defaultGearDistribution:
+    target-weight: 5.0
+    steepness: 1.5
+    range: 6.0
+    helmet:
+      - AIR:0
+      - LEATHER_HELMET:2
+      - IRON_HELMET:5
+      - DIAMOND_HELMET:8
+      - NETHERITE_HELMET:10
+    chestplate:
+      - AIR:0
+      - LEATHER_CHESTPLATE:2
+      - IRON_CHESTPLATE:5
+      - DIAMOND_CHESTPLATE:8
+      - NETHERITE_CHESTPLATE:10
+    leggings:
+      - AIR:0
+      - LEATHER_LEGGINGS:2
+      - IRON_LEGGINGS:5
+      - DIAMOND_LEGGINGS:8
+      - NETHERITE_LEGGINGS:10
+    boots:
+      - AIR:0
+      - LEATHER_BOOTS:2
+      - IRON_BOOTS:5
+      - DIAMOND_BOOTS:8
+      - NETHERITE_BOOTS:10
+    hand:
+      - AIR:0
+      - WOODEN_SWORD:2
+      - WOODEN_AXE:2
+      - STONE_SWORD:3
+      - STONE_AXE:3
+      - IRON_SWORD:5
+      - IRON_AXE:5
+      - DIAMOND_SWORD:7
+      - DIAMOND_AXE:7
+      - NETHERITE_SWORD:10
+      - NETHERITE_AXE:10
+      - SHIELD:6
+      - TOTEM_OF_UNDYING:4
+    off_hand:
+      - AIR:0
+      - SHIELD:6
+      - TOTEM_OF_UNDYING:4
+      - WOODEN_SWORD:2
+      - WOODEN_AXE:2
+      - STONE_SWORD:3
+      - STONE_AXE:3
+      - IRON_SWORD:5
+      - IRON_AXE:5
+      - DIAMOND_SWORD:7
+      - DIAMOND_AXE:7
+      - NETHERITE_SWORD:10
+      - NETHERITE_AXE:10
+  defaultArcherDistribution:
+    target-weight: 5.0
+    steepness: 1.5
+    range: 6.0
+    helmet:
+      - AIR:0
+      - LEATHER_HELMET:2
+      - IRON_HELMET:5
+      - DIAMOND_HELMET:8
+      - NETHERITE_HELMET:10
+    chestplate:
+      - AIR:0
+      - LEATHER_CHESTPLATE:2
+      - IRON_CHESTPLATE:5
+      - DIAMOND_CHESTPLATE:8
+      - NETHERITE_CHESTPLATE:10
+    leggings:
+      - AIR:0
+      - LEATHER_LEGGINGS:2
+      - IRON_LEGGINGS:5
+      - DIAMOND_LEGGINGS:8
+      - NETHERITE_LEGGINGS:10
+    boots:
+      - AIR:0
+      - LEATHER_BOOTS:2
+      - IRON_BOOTS:5
+      - DIAMOND_BOOTS:8
+      - NETHERITE_BOOTS:10
+    hand:
+      - AIR:0
+      - BOW:7
+      - CROSSBOW:9
+    off_hand:
+      - AIR:0
+      - SHIELD:6
+      - TOTEM_OF_UNDYING:4
+      - WOODEN_SWORD:2
+      - WOODEN_AXE:2
+      - STONE_SWORD:3
+      - STONE_AXE:3
+      - IRON_SWORD:5
+      - IRON_AXE:5
+      - DIAMOND_SWORD:7
+      - DIAMOND_AXE:7
+      - NETHERITE_SWORD:10
+      - NETHERITE_AXE:10
+  defaultMinerDistribution:
+    target-weight: 5.0
+    steepness: 1.5
+    range: 6.0
+    helmet:
+      - AIR:0
+      - LEATHER_HELMET:2
+      - IRON_HELMET:5
+      - DIAMOND_HELMET:8
+      - NETHERITE_HELMET:10
+    chestplate:
+      - AIR:0
+      - LEATHER_CHESTPLATE:2
+      - IRON_CHESTPLATE:5
+      - DIAMOND_CHESTPLATE:8
+      - NETHERITE_CHESTPLATE:10
+    leggings:
+      - AIR:0
+      - LEATHER_LEGGINGS:2
+      - IRON_LEGGINGS:5
+      - DIAMOND_LEGGINGS:8
+      - NETHERITE_LEGGINGS:10
+    boots:
+      - AIR:0
+      - LEATHER_BOOTS:2
+      - IRON_BOOTS:5
+      - DIAMOND_BOOTS:8
+      - NETHERITE_BOOTS:10
+    hand:
+      - WOODEN_PICKAXE:2
+      - STONE_PICKAXE:4
+      - IRON_PICKAXE:6
+      - DIAMOND_PICKAXE:8
+      - NETHERITE_PICKAXE:10
+    off_hand:
+      - AIR:0
+      - SHIELD:6
+      - TOTEM_OF_UNDYING:4
+      - WOODEN_SWORD:2
+      - WOODEN_AXE:2
+      - STONE_SWORD:3
+      - STONE_AXE:3
+      - IRON_SWORD:5
+      - IRON_AXE:5
+      - DIAMOND_SWORD:7
+      - DIAMOND_AXE:7
+      - NETHERITE_SWORD:10
+      - NETHERITE_AXE:10
