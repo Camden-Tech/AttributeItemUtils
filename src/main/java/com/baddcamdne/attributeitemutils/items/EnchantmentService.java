@@ -27,13 +27,13 @@ public class EnchantmentService {
         if (meta == null) return stack;
 
         boolean changed = false;
-        do {
+        while (roll(config, nights)) {
             Enchantment enchantment = randomEnchantment(stack);
             if (enchantment == null) break;
             int level = meta.getEnchantLevel(enchantment) + config.levelBonus();
             meta.addEnchant(enchantment, level, true);
             changed = true;
-        } while (roll(config, nights));
+        }
 
         if (changed) {
             meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
