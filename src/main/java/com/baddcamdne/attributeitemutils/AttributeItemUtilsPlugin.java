@@ -9,6 +9,12 @@ import com.baddcamdne.attributeitemutils.gear.KitConfig;
 import com.baddcamdne.attributeitemutils.items.AttributeService;
 import com.baddcamdne.attributeitemutils.items.EnchantmentService;
 import com.baddcamdne.attributeitemutils.items.GearService;
+import com.baddcamdne.attributeutils.AttributeBaseline;
+import com.baddcamdne.attributeutils.AttributeDefinition;
+import com.baddcamdne.attributeutils.AttributeFacade;
+import com.baddcamdne.attributeutils.AttributeUtilitiesPlugin;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -17,10 +23,14 @@ import java.util.Optional;
 public class AttributeItemUtilsPlugin extends JavaPlugin {
 
     private GearService gearService;
+    private AttributeFacade attributeFacade;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
+
+        attributeFacade = AttributeUtilitiesPlugin.getInstance().getAttributeFacade();
+        registerAttributeUtilities();
 
         GearConfigLoader loader = new GearConfigLoader(this);
         loader.reload();
@@ -30,8 +40,16 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
         DropChanceConfigSource dropChanceConfigSource = DropChanceConfigSource.fromConfig(getConfig(), getLogger());
         AttributeAffixConfig attributeAffixConfig = AttributeAffixConfig.load(this);
 
-        gearService = new GearService(loader, new AttributeService(attributeAffixConfig.prefixes(), attributeAffixConfig.suffixes()), new EnchantmentService(), attributeConfigSource, enchantmentConfigSource, dropChanceConfigSource);
+        gearService = new GearService(loader, new AttributeService(attributeFacade, attributeAffixConfig.prefixes(), attributeAffixConfig.suffixes()), new EnchantmentService(attributeFacade), attributeConfigSource, enchantmentConfigSource, dropChanceConfigSource);
         getLogger().info("AttributeItemUtils enabled");
+    }
+
+    private void registerAttributeUtilities() {
+        for (Attribute attribute : AttributeService.CANDIDATE_ATTRIBUTES) {
+            AttributeDefinition definition = new AttributeDefinition(attribute, AttributeModifier.Operation.MULTIPLY_SCALAR_1, 1.0);
+            attributeFacade.registerDefinition(definition);
+            attributeFacade.registerBaseline(new AttributeBaseline(attribute, 0.0));
+        }
     }
 
     public boolean applyKit(LivingEntity entity, String kitName) {

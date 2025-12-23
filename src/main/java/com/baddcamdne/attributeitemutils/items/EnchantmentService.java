@@ -1,44 +1,36 @@
 package com.baddcamdne.attributeitemutils.items;
 
 import com.baddcamdne.attributeitemutils.config.EnchantmentConfig;
+import com.baddcamdne.attributeutils.AttributeFacade;
 import org.bukkit.enchantments.Enchantment;
-import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
 public class EnchantmentService {
+    private final AttributeFacade attributeFacade;
     private final Random random;
 
-    public EnchantmentService() {
-        this(new Random());
+    public EnchantmentService(AttributeFacade attributeFacade) {
+        this(attributeFacade, new Random());
     }
 
-    EnchantmentService(Random random) {
+    EnchantmentService(AttributeFacade attributeFacade, Random random) {
+        this.attributeFacade = attributeFacade;
         this.random = random;
     }
 
     public ItemStack applyEnchants(ItemStack stack, EnchantmentConfig config, int nights) {
         if (stack == null) return null;
-        ItemMeta meta = stack.getItemMeta();
-        if (meta == null) return stack;
-
-        boolean changed = false;
         while (roll(config, nights)) {
             Enchantment enchantment = randomEnchantment(stack);
             if (enchantment == null) break;
-            int level = meta.getEnchantLevel(enchantment) + config.levelBonus();
-            meta.addEnchant(enchantment, level, true);
-            changed = true;
+            int level = stack.getEnchantmentLevel(enchantment) + config.levelBonus();
+            attributeFacade.applyEnchant(stack, enchantment, level);
         }
 
-        if (changed) {
-            meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-            stack.setItemMeta(meta);
-        }
         return stack;
     }
 
