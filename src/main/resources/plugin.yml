@@ -1,0 +1,6 @@
+name: AttributeItemUtils
+author: BaddCamdne
+main: com.baddcamdne.attributeitemutils.AttributeItemUtilsPlugin
+version: 1.0.0-SNAPSHOT
+depend: [AttributeUtils]
+api-version: 1.21
