@@ -4,19 +4,26 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.baddcamdne</groupId>
-    <artifactId>AttributeItemUtils</artifactId>
+    <groupId>com.baddcamdne.attributeitemutils</groupId>
+    <artifactId>attributeitemutils</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>AttributeItemUtils</name>
-    <description>Attribute driven item and kit utilities for Spigot/Bukkit 1.21.10.</description>
+    <description>Attribute driven item and kit utilities plugin for Spigot/Bukkit 1.21.10 by BaddCamdne.</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.release>21</maven.compiler.release>
     </properties>
+
+    <developers>
+        <developer>
+            <name>BaddCamdne</name>
+        </developer>
+    </developers>
 
     <repositories>
         <repository>
@@ -51,11 +58,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
+                <version>3.13.0</version>
                 <configuration>
-                    <source>21</source>
-                    <target>21</target>
-                    <compilerArgs>--enable-preview</compilerArgs>
+                    <release>21</release>
                 </configuration>
             </plugin>
             <plugin>
