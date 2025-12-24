@@ -6,9 +6,12 @@ package com.baddcamden.attributeitemutils.util;
  */
 public final class NightCalculator {
 
+    /** Minecraft ticks in a full day-night cycle. */
     private static final long TICKS_PER_NIGHT = 24000L;
+    /** Maximum nights tracked to prevent overflow when fed arbitrary server values. */
     private static final long MAX_TRACKED_NIGHTS = Integer.MAX_VALUE;
 
+    /** Utility class; prevent instantiation. */
     private NightCalculator() {
     }
 

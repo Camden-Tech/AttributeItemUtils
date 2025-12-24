@@ -16,18 +16,31 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Loads kit configuration data from Gear.yml into strongly typed models used by commands and services.
+ */
 public class GearConfigLoader {
 
+    /** Owning plugin used to resolve data folders and log warnings. */
     private final JavaPlugin plugin;
+    /** Physical Gear.yml file on disk. */
     private final File gearConfigFile;
+    /** Cached kit configurations keyed by their identifier. */
     private final Map<String, KitConfig> kits = new HashMap<>();
+    /** Active YAML configuration backing this loader. */
     private YamlConfiguration gearConfig;
 
+    /**
+     * Creates a loader bound to the provided plugin instance.
+     */
     public GearConfigLoader(JavaPlugin plugin) {
         this.plugin = plugin;
         this.gearConfigFile = new File(plugin.getDataFolder(), "Gear.yml");
     }
 
+    /**
+     * Reloads configuration from disk and repopulates the in-memory kit cache.
+     */
     public void reload() {
         kits.clear();
         gearConfig = YamlConfiguration.loadConfiguration(gearConfigFile);
@@ -49,12 +62,16 @@ public class GearConfigLoader {
                         .map(this::parseWeightedItem)
                         .flatMap(Optional::stream)
                         .toList();
+                //VAGUE/IMPROVEMENT NEEDED Slot key casing assumptions are tied to toLowerCase without locale awareness.
                 map.put(slot, entries);
             }
             kits.put(key, new KitConfig(key, target, steepness, range, map));
         }
     }
 
+    /**
+     * Loads default Gear.yml values packaged inside the plugin JAR when available.
+     */
     private void loadDefaults() {
         try (InputStream stream = plugin.getResource("Gear.yml")) {
             if (stream == null) {
@@ -68,6 +85,11 @@ public class GearConfigLoader {
         }
     }
 
+    /**
+     * Parses a weighted item entry in the format {@code MATERIAL:weight}.
+     * @param raw the raw string entry from the configuration list
+     * @return the parsed {@link WeightedItem} when valid
+     */
     private Optional<WeightedItem> parseWeightedItem(String raw) {
         String[] parts = raw.split(":");
         if (parts.length != 2) return Optional.empty();
@@ -82,10 +104,16 @@ public class GearConfigLoader {
         }
     }
 
+    /**
+     * Retrieves a kit by name.
+     */
     public Optional<KitConfig> getKit(String name) {
         return Optional.ofNullable(kits.get(name));
     }
 
+    /**
+     * Returns all loaded kits keyed by name.
+     */
     public Map<String, KitConfig> getKits() {
         return kits;
     }
