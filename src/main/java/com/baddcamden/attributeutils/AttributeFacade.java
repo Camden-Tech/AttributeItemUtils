@@ -8,7 +8,10 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import com.google.common.collect.Multimap;
+
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class AttributeFacade {
@@ -70,7 +73,17 @@ public class AttributeFacade {
             return;
         }
 
-        definitions.keySet().forEach(meta::removeAttributeModifier);
+        Multimap<Attribute, AttributeModifier> modifiers = meta.getAttributeModifiers();
+        definitions.keySet().forEach(attribute -> {
+            if (modifiers == null) {
+                return;
+            }
+            for (AttributeModifier modifier : List.copyOf(modifiers.get(attribute))) {
+                if (isPluginModifier(modifier)) {
+                    meta.removeAttributeModifier(attribute, modifier);
+                }
+            }
+        });
         baselines.forEach((attribute, baseline) -> {
             AttributeDefinition definition = definitions.get(attribute);
             if (definition != null) {
@@ -95,6 +108,11 @@ public class AttributeFacade {
         meta.addAttributeModifier(attribute, modifier);
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
         stack.setItemMeta(meta);
+    }
+
+    private boolean isPluginModifier(AttributeModifier modifier) {
+        String name = modifier.getName();
+        return name != null && name.startsWith("attributeitemutils:");
     }
 
     public void applyEnchant(ItemStack stack, Enchantment enchantment, int level) {
