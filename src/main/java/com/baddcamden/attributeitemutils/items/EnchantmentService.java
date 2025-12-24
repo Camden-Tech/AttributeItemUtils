@@ -12,8 +12,11 @@ import java.util.List;
 import java.util.Random;
 
 public class EnchantmentService {
+    // Performs attribute-aware interactions such as applying enchantments that respect custom modifiers.
     private final AttributeFacade attributeFacade;
+    // Centralized RNG so enchantment rolls can be deterministically tested when seeded.
     private final Random random;
+    // Provides the list of allowed enchantments and their weighting for selection.
     private final EnchantmentPoolConfig enchantmentPool;
 
     /**
@@ -36,13 +39,20 @@ public class EnchantmentService {
      * Applies random enchants to the given item stack while the roll succeeds, increasing existing levels with a bonus.
      */
     public ItemStack applyEnchants(ItemStack stack, EnchantmentConfig config, EquipmentSlot slot, long nights) {
-        if (stack == null) return null;
-        if (config.levelBonus() <= 0) return stack;
+        if (stack == null) {
+            return null;
+        }
+        if (config.levelBonus() <= 0) {
+            return stack;
+        }
 
         List<Enchantment> validEnchantments = validEnchantments(stack);
-        if (validEnchantments.isEmpty()) return stack;
+        if (validEnchantments.isEmpty()) {
+            return stack;
+        }
 
         int remainingApplications = Math.max(1, validEnchantments.size());
+        //VAGUE/IMPROVEMENT NEEDED {Number of potential enchant applications tied to available enchant count without design note}
         while (remainingApplications-- > 0 && roll(config, nights)) {
             Enchantment enchantment = validEnchantments.get(random.nextInt(validEnchantments.size()));
             int currentLevel = stack.getEnchantmentLevel(enchantment);

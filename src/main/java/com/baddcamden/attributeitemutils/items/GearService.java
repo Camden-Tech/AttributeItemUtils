@@ -23,12 +23,19 @@ import java.util.Map;
 import java.util.Optional;
 
 public class GearService {
+    // Loads configured kits and weighted item selections from disk.
     private final GearConfigLoader loader;
+    // Applies attribute modifiers and related lore for generated gear.
     private final AttributeService attributeService;
+    // Adds enchantments according to pool rules and configured bonuses.
     private final EnchantmentService enchantmentService;
+    // Supplies attribute rolling parameters (chance, bonus, scaling) for entities.
     private final AttributeConfigSource attributeConfigSource;
+    // Supplies enchantment rolling parameters for entities.
     private final EnchantmentConfigSource enchantmentConfigSource;
+    // Provides drop chance defaults and overrides for entity equipment.
     private final DropChanceConfigSource dropChanceConfigSource;
+    // Publishes hooks that may override attribute/enchant/drop settings per entity type.
     private final EntityChanceHooks chanceHooks;
     private final BellCurveSelector selector = new BellCurveSelector();
     /**
