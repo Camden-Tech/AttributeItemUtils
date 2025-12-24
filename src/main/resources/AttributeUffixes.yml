@@ -5,28 +5,24 @@ prefixes:
     value: "Relentless "
   - attributes: [ATTACK_DAMAGE]
     value: "Strengthening "
+  - attributes: [ ATTACK_DAMAGE, ATTACK_SPEED, ATTACK_KNOCKBACK]
+    value: "Powerful "
   - attributes: [ATTACK_SPEED]
-    value: "Speedster "
+    value: "Quick "
   - attributes: [MOVEMENT_SPEED]
     value: "Fast "
-  - attributes: [MOVEMENT_SPEED]
-    value: "Speedster "
-  - attributes: [BLOCK_BREAK_SPEED]
-    value: "Speedster "
   - attributes: [SNEAKING_SPEED]
     value: "Stealthy "
-  - attributes: [SNEAKING_SPEED]
-    value: "Speedster "
   - attributes: [SPRINT_SPEED]
-    value: "Speedster "
-  - attributes: [SWIM_SPEED]
-    value: "Aerodynamic "
-  - attributes: [SWIM_SPEED]
+    value: "Untiring "
+  - attributes: [ MOVEMENT_SPEED, SPRINT_SPEED, SNEAKING_SPEED, SWIMMING_SPEED, FLYING_SPEED, BLOCK_BREAK_SPEED]
     value: "Speedster "
   - attributes: [ARMOR]
     value: "Hardened "
   - attributes: [ARMOR_TOUGHNESS]
     value: "Tough "
+  - attributes: [ ARMOR, ARMOR_TOUGHNESS, KNOCKBACK_RESISTANCE, DAMAGE_REDUCTION]
+    value: "Durable "
   - attributes: [LUCK]
     value: "Lucky "
   - attributes: [KNOCKBACK_RESISTANCE]
@@ -37,24 +33,22 @@ prefixes:
     value: "Padded "
   - attributes: [JUMP_STRENGTH]
     value: "Athletic "
+  - attributes: [SAFE_FALL_DISTANCE, JUMP_STRENGTH, FALL_DAMAGE_MULTIPLIER]
+    value: "Springy "
   - attributes: [DAMAGE_REDUCTION]
     value: "Protecting "
 
 suffixes:
-  - attributes: [SCALE]
+  - attributes: [KNOCKBACK_RESISTANCE, SCALE, GRAVITY]
     value: " of Obesity"
-  - attributes: [GRAVITY]
-    value: " of the Sky Diver"
-  - attributes: [GRAVITY]
-    value: " of Obesity"
-  - attributes: [KNOCKBACK_RESISTANCE]
-    value: " of Obesity"
+  - attributes: [ KNOCKBACK_RESISTANCE, SCALE, GRAVITY, MAXIMUM_HEALTH, ARMOR, ARMOR_TOUGHNESS]
+    value: " of Morbid Obesity"
   - attributes: [MAX_HEALTH]
     value: " of the Tank"
+  - attributes: [FOLLOW_RANGE, FLYING_SPEED, GRAVITY]
+    value: " of the Hawk"
   - attributes: [FOLLOW_RANGE]
     value: " of the Lookout"
-  - attributes: [ATTACK_DAMAGE]
-    value: " of Power"
   - attributes: [ATTACK_KNOCKBACK]
     value: " of the Boxer"
   - attributes: [ATTACK_SPEED]
