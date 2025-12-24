@@ -9,26 +9,40 @@ commands:
     description: Apply a configured kit to a player with optional weight overrides.
     usage: /aiukit <kit> [player] [targetWeight] [steepness] [range]
     permission: attributeitemutils.test.kit
+    tab-complete: true
   aiuattributes:
     description: Apply attribute rolls to the item in a specific slot.
     usage: /aiuattributes <slot> <nights> [default|baseChance nightlyIncrease bonusPercent maxChance]
     permission: attributeitemutils.test.attributes
+    tab-complete: true
   aiuenchants:
     description: Apply enchantment rolls to the item in a specific slot.
     usage: /aiuenchants <slot> <nights> [default|baseChance nightlyIncrease levelBonus maxChance]
     permission: attributeitemutils.test.enchants
+    tab-complete: true
+  aiutestgenerate:
+    description: Generate a configured test item for the executing player.
+    usage: /aiutestgenerate <slot> [targetWeight] [steepness] [range]
+    permission: attributeitemutils.test.generate
+    tab-complete: true
   aiutestspawn:
     description: Spawn a test mob with a configured kit applied.
     usage: /aiutestspawn <entityType> <kit> [targetWeight] [steepness] [range]
     permission: attributeitemutils.test.spawn
+    tab-complete: true
 permissions:
   attributeitemutils.test.*:
     description: Access to all AttributeItemUtils test commands.
+    default: op
     children:
+      attributeitemutils.test.generate: true
       attributeitemutils.test.kit: true
       attributeitemutils.test.attributes: true
       attributeitemutils.test.enchants: true
       attributeitemutils.test.spawn: true
+  attributeitemutils.test.generate:
+    description: Permission to generate test items.
+    default: op
   attributeitemutils.test.kit:
     description: Permission to apply test kits.
     default: op
