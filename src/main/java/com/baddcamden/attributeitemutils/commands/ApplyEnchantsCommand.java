@@ -21,11 +21,17 @@ public class ApplyEnchantsCommand implements CommandExecutor, TabCompleter {
     private final EnchantmentService enchantmentService;
     private final AttributeItemUtilsPlugin plugin;
 
+    /**
+     * Creates a new enchantment command bound to the plugin's enchantment service.
+     */
     public ApplyEnchantsCommand(AttributeItemUtilsPlugin plugin) {
         this.plugin = plugin;
         this.enchantmentService = plugin.getEnchantmentService();
     }
 
+    /**
+     * Processes the command to apply configured enchantments to a chosen equipment slot.
+     */
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!sender.hasPermission("attributeitemutils.test.enchants")) {
@@ -114,6 +120,9 @@ public class ApplyEnchantsCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    /**
+     * Provides tab completions for equipment slots and enchantment configuration values.
+     */
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         switch (args.length) {
