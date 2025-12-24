@@ -70,7 +70,7 @@ public class AttributeLoreConfig {
         Map<String, String> slotNames = loadSlotNames(formats);
 
         ConfigurationSection attributeSection = config.getConfigurationSection("attributes");
-        Map<Attribute, AttributeLore> attributes = new EnumMap<>(Attribute.class);
+        Map<Attribute, AttributeLore> attributes = new EnumMap<Attribute, AttributeLore>(Attribute.class);
         if (attributeSection != null) {
             for (String key : attributeSection.getKeys(false)) {
                 Attribute attribute = parseAttribute(key, logger);
