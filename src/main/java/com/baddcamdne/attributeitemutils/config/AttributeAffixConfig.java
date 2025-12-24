@@ -64,7 +64,7 @@ public class AttributeAffixConfig {
         if (!(rawAttributes instanceof List<?> attributeList)) {
             return Set.of();
         }
-        Set<Attribute> attributes = EnumSet.noneOf(Attribute.class);
+        Set<Attribute> attributes = EnumSet.<Attribute>noneOf(Attribute.class);
         for (Object value : attributeList) {
             if (value instanceof String key) {
                 Attribute attribute = parseAttribute(key, logger);
