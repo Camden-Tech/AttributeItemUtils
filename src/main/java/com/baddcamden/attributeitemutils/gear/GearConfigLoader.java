@@ -18,16 +18,28 @@ import java.util.Optional;
 
 public class GearConfigLoader {
 
+    /** Owning plugin used to access resources and log warnings. */
     private final JavaPlugin plugin;
+    /** Physical config file path resolved from the plugin data folder. */
     private final File gearConfigFile;
+    /** Parsed kit definitions keyed by name. */
     private final Map<String, KitConfig> kits = new HashMap<>();
+    /** In-memory YAML configuration loaded from disk and defaults. */
     private YamlConfiguration gearConfig;
 
+    /**
+     * Creates a loader bound to the provided plugin instance.
+     *
+     * @param plugin plugin used to locate the gear configuration
+     */
     public GearConfigLoader(JavaPlugin plugin) {
         this.plugin = plugin;
         this.gearConfigFile = new File(plugin.getDataFolder(), "Gear.yml");
     }
 
+    /**
+     * Reloads the gear configuration from disk, applying defaults and rebuilding kit mappings.
+     */
     public void reload() {
         kits.clear();
         gearConfig = YamlConfiguration.loadConfiguration(gearConfigFile);
@@ -55,6 +67,9 @@ public class GearConfigLoader {
         }
     }
 
+    /**
+     * Applies default values from the packaged resource if available.
+     */
     private void loadDefaults() {
         try (InputStream stream = plugin.getResource("Gear.yml")) {
             if (stream == null) {
@@ -68,6 +83,12 @@ public class GearConfigLoader {
         }
     }
 
+    /**
+     * Converts a configuration line into a weighted material entry.
+     *
+     * @param raw source string in the format material:weight
+     * @return parsed weighted item if valid
+     */
     private Optional<WeightedItem> parseWeightedItem(String raw) {
         String[] parts = raw.split(":");
         if (parts.length != 2) return Optional.empty();
@@ -82,10 +103,16 @@ public class GearConfigLoader {
         }
     }
 
+    /**
+     * Retrieves a kit definition by name if one was loaded.
+     */
     public Optional<KitConfig> getKit(String name) {
         return Optional.ofNullable(kits.get(name));
     }
 
+    /**
+     * Exposes all loaded kits for inspection or iteration.
+     */
     public Map<String, KitConfig> getKits() {
         return kits;
     }
