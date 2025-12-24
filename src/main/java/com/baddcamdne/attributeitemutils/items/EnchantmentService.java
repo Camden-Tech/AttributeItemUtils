@@ -3,6 +3,7 @@ package com.baddcamdne.attributeitemutils.items;
 import com.baddcamdne.attributeitemutils.config.EnchantmentConfig;
 import com.baddcamdne.attributeutils.AttributeFacade;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.Arrays;
@@ -22,7 +23,7 @@ public class EnchantmentService {
         this.random = random;
     }
 
-    public ItemStack applyEnchants(ItemStack stack, EnchantmentConfig config, int nights) {
+    public ItemStack applyEnchants(ItemStack stack, EnchantmentConfig config, EquipmentSlot slot, int nights) {
         if (stack == null) return null;
         while (roll(config, nights)) {
             Enchantment enchantment = randomEnchantment(stack);
