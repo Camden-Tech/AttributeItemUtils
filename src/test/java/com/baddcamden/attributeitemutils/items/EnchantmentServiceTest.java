@@ -76,4 +76,32 @@ class EnchantmentServiceTest {
 
         verify(facade, never()).applyEnchant(stack, enchantment, 2);
     }
+
+    @Test
+    void returnsEarlyWhenNoEnchantmentsAreApplicable() {
+        AttributeFacade facade = mock(AttributeFacade.class);
+        Enchantment enchantment = mock(Enchantment.class);
+        ItemStack stack = mock(ItemStack.class);
+        when(enchantment.canEnchantItem(stack)).thenReturn(false);
+
+        EnchantmentPoolConfig poolConfig = new EnchantmentPoolConfig(List.of(enchantment));
+        EnchantmentConfig config = new EnchantmentConfig(1.0, 0.0, 1, 1.0);
+        Random alwaysSuccessful = new Random() {
+            @Override
+            public double nextDouble() {
+                return 0.0d;
+            }
+
+            @Override
+            public int nextInt(int bound) {
+                return 0;
+            }
+        };
+
+        EnchantmentService service = new EnchantmentService(facade, poolConfig, alwaysSuccessful);
+
+        service.applyEnchants(stack, config, EquipmentSlot.HAND, 0);
+
+        verify(facade, never()).applyEnchant(stack, enchantment, 1);
+    }
 }
