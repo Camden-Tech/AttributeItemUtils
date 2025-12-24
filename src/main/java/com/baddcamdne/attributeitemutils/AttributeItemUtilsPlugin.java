@@ -59,6 +59,7 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
     }
 
     public void reloadPluginConfigs() {
+        saveDefaultConfig();
         saveDefaultGearConfig();
         reloadConfig();
         gearConfigLoader.reload();

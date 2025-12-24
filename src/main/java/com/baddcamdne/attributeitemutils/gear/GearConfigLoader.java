@@ -6,6 +6,10 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +31,7 @@ public class GearConfigLoader {
     public void reload() {
         kits.clear();
         gearConfig = YamlConfiguration.loadConfiguration(gearConfigFile);
+        loadDefaults();
         ConfigurationSection section = gearConfig.getConfigurationSection("kits");
         if (section == null) {
             return;
@@ -47,6 +52,19 @@ public class GearConfigLoader {
                 map.put(slot, entries);
             }
             kits.put(key, new KitConfig(key, target, steepness, range, map));
+        }
+    }
+
+    private void loadDefaults() {
+        try (InputStream stream = plugin.getResource("Gear.yml")) {
+            if (stream == null) {
+                return;
+            }
+            YamlConfiguration defaults = YamlConfiguration.loadConfiguration(new InputStreamReader(stream, StandardCharsets.UTF_8));
+            gearConfig.setDefaults(defaults);
+            gearConfig.options().copyDefaults(true);
+        } catch (IOException ex) {
+            plugin.getLogger().warning("Unable to load default Gear.yml: " + ex.getMessage());
         }
     }
 
