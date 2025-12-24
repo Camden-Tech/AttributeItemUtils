@@ -1,14 +1,19 @@
 package com.baddcamdne.attributeitemutils;
 
+import com.baddcamdne.attributeitemutils.config.AttributeBonus;
 import com.baddcamdne.attributeitemutils.config.AttributeConfigSource;
 import com.baddcamdne.attributeitemutils.config.AttributeAffixConfig;
+import com.baddcamdne.attributeitemutils.config.AttributePoolConfig;
 import com.baddcamdne.attributeitemutils.config.DropChanceConfigSource;
 import com.baddcamdne.attributeitemutils.config.EnchantmentConfigSource;
+import com.baddcamdne.attributeitemutils.config.EnchantmentPoolConfig;
 import com.baddcamdne.attributeitemutils.gear.GearConfigLoader;
 import com.baddcamdne.attributeitemutils.gear.KitConfig;
 import com.baddcamdne.attributeitemutils.items.AttributeService;
 import com.baddcamdne.attributeitemutils.items.EnchantmentService;
 import com.baddcamdne.attributeitemutils.items.GearService;
+import com.baddcamdne.attributeitemutils.hooks.EntityChanceHook;
+import com.baddcamdne.attributeitemutils.hooks.EntityChanceHooks;
 import com.baddcamdne.attributeutils.AttributeBaseline;
 import com.baddcamdne.attributeutils.AttributeDefinition;
 import com.baddcamdne.attributeutils.AttributeFacade;
@@ -26,22 +31,26 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
     private GearService gearService;
     private AttributeFacade attributeFacade;
     private GearConfigLoader gearConfigLoader;
+    private AttributePoolConfig attributePoolConfig;
+    private EnchantmentPoolConfig enchantmentPoolConfig;
+    private final EntityChanceHooks chanceHooks = new EntityChanceHooks();
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
         saveDefaultGearConfig();
+        saveDefaultAttributePoolConfig();
+        saveDefaultEnchantmentPoolConfig();
 
         attributeFacade = AttributeUtilitiesPlugin.getInstance().getAttributeFacade();
-        registerAttributeUtilities();
-
         gearConfigLoader = new GearConfigLoader(this);
         reloadPluginConfigs();
         getLogger().info("AttributeItemUtils enabled");
     }
 
-    private void registerAttributeUtilities() {
-        for (Attribute attribute : AttributeService.CANDIDATE_ATTRIBUTES) {
+    private void registerAttributeUtilities(AttributePoolConfig poolConfig) {
+        for (AttributeBonus attributeBonus : poolConfig.attributes()) {
+            Attribute attribute = attributeBonus.attribute();
             AttributeDefinition definition = new AttributeDefinition(attribute, AttributeModifier.Operation.MULTIPLY_SCALAR_1, 1.0);
             attributeFacade.registerDefinition(definition);
             attributeFacade.registerBaseline(new AttributeBaseline(attribute, 0.0));
@@ -61,15 +70,20 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
     public void reloadPluginConfigs() {
         saveDefaultConfig();
         saveDefaultGearConfig();
+        saveDefaultAttributePoolConfig();
+        saveDefaultEnchantmentPoolConfig();
         reloadConfig();
         gearConfigLoader.reload();
 
-        AttributeConfigSource attributeConfigSource = AttributeConfigSource.fromConfig(getConfig(), getLogger());
-        EnchantmentConfigSource enchantmentConfigSource = EnchantmentConfigSource.fromConfig(getConfig(), getLogger());
-        DropChanceConfigSource dropChanceConfigSource = DropChanceConfigSource.fromConfig(getConfig(), getLogger());
+        attributePoolConfig = AttributePoolConfig.load(this, getLogger());
+        enchantmentPoolConfig = EnchantmentPoolConfig.load(this, getLogger());
+        AttributeConfigSource attributeConfigSource = AttributeConfigSource.fromConfig(getConfig());
+        EnchantmentConfigSource enchantmentConfigSource = EnchantmentConfigSource.fromConfig(getConfig());
+        DropChanceConfigSource dropChanceConfigSource = DropChanceConfigSource.fromConfig(getConfig());
         AttributeAffixConfig attributeAffixConfig = AttributeAffixConfig.load(this);
 
-        gearService = new GearService(gearConfigLoader, new AttributeService(attributeFacade, attributeAffixConfig), new EnchantmentService(attributeFacade), attributeConfigSource, enchantmentConfigSource, dropChanceConfigSource);
+        registerAttributeUtilities(attributePoolConfig);
+        gearService = new GearService(gearConfigLoader, new AttributeService(attributeFacade, attributeAffixConfig, attributePoolConfig), new EnchantmentService(attributeFacade, enchantmentPoolConfig), attributeConfigSource, enchantmentConfigSource, dropChanceConfigSource, chanceHooks);
     }
 
     private void saveDefaultGearConfig() {
@@ -80,5 +94,33 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
             }
             saveResource("Gear.yml", false);
         }
+    }
+
+    private void saveDefaultAttributePoolConfig() {
+        File poolFile = new File(getDataFolder(), "AttributePool.yml");
+        if (!poolFile.exists()) {
+            if (!getDataFolder().exists()) {
+                getDataFolder().mkdirs();
+            }
+            saveResource("AttributePool.yml", false);
+        }
+    }
+
+    private void saveDefaultEnchantmentPoolConfig() {
+        File poolFile = new File(getDataFolder(), "EnchantmentPool.yml");
+        if (!poolFile.exists()) {
+            if (!getDataFolder().exists()) {
+                getDataFolder().mkdirs();
+            }
+            saveResource("EnchantmentPool.yml", false);
+        }
+    }
+
+    public EntityChanceHooks getChanceHooks() {
+        return chanceHooks;
+    }
+
+    public void registerChanceHook(EntityChanceHook hook) {
+        chanceHooks.register(hook);
     }
 }

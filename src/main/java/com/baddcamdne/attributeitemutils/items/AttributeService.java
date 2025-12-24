@@ -1,7 +1,9 @@
 package com.baddcamdne.attributeitemutils.items;
 
+import com.baddcamdne.attributeitemutils.config.AttributeBonus;
 import com.baddcamdne.attributeitemutils.config.AttributeConfig;
 import com.baddcamdne.attributeitemutils.config.AttributeAffixConfig;
+import com.baddcamdne.attributeitemutils.config.AttributePoolConfig;
 import com.baddcamdne.attributeutils.AttributeFacade;
 import com.google.common.collect.Multimap;
 import org.bukkit.attribute.Attribute;
@@ -12,7 +14,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
@@ -20,39 +21,17 @@ import java.util.Set;
 
 public class AttributeService {
     private final AttributeAffixConfig affixConfig;
-    public static final List<Attribute> CANDIDATE_ATTRIBUTES = List.of(
-            Attribute.MAX_HEALTH,
-            Attribute.GENERIC_ARMOR,
-            Attribute.GENERIC_ARMOR_TOUGHNESS,
-            Attribute.GENERIC_ATTACK_DAMAGE,
-            Attribute.GENERIC_ATTACK_SPEED,
-            Attribute.GENERIC_ATTACK_KNOCKBACK,
-            Attribute.GENERIC_MOVEMENT_SPEED,
-            Attribute.GENERIC_FLYING_SPEED,
-            Attribute.GENERIC_KNOCKBACK_RESISTANCE,
-            Attribute.GENERIC_LUCK,
-            Attribute.GENERIC_FOLLOW_RANGE,
-            Attribute.GENERIC_BLOCK_INTERACTION_RANGE,
-            Attribute.GENERIC_ENTITY_INTERACTION_RANGE,
-            Attribute.GENERIC_MINING_EFFICIENCY,
-            Attribute.GENERIC_MAX_ABSORPTION,
-            Attribute.GENERIC_STEP_HEIGHT,
-            Attribute.GENERIC_SAFE_FALL_DISTANCE,
-            Attribute.GENERIC_SCALE,
-            Attribute.GENERIC_JUMP_STRENGTH,
-            Attribute.GENERIC_GRAVITY,
-            Attribute.GENERIC_FALL_DAMAGE_MULTIPLIER
-    );
-
+    private final AttributePoolConfig attributePool;
     private final AttributeFacade attributeFacade;
     private final Random random;
-    public AttributeService(AttributeFacade attributeFacade, AttributeAffixConfig affixConfig) {
-        this(attributeFacade, affixConfig, new Random());
+    public AttributeService(AttributeFacade attributeFacade, AttributeAffixConfig affixConfig, AttributePoolConfig attributePool) {
+        this(attributeFacade, affixConfig, attributePool, new Random());
     }
 
-    AttributeService(AttributeFacade attributeFacade, AttributeAffixConfig affixConfig, Random random) {
+    AttributeService(AttributeFacade attributeFacade, AttributeAffixConfig affixConfig, AttributePoolConfig attributePool, Random random) {
         this.attributeFacade = attributeFacade;
         this.affixConfig = affixConfig;
+        this.attributePool = attributePool;
         this.random = random;
     }
 
@@ -99,8 +78,8 @@ public class AttributeService {
         meta.setDisplayName(prefix.orElse("") + display + suffix.orElse(""));
     }
 
-    private Attribute randomAttribute() {
-        return CANDIDATE_ATTRIBUTES.get(random.nextInt(CANDIDATE_ATTRIBUTES.size()));
+    private Optional<AttributeBonus> randomAttribute() {
+        return attributePool.random(random);
     }
 
     Map<Attribute, Double> collectAttributeBonuses(AttributeConfig config, int nights) {
@@ -110,8 +89,13 @@ public class AttributeService {
         }
 
         do {
-            Attribute attribute = randomAttribute();
-            bonuses.merge(attribute, config.bonusPercent(), Double::sum);
+            Optional<AttributeBonus> attributeBonus = randomAttribute();
+            if (attributeBonus.isEmpty()) {
+                break;
+            }
+            AttributeBonus bonus = attributeBonus.get();
+            double amount = bonus.bonusPercent() == 0.0 ? config.bonusPercent() : bonus.bonusPercent();
+            bonuses.merge(bonus.attribute(), amount, Double::sum);
         } while (roll(config, nights));
         return bonuses;
     }

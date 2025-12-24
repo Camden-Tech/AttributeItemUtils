@@ -1,7 +1,9 @@
 package com.baddcamdne.attributeitemutils.items;
 
 import com.baddcamdne.attributeitemutils.config.AttributeAffixConfig;
+import com.baddcamdne.attributeitemutils.config.AttributeBonus;
 import com.baddcamdne.attributeitemutils.config.AttributeConfig;
+import com.baddcamdne.attributeitemutils.config.AttributePoolConfig;
 import com.baddcamdne.attributeutils.AttributeFacade;
 import com.baddcamdne.attributeutils.AttributeDefinition;
 import org.bukkit.attribute.Attribute;
@@ -26,7 +28,7 @@ class AttributeServiceTest {
     void collectAttributeBonusesAggregatesDuplicates() {
         AttributeConfig attributeConfig = new AttributeConfig(1.0, 0.0, 0.05, 1.0);
         StubRandom random = new StubRandom(new int[]{0, 0}, new double[]{0.0, 1.0});
-        AttributeService service = new AttributeService(new AttributeFacade(), emptyAffixes(), random);
+        AttributeService service = new AttributeService(new AttributeFacade(), emptyAffixes(), singleAttributePool(), random);
 
         Map<Attribute, Double> bonuses = service.collectAttributeBonuses(attributeConfig, 0);
 
@@ -38,7 +40,7 @@ class AttributeServiceTest {
     void collectAttributeBonusesReturnsEmptyWhenFirstRollFails() {
         AttributeConfig attributeConfig = new AttributeConfig(0.0, 0.0, 0.05, 1.0);
         StubRandom random = new StubRandom(new int[]{}, new double[]{1.0});
-        AttributeService service = new AttributeService(new AttributeFacade(), emptyAffixes(), random);
+        AttributeService service = new AttributeService(new AttributeFacade(), emptyAffixes(), singleAttributePool(), random);
 
         Map<Attribute, Double> bonuses = service.collectAttributeBonuses(attributeConfig, 0);
 
@@ -48,7 +50,7 @@ class AttributeServiceTest {
     @Test
     void resolveAmountHandlesSpecialCases() {
         AttributeConfig attributeConfig = new AttributeConfig(1.0, 0.0, 0.05, 1.0);
-        AttributeService service = new AttributeService(new AttributeFacade(), emptyAffixes(), new StubRandom(new int[]{0}, new double[]{1.0}));
+        AttributeService service = new AttributeService(new AttributeFacade(), emptyAffixes(), singleAttributePool(), new StubRandom(new int[]{0}, new double[]{1.0}));
 
         double scaleAmount = service.resolveAmount(Attribute.GENERIC_SCALE, 0.05);
         assertEquals(Math.cbrt(1.05) - 1, scaleAmount, 1.0e-9);
@@ -61,38 +63,20 @@ class AttributeServiceTest {
     }
 
     @Test
-    void candidatesExposeAllConfiguredAttributes() throws Exception {
+    void poolExposesAllConfiguredAttributes() {
         List<Attribute> expected = List.of(
-                Attribute.GENERIC_MAX_HEALTH,
-                Attribute.GENERIC_ARMOR,
-                Attribute.GENERIC_ARMOR_TOUGHNESS,
                 Attribute.GENERIC_ATTACK_DAMAGE,
-                Attribute.GENERIC_ATTACK_SPEED,
-                Attribute.GENERIC_ATTACK_KNOCKBACK,
-                Attribute.GENERIC_MOVEMENT_SPEED,
-                Attribute.GENERIC_FLYING_SPEED,
-                Attribute.GENERIC_KNOCKBACK_RESISTANCE,
-                Attribute.GENERIC_LUCK,
-                Attribute.GENERIC_FOLLOW_RANGE,
-                Attribute.GENERIC_BLOCK_INTERACTION_RANGE,
-                Attribute.GENERIC_ENTITY_INTERACTION_RANGE,
-                Attribute.GENERIC_MINING_EFFICIENCY,
-                Attribute.GENERIC_MAX_ABSORPTION,
-                Attribute.GENERIC_STEP_HEIGHT,
-                Attribute.GENERIC_SAFE_FALL_DISTANCE,
-                Attribute.GENERIC_SCALE,
-                Attribute.GENERIC_JUMP_STRENGTH,
-                Attribute.GENERIC_GRAVITY,
-                Attribute.GENERIC_FALL_DAMAGE_MULTIPLIER
+                Attribute.GENERIC_ATTACK_SPEED
         );
 
-        var candidatesField = AttributeService.class.getDeclaredField("CANDIDATE_ATTRIBUTES");
-        assertTrue(candidatesField.trySetAccessible());
+        AttributePoolConfig pool = new AttributePoolConfig(List.of(
+                new AttributeBonus(Attribute.GENERIC_ATTACK_DAMAGE, 0.05),
+                new AttributeBonus(Attribute.GENERIC_ATTACK_SPEED, 0.10)
+        ));
 
-        @SuppressWarnings("unchecked")
-        List<Attribute> candidates = (List<Attribute>) candidatesField.get(null);
+        List<Attribute> configured = pool.attributes().stream().map(AttributeBonus::attribute).toList();
 
-        assertIterableEquals(expected, candidates);
+        assertIterableEquals(expected, configured);
     }
 
     @Test
@@ -102,7 +86,11 @@ class AttributeServiceTest {
                 Map.of(Set.of(Attribute.GENERIC_ATTACK_DAMAGE, Attribute.GENERIC_ATTACK_SPEED), "Relentless "),
                 Map.of(Set.of(Attribute.GENERIC_ATTACK_DAMAGE, Attribute.GENERIC_ATTACK_SPEED), " of Fury")
         );
-        AttributeService service = new AttributeService(facade, affixConfig, new StubRandom(new int[]{3, 4}, new double[]{0.0, 0.0, 1.0}));
+        AttributePoolConfig pool = new AttributePoolConfig(List.of(
+                new AttributeBonus(Attribute.GENERIC_ATTACK_DAMAGE, 0.05),
+                new AttributeBonus(Attribute.GENERIC_ATTACK_SPEED, 0.05)
+        ));
+        AttributeService service = new AttributeService(facade, affixConfig, pool, new StubRandom(new int[]{0, 1}, new double[]{0.0, 0.0, 1.0}));
 
         AttributeConfig config = new AttributeConfig(1.0, 0.0, 0.05, 1.0);
         ItemStack stack = new ItemStack(Material.DIAMOND_SWORD);
@@ -119,7 +107,8 @@ class AttributeServiceTest {
                 Map.of(Set.of(Attribute.GENERIC_ATTACK_DAMAGE, Attribute.GENERIC_ATTACK_SPEED), "Relentless "),
                 Map.of(Set.of(Attribute.GENERIC_ATTACK_DAMAGE, Attribute.GENERIC_ATTACK_SPEED), " of Fury")
         );
-        AttributeService service = new AttributeService(facade, affixConfig, new StubRandom(new int[]{3}, new double[]{0.0, 1.0}));
+        AttributePoolConfig pool = new AttributePoolConfig(List.of(new AttributeBonus(Attribute.GENERIC_ATTACK_DAMAGE, 0.05)));
+        AttributeService service = new AttributeService(facade, affixConfig, pool, new StubRandom(new int[]{0}, new double[]{0.0, 1.0}));
 
         AttributeConfig config = new AttributeConfig(1.0, 0.0, 0.05, 1.0);
         ItemStack stack = new ItemStack(Material.DIAMOND_SWORD);
@@ -131,6 +120,10 @@ class AttributeServiceTest {
 
     private AttributeAffixConfig emptyAffixes() {
         return new AttributeAffixConfig(Map.of(), Map.of());
+    }
+
+    private AttributePoolConfig singleAttributePool() {
+        return new AttributePoolConfig(List.of(new AttributeBonus(Attribute.GENERIC_MAX_HEALTH, 0.05)));
     }
 
     private AttributeFacade facadeWithDefinitions(Attribute... attributes) {

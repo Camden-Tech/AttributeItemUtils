@@ -9,6 +9,8 @@ import com.baddcamdne.attributeitemutils.gear.GearConfigLoader;
 import com.baddcamdne.attributeitemutils.gear.GearSlot;
 import com.baddcamdne.attributeitemutils.gear.KitConfig;
 import com.baddcamdne.attributeitemutils.gear.WeightedItem;
+import com.baddcamdne.attributeitemutils.hooks.EntityChanceHook;
+import com.baddcamdne.attributeitemutils.hooks.EntityChanceHooks;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.EntityType;
@@ -35,7 +37,7 @@ class GearServiceDropChanceTest {
     @Test
     void setsDropChancesForEquippedItems() {
         DropChanceConfigSource dropChanceConfigSource = new DropChanceConfigSource(0.015);
-        GearService service = createService(dropChanceConfigSource);
+        GearService service = createService(dropChanceConfigSource, new EntityChanceHooks());
         LivingEntity entity = mockEntity(EntityType.SKELETON);
         EntityEquipment equipment = mock(EntityEquipment.class);
         when(entity.getEquipment()).thenReturn(equipment);
@@ -51,8 +53,15 @@ class GearServiceDropChanceTest {
 
     @Test
     void appliesEntitySpecificDropChanceOverride() {
-        DropChanceConfigSource dropChanceConfigSource = new DropChanceConfigSource(0.015, Map.of(EntityType.ZOMBIE, 0.03));
-        GearService service = createService(dropChanceConfigSource);
+        DropChanceConfigSource dropChanceConfigSource = new DropChanceConfigSource(0.015);
+        EntityChanceHooks hooks = new EntityChanceHooks();
+        hooks.register(new EntityChanceHook() {
+            @Override
+            public java.util.Optional<Double> dropChanceFor(EntityType type) {
+                return type == EntityType.ZOMBIE ? java.util.Optional.of(0.03) : java.util.Optional.empty();
+            }
+        });
+        GearService service = createService(dropChanceConfigSource, hooks);
         LivingEntity entity = mockEntity(EntityType.ZOMBIE);
         EntityEquipment equipment = mock(EntityEquipment.class);
         when(entity.getEquipment()).thenReturn(equipment);
@@ -76,7 +85,7 @@ class GearServiceDropChanceTest {
         when(enchantmentService.applyEnchants(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyInt()))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        GearService service = new GearService(mock(GearConfigLoader.class), attributeService, enchantmentService, ATTRIBUTE_CONFIG, ENCHANT_CONFIG, dropChanceConfigSource);
+        GearService service = new GearService(mock(GearConfigLoader.class), attributeService, enchantmentService, ATTRIBUTE_CONFIG, ENCHANT_CONFIG, dropChanceConfigSource, new EntityChanceHooks());
         LivingEntity entity = mockEntity(EntityType.SKELETON);
         EntityEquipment equipment = mock(EntityEquipment.class);
         when(entity.getEquipment()).thenReturn(equipment);
@@ -85,15 +94,15 @@ class GearServiceDropChanceTest {
 
         service.applyKit(entity, kit);
 
-        verify(attributeService).applyAttributes(org.mockito.ArgumentMatchers.any(), eq(ATTRIBUTE_CONFIG.configFor(EntityType.SKELETON)), eq(org.bukkit.inventory.EquipmentSlot.HEAD), org.mockito.ArgumentMatchers.anyInt());
-        verify(attributeService).applyAttributes(org.mockito.ArgumentMatchers.any(), eq(ATTRIBUTE_CONFIG.configFor(EntityType.SKELETON)), eq(org.bukkit.inventory.EquipmentSlot.HAND), org.mockito.ArgumentMatchers.anyInt());
-        verify(attributeService).applyAttributes(org.mockito.ArgumentMatchers.any(), eq(ATTRIBUTE_CONFIG.configFor(EntityType.SKELETON)), eq(org.bukkit.inventory.EquipmentSlot.OFF_HAND), org.mockito.ArgumentMatchers.anyInt());
-        verify(enchantmentService).applyEnchants(org.mockito.ArgumentMatchers.any(), eq(ENCHANT_CONFIG.configFor(EntityType.SKELETON)), eq(org.bukkit.inventory.EquipmentSlot.HEAD), org.mockito.ArgumentMatchers.anyInt());
-        verify(enchantmentService).applyEnchants(org.mockito.ArgumentMatchers.any(), eq(ENCHANT_CONFIG.configFor(EntityType.SKELETON)), eq(org.bukkit.inventory.EquipmentSlot.HAND), org.mockito.ArgumentMatchers.anyInt());
-        verify(enchantmentService).applyEnchants(org.mockito.ArgumentMatchers.any(), eq(ENCHANT_CONFIG.configFor(EntityType.SKELETON)), eq(org.bukkit.inventory.EquipmentSlot.OFF_HAND), org.mockito.ArgumentMatchers.anyInt());
+        verify(attributeService).applyAttributes(org.mockito.ArgumentMatchers.any(), eq(ATTRIBUTE_CONFIG.defaultConfig()), eq(org.bukkit.inventory.EquipmentSlot.HEAD), org.mockito.ArgumentMatchers.anyInt());
+        verify(attributeService).applyAttributes(org.mockito.ArgumentMatchers.any(), eq(ATTRIBUTE_CONFIG.defaultConfig()), eq(org.bukkit.inventory.EquipmentSlot.HAND), org.mockito.ArgumentMatchers.anyInt());
+        verify(attributeService).applyAttributes(org.mockito.ArgumentMatchers.any(), eq(ATTRIBUTE_CONFIG.defaultConfig()), eq(org.bukkit.inventory.EquipmentSlot.OFF_HAND), org.mockito.ArgumentMatchers.anyInt());
+        verify(enchantmentService).applyEnchants(org.mockito.ArgumentMatchers.any(), eq(ENCHANT_CONFIG.defaultConfig()), eq(org.bukkit.inventory.EquipmentSlot.HEAD), org.mockito.ArgumentMatchers.anyInt());
+        verify(enchantmentService).applyEnchants(org.mockito.ArgumentMatchers.any(), eq(ENCHANT_CONFIG.defaultConfig()), eq(org.bukkit.inventory.EquipmentSlot.HAND), org.mockito.ArgumentMatchers.anyInt());
+        verify(enchantmentService).applyEnchants(org.mockito.ArgumentMatchers.any(), eq(ENCHANT_CONFIG.defaultConfig()), eq(org.bukkit.inventory.EquipmentSlot.OFF_HAND), org.mockito.ArgumentMatchers.anyInt());
     }
 
-    private GearService createService(DropChanceConfigSource dropChanceConfigSource) {
+    private GearService createService(DropChanceConfigSource dropChanceConfigSource, EntityChanceHooks hooks) {
         AttributeService attributeService = mock(AttributeService.class);
         when(attributeService.applyAttributes(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyInt()))
                 .thenAnswer(invocation -> invocation.getArgument(0));
@@ -102,7 +111,7 @@ class GearServiceDropChanceTest {
         when(enchantmentService.applyEnchants(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyInt()))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        return new GearService(mock(GearConfigLoader.class), attributeService, enchantmentService, ATTRIBUTE_CONFIG, ENCHANT_CONFIG, dropChanceConfigSource);
+        return new GearService(mock(GearConfigLoader.class), attributeService, enchantmentService, ATTRIBUTE_CONFIG, ENCHANT_CONFIG, dropChanceConfigSource, hooks);
     }
 
     private LivingEntity mockEntity(EntityType type) {
