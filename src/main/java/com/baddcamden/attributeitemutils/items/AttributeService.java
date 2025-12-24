@@ -121,6 +121,7 @@ public class AttributeService {
             prefixSelection = affixConfig.matchingPrefixes(appliedAttributes);
             suffix = affixConfig.matchingSuffix(appliedAttributes);
         } catch (Exception ex) {
+            //VAGUE/IMPROVEMENT NEEDED Exceptions are swallowed without logging; clarify expected failures or record the cause.
             fallback = true;
         }
 
@@ -148,7 +149,7 @@ public class AttributeService {
         if (!fallback) {
             suffix.map(AttributeAffix::value).ifPresent(decoratedName::append);
         }
-        meta.setDisplayName(ChatColor.RESET+decoratedName.toString());
+        meta.setDisplayName(ChatColor.RESET + decoratedName.toString());
     }
 
     /**
