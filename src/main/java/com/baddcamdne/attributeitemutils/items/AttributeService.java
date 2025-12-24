@@ -43,6 +43,10 @@ public class AttributeService {
         this.random = random;
     }
 
+    AttributeService(AttributeFacade attributeFacade, AttributeAffixConfig affixConfig, AttributePoolConfig attributePool, Random random, AttributeLoreConfig attributeLoreConfig) {
+        this(attributeFacade, affixConfig, attributePool, attributeLoreConfig, random);
+    }
+
     public ItemStack applyAttributes(ItemStack stack, AttributeConfig config, EquipmentSlot slot, int nights) {
         if (stack == null) return null;
         if (stack.getItemMeta() == null) return stack;
