@@ -148,33 +148,45 @@ public class AttributeLoreConfig {
     }
 
     private List<String> formatLines(Attribute attribute, Collection<AttributeModifier> modifiers) {
-        List<String> lines = new ArrayList<>();
+        Map<String, List<String>> linesByCondition = new LinkedHashMap<>();
         for (AttributeModifier modifier : modifiers) {
-            List<String> formatted = formatLine(attribute, modifier);
-            if (!formatted.isEmpty()) {
-                lines.addAll(formatted);
+            FormattedLine formatted = formatLine(attribute, modifier);
+            if (formatted == null) {
+                continue;
+            }
+            String conditionKey = formatted.condition == null ? "" : formatted.condition;
+            linesByCondition.computeIfAbsent(conditionKey, ignored -> new ArrayList<>())
+                    .add(formatted.valueLine);
+        }
+
+        List<String> lines = new ArrayList<>();
+        for (Map.Entry<String, List<String>> entry : linesByCondition.entrySet()) {
+            lines.addAll(entry.getValue());
+            String condition = entry.getKey();
+            if (!condition.isBlank()) {
+                lines.add(condition);
             }
         }
         return lines;
     }
 
-    private List<String> formatLine(Attribute attribute, AttributeModifier modifier) {
+    private FormattedLine formatLine(Attribute attribute, AttributeModifier modifier) {
         double percentValue = modifier.getAmount() * 100.0;
         String slotName = slotName(modifier.getSlot());
         AttributeLore lore = attributes.get(attribute);
         String color = lore == null ? ChatColor.WHITE.toString() : lore.color();
         String name = lore == null ? attribute.name() : lore.name();
-        List<String> lines = new ArrayList<>();
-        lines.add(valueFormat
+        String valueLine = valueFormat
                 .replace("{amount}", PERCENT_FORMAT.format(percentValue))
                 .replace("{name}", name)
-                .replace("{color}", color));
+                .replace("{color}", color);
 
         String condition = formatCondition(modifier.getSlot(), slotName);
         if (!condition.isBlank()) {
-            lines.add(condition.replace("{name}", name).replace("{color}", color));
+            condition = condition.replace("{name}", name).replace("{color}", color);
         }
-        return lines;
+
+        return new FormattedLine(valueLine, condition.isBlank() ? null : condition);
     }
 
     private String formatHeader(Attribute attribute) {
@@ -220,5 +232,8 @@ public class AttributeLoreConfig {
         public AttributeLore {
             color = translate(color);
         }
+    }
+
+    private record FormattedLine(String valueLine, String condition) {
     }
 }
