@@ -37,10 +37,13 @@ public class EnchantmentService {
      */
     public ItemStack applyEnchants(ItemStack stack, EnchantmentConfig config, EquipmentSlot slot, long nights) {
         if (stack == null) return null;
-        while (roll(config, nights)) {
+        int remainingApplications = Math.max(1, enchantmentPool.enchantments().size());
+        while (remainingApplications-- > 0 && roll(config, nights)) {
             Enchantment enchantment = randomEnchantment(stack);
             if (enchantment == null) break;
-            int level = stack.getEnchantmentLevel(enchantment) + config.levelBonus();
+            int currentLevel = stack.getEnchantmentLevel(enchantment);
+            int level = currentLevel + config.levelBonus();
+            if (level <= currentLevel) break;
             attributeFacade.applyEnchant(stack, enchantment, level);
         }
 
@@ -53,7 +56,8 @@ public class EnchantmentService {
     boolean roll(EnchantmentConfig config, long nights) {
         long clampedNights = NightCalculator.clampNights(nights);
         double chance = Math.min(config.maxChance(), config.baseChance() + (config.nightlyIncrease() * clampedNights));
-        return random.nextDouble() < chance;
+        double effectiveChance = Math.min(chance, Math.nextAfter(1.0d, 0.0d));
+        return random.nextDouble() < effectiveChance;
     }
 
     /**
