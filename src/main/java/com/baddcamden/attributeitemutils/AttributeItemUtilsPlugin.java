@@ -33,21 +33,45 @@ import java.util.Optional;
 
 public class AttributeItemUtilsPlugin extends JavaPlugin {
 
+    /** Responsible for applying configured gear kits to entities. */
     private GearService gearService;
+
+    /** Shared attribute facade provided by AttributeUtilitiesPlugin. */
     private AttributeFacade attributeFacade;
+
+    /** Reloadable loader for the Gear.yml configuration. */
     private GearConfigLoader gearConfigLoader;
+
+    /** In-memory representation of AttributePool.yml. */
     private AttributePoolConfig attributePoolConfig;
+
+    /** In-memory representation of EnchantmentPool.yml. */
     private EnchantmentPoolConfig enchantmentPoolConfig;
+
+    /** Service applying attribute bonuses and lore to items. */
     private AttributeService attributeService;
+
+    /** Service applying enchantment selections to items. */
     private EnchantmentService enchantmentService;
+
+    /** Lore configuration applied when attributes are added to items. */
     private AttributeLoreConfig attributeLoreConfig;
+
+    /** Reader for attribute configuration blocks in config.yml. */
     private AttributeConfigSource attributeConfigSource;
+
+    /** Reader for enchantment configuration blocks in config.yml. */
     private EnchantmentConfigSource enchantmentConfigSource;
+
+    /** Reader for drop chance configuration blocks in config.yml. */
     private DropChanceConfigSource dropChanceConfigSource;
+
+    /** Registry for external hooks that can influence drop chances. */
     private final EntityChanceHooks chanceHooks = new EntityChanceHooks();
 
     @Override
     public void onEnable() {
+        // Bootstrap configuration and dependent services before exposing commands.
         saveDefaultConfig();
         saveDefaultGearConfig();
         saveDefaultAttributePoolConfig();
@@ -61,6 +85,7 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
     }
 
     private void registerAttributeUtilities(AttributePoolConfig poolConfig) {
+        //VAGUE/IMPROVEMENT NEEDED Re-registers definitions on every reload; unclear whether AttributeFacade deduplicates.
         for (AttributeBonus attributeBonus : poolConfig.attributes()) {
             Attribute attribute = attributeBonus.attribute();
             AttributeDefinition definition = new AttributeDefinition(attribute, AttributeModifier.Operation.MULTIPLY_SCALAR_1, 1.0);
@@ -70,6 +95,7 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
     }
 
     public boolean applyKit(LivingEntity entity, String kitName) {
+        // Attempt to apply a kit and log if it could not be found for the given name.
         Optional<KitConfig> kit = gearService.getKit(kitName);
         if (kit.isEmpty()) {
             getLogger().warning("Unknown kit: " + kitName);
@@ -80,6 +106,7 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
     }
 
     public void reloadPluginConfigs() {
+        // Reload every known configuration file and rebuild dependent services.
         saveDefaultConfig();
         saveDefaultGearConfig();
         saveDefaultAttributePoolConfig();
