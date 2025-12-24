@@ -1,91 +1,75 @@
+default-prefix: "Unique "
+
 prefixes:
-  - attributes: [MAX_HEALTH]
-    value: "Bulky "
-  - attributes: [ARMOR]
-    value: "Hardened "
-  - attributes: [ARMOR_TOUGHNESS]
-    value: "Tough "
+  - attributes: [ATTACK_DAMAGE, ATTACK_SPEED]
+    value: "Relentless "
   - attributes: [ATTACK_DAMAGE]
     value: "Strengthening "
   - attributes: [ATTACK_SPEED]
     value: "Speedster "
-  - attributes: [ATTACK_KNOCKBACK]
-    value: "Forceful "
   - attributes: [MOVEMENT_SPEED]
     value: "Fast "
-  - attributes: [FLYING_SPEED]
-    value: "Soaring "
-  - attributes: [KNOCKBACK_RESISTANCE]
-    value: "Immovable "
+  - attributes: [MOVEMENT_SPEED]
+    value: "Speedster "
+  - attributes: [BLOCK_BREAK_SPEED]
+    value: "Speedster "
+  - attributes: [SNEAKING_SPEED]
+    value: "Stealthy "
+  - attributes: [SNEAKING_SPEED]
+    value: "Speedster "
+  - attributes: [SPRINT_SPEED]
+    value: "Speedster "
+  - attributes: [SWIM_SPEED]
+    value: "Aerodynamic "
+  - attributes: [SWIM_SPEED]
+    value: "Speedster "
+  - attributes: [ARMOR]
+    value: "Hardened "
+  - attributes: [ARMOR_TOUGHNESS]
+    value: "Tough "
   - attributes: [LUCK]
     value: "Lucky "
-  - attributes: [FOLLOW_RANGE]
-    value: "Watchful "
-  - attributes: [BLOCK_INTERACTION_RANGE]
-    value: "Long-Armed "
-  - attributes: [ENTITY_INTERACTION_RANGE]
-    value: "Stretching "
-  - attributes: [MINING_EFFICIENCY]
-    value: "Industrious "
-  - attributes: [MAX_ABSORPTION]
-    value: "Absorbing "
-  - attributes: [STEP_HEIGHT]
-    value: "Stilted "
-  - attributes: [SAFE_FALL_DISTANCE]
-    value: "Springy "
+  - attributes: [KNOCKBACK_RESISTANCE]
+    value: "Immovable "
   - attributes: [SCALE]
-    value: "Giant "
+    value: "Large "
+  - attributes: [SAFE_FALL_DISTANCE]
+    value: "Padded "
   - attributes: [JUMP_STRENGTH]
-    value: "Bounding "
-  - attributes: [GRAVITY]
-    value: "Weightless "
-  - attributes: [FALL_DAMAGE_MULTIPLIER]
-    value: "Featherweight "
-  - attributes: [ATTACK_DAMAGE, ATTACK_SPEED]
-    value: "Relentless "
+    value: "Athletic "
+  - attributes: [DAMAGE_REDUCTION]
+    value: "Protecting "
 
 suffixes:
+  - attributes: [SCALE]
+    value: " of Obesity"
+  - attributes: [GRAVITY]
+    value: " of the Sky Diver"
+  - attributes: [GRAVITY]
+    value: " of Obesity"
+  - attributes: [KNOCKBACK_RESISTANCE]
+    value: " of Obesity"
   - attributes: [MAX_HEALTH]
     value: " of the Tank"
-  - attributes: [ARMOR]
-    value: " of the Bulwark"
-  - attributes: [ARMOR_TOUGHNESS]
-    value: " of Fortitude"
+  - attributes: [FOLLOW_RANGE]
+    value: " of the Lookout"
   - attributes: [ATTACK_DAMAGE]
     value: " of Power"
   - attributes: [ATTACK_KNOCKBACK]
     value: " of the Boxer"
   - attributes: [ATTACK_SPEED]
     value: " of Dexterity"
-  - attributes: [MOVEMENT_SPEED]
+  - attributes: [SPRINT_SPEED]
     value: " of the Runner"
   - attributes: [FLYING_SPEED]
-    value: " of the Skystrider"
-  - attributes: [KNOCKBACK_RESISTANCE]
-    value: " of Obesity"
-  - attributes: [LUCK]
-    value: " of Fortune"
-  - attributes: [FOLLOW_RANGE]
-    value: " of the Lookout"
+    value: " of the Bird"
   - attributes: [BLOCK_INTERACTION_RANGE]
-    value: " of the Reacher"
+    value: " of Extension"
   - attributes: [ENTITY_INTERACTION_RANGE]
-    value: " of the Longarm"
+    value: " of Reach"
   - attributes: [MINING_EFFICIENCY]
     value: " of the Miner"
-  - attributes: [MAX_ABSORPTION]
-    value: " of the Sponge"
   - attributes: [STEP_HEIGHT]
     value: " of the Climber"
-  - attributes: [SAFE_FALL_DISTANCE]
-    value: " of the Acrobat"
-  - attributes: [SCALE]
-    value: " of the Giant"
-  - attributes: [JUMP_STRENGTH]
-    value: " of the Hopper"
-  - attributes: [GRAVITY]
-    value: " of the Moonwalker"
   - attributes: [FALL_DAMAGE_MULTIPLIER]
-    value: " of Soft Landings"
-  - attributes: [ATTACK_DAMAGE, ATTACK_SPEED]
-    value: " of Fury"
+    value: " of the Daredevil"

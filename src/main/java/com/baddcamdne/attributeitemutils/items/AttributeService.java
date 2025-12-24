@@ -73,19 +73,17 @@ public class AttributeService {
             return;
         }
 
-        boolean overflow = false;
+        boolean fallback = false;
         Optional<AttributeAffix> suffix = Optional.empty();
-        PrefixSelection prefixSelection;
+        PrefixSelection prefixSelection = new PrefixSelection(List.of(), false);
         try {
             prefixSelection = affixConfig.matchingPrefixes(appliedAttributes);
             suffix = affixConfig.matchingSuffix(appliedAttributes);
-            overflow = prefixSelection.overflowed();
         } catch (Exception ex) {
-            overflow = true;
-            prefixSelection = new PrefixSelection(List.of(), true);
+            fallback = true;
         }
 
-        if (!overflow && prefixSelection.prefixes().isEmpty() && suffix.isEmpty()) {
+        if (!fallback && prefixSelection.prefixes().isEmpty() && suffix.isEmpty()) {
             return;
         }
 
@@ -95,15 +93,17 @@ public class AttributeService {
         }
 
         StringBuilder decoratedName = new StringBuilder();
-        if (overflow) {
-            decoratedName.append("Unique ");
+        if (fallback) {
+            decoratedName.append(affixConfig.defaultPrefix());
         } else {
             prefixSelection.prefixes().stream()
                     .map(AttributeAffix::value)
                     .forEach(decoratedName::append);
         }
         decoratedName.append(display);
-        suffix.map(AttributeAffix::value).ifPresent(decoratedName::append);
+        if (!fallback) {
+            suffix.map(AttributeAffix::value).ifPresent(decoratedName::append);
+        }
         meta.setDisplayName(decoratedName.toString());
     }
 

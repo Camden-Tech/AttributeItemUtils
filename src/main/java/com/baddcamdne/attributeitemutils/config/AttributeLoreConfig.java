@@ -28,25 +28,28 @@ public class AttributeLoreConfig {
 
     private final Map<Attribute, AttributeLore> attributes;
     private final String headerFormat;
-    private final String anySlotFormat;
-    private final String mainHandFormat;
-    private final String offHandFormat;
-    private final String otherSlotFormat;
+    private final String valueFormat;
+    private final String anySlotCondition;
+    private final String mainHandCondition;
+    private final String offHandCondition;
+    private final String otherSlotCondition;
     private final Map<String, String> slotNames;
 
     public AttributeLoreConfig(Map<Attribute, AttributeLore> attributes,
                                String headerFormat,
-                               String anySlotFormat,
-                               String mainHandFormat,
-                               String offHandFormat,
-                               String otherSlotFormat,
+                               String valueFormat,
+                               String anySlotCondition,
+                               String mainHandCondition,
+                               String offHandCondition,
+                               String otherSlotCondition,
                                Map<String, String> slotNames) {
         this.attributes = attributes;
         this.headerFormat = translate(headerFormat);
-        this.anySlotFormat = translate(anySlotFormat);
-        this.mainHandFormat = translate(mainHandFormat);
-        this.offHandFormat = translate(offHandFormat);
-        this.otherSlotFormat = translate(otherSlotFormat);
+        this.valueFormat = translate(valueFormat);
+        this.anySlotCondition = translate(anySlotCondition);
+        this.mainHandCondition = translate(mainHandCondition);
+        this.offHandCondition = translate(offHandCondition);
+        this.otherSlotCondition = translate(otherSlotCondition);
         this.slotNames = slotNames;
     }
 
@@ -58,10 +61,12 @@ public class AttributeLoreConfig {
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
         ConfigurationSection formats = config.getConfigurationSection("formats");
         String headerFormat = formats == null ? "&6{name}" : formats.getString("header", "&6{name}");
-        String anySlotFormat = formats == null ? "&7+{amount}% {color}{name}" : formats.getString("any-slot", "&7+{amount}% {color}{name}");
-        String mainHandFormat = formats == null ? "&7+{amount}% {color}{name} &8(Main Hand)" : formats.getString("main-hand", "&7+{amount}% {color}{name} &8(Main Hand)");
-        String offHandFormat = formats == null ? "&7+{amount}% {color}{name} &8(Off Hand)" : formats.getString("off-hand", "&7+{amount}% {color}{name} &8(Off Hand)");
-        String otherSlotFormat = formats == null ? "&7+{amount}% {color}{name} &8({slot})" : formats.getString("other-slot", "&7+{amount}% {color}{name} &8({slot})");
+        String valueFormat = formats == null ? "&7+{amount}% {color}{name}" : formats.getString("value", "&7+{amount}% {color}{name}");
+        ConfigurationSection fulfillment = formats == null ? null : formats.getConfigurationSection("fulfillment");
+        String anySlotCondition = fulfillment == null ? "&8Applies in any slot." : fulfillment.getString("any-slot", "&8Applies in any slot.");
+        String mainHandCondition = fulfillment == null ? "&8Only when held in main hand." : fulfillment.getString("main-hand", "&8Only when held in main hand.");
+        String offHandCondition = fulfillment == null ? "&8Only when held in off hand." : fulfillment.getString("off-hand", "&8Only when held in off hand.");
+        String otherSlotCondition = fulfillment == null ? "&8Only when in {slot}." : fulfillment.getString("other-slot", "&8Only when in {slot}.");
         Map<String, String> slotNames = loadSlotNames(formats);
 
         ConfigurationSection attributeSection = config.getConfigurationSection("attributes");
@@ -77,14 +82,14 @@ public class AttributeLoreConfig {
                 attributes.put(attribute, new AttributeLore(name, color));
             }
         }
-        return new AttributeLoreConfig(attributes, headerFormat, anySlotFormat, mainHandFormat, offHandFormat, otherSlotFormat, slotNames);
+        return new AttributeLoreConfig(attributes, headerFormat, valueFormat, anySlotCondition, mainHandCondition, offHandCondition, otherSlotCondition, slotNames);
     }
 
     private static Map<String, String> loadSlotNames(ConfigurationSection formats) {
         Map<String, String> slotNames = new LinkedHashMap<>();
         if (formats == null) {
-            slotNames.put(EquipmentSlot.HAND.name(), "Main Hand");
-            slotNames.put(EquipmentSlot.OFF_HAND.name(), "Off Hand");
+            slotNames.put(EquipmentSlot.HAND.name(), "Main hand");
+            slotNames.put(EquipmentSlot.OFF_HAND.name(), "Off hand");
             return slotNames;
         }
         ConfigurationSection slotNameSection = formats.getConfigurationSection("slot-names");
@@ -97,10 +102,10 @@ public class AttributeLoreConfig {
             }
         }
         if (!slotNames.containsKey(EquipmentSlot.HAND.name())) {
-            slotNames.put(EquipmentSlot.HAND.name(), "Main Hand");
+            slotNames.put(EquipmentSlot.HAND.name(), "Main hand");
         }
         if (!slotNames.containsKey(EquipmentSlot.OFF_HAND.name())) {
-            slotNames.put(EquipmentSlot.OFF_HAND.name(), "Off Hand");
+            slotNames.put(EquipmentSlot.OFF_HAND.name(), "Off hand");
         }
         return slotNames;
     }
@@ -146,26 +151,31 @@ public class AttributeLoreConfig {
     private List<String> formatLines(Attribute attribute, Collection<AttributeModifier> modifiers) {
         List<String> lines = new ArrayList<>();
         for (AttributeModifier modifier : modifiers) {
-            String formatted = formatLine(attribute, modifier);
-            if (formatted != null && !formatted.isBlank()) {
-                lines.add(formatted);
+            List<String> formatted = formatLine(attribute, modifier);
+            if (!formatted.isEmpty()) {
+                lines.addAll(formatted);
             }
         }
         return lines;
     }
 
-    private String formatLine(Attribute attribute, AttributeModifier modifier) {
+    private List<String> formatLine(Attribute attribute, AttributeModifier modifier) {
         double percentValue = modifier.getAmount() * 100.0;
-        String slotFormat = formatForSlot(modifier.getSlot());
         String slotName = slotName(modifier.getSlot());
         AttributeLore lore = attributes.get(attribute);
         String color = lore == null ? ChatColor.WHITE.toString() : lore.color();
         String name = lore == null ? attribute.name() : lore.name();
-        return slotFormat
+        List<String> lines = new ArrayList<>();
+        lines.add(valueFormat
                 .replace("{amount}", PERCENT_FORMAT.format(percentValue))
-                .replace("{slot}", slotName)
                 .replace("{name}", name)
-                .replace("{color}", color);
+                .replace("{color}", color));
+
+        String condition = formatCondition(modifier.getSlot(), slotName);
+        if (!condition.isBlank()) {
+            lines.add(condition.replace("{name}", name).replace("{color}", color));
+        }
+        return lines;
     }
 
     private String formatHeader(Attribute attribute) {
@@ -177,17 +187,17 @@ public class AttributeLoreConfig {
                 .replace("{color}", color);
     }
 
-    private String formatForSlot(EquipmentSlot slot) {
+    private String formatCondition(EquipmentSlot slot, String slotName) {
         if (slot == EquipmentSlot.HAND) {
-            return mainHandFormat;
+            return mainHandCondition;
         }
         if (slot == EquipmentSlot.OFF_HAND) {
-            return offHandFormat;
+            return offHandCondition;
         }
         if (slot == null) {
-            return anySlotFormat;
+            return anySlotCondition;
         }
-        return otherSlotFormat;
+        return otherSlotCondition.replace("{slot}", slotName);
     }
 
     private String slotName(EquipmentSlot slot) {
