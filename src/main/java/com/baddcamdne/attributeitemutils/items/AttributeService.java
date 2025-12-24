@@ -2,7 +2,6 @@ package com.baddcamdne.attributeitemutils.items;
 
 import com.baddcamdne.attributeitemutils.config.AttributeConfig;
 import com.baddcamdne.attributeutils.AttributeFacade;
-import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -54,7 +53,7 @@ public class AttributeService {
         this.random = random;
     }
 
-    public ItemStack applyAttributes(ItemStack stack, AttributeConfig config, int nights) {
+    public ItemStack applyAttributes(ItemStack stack, AttributeConfig config, EquipmentSlot slot, int nights) {
         if (stack == null) return null;
         if (stack.getItemMeta() == null) return stack;
         Map<Attribute, Double> bonuses = collectAttributeBonuses(config, nights);
@@ -62,7 +61,6 @@ public class AttributeService {
             return stack;
         }
 
-        EquipmentSlot slot = determineSlot(stack);
         attributeFacade.refresh(stack, slot);
         bonuses.forEach((attribute, amount) -> attributeFacade.mutate(stack, attribute, amount, slot));
         Attribute decoratedAttribute = bonuses.keySet().iterator().next();
@@ -91,29 +89,6 @@ public class AttributeService {
 
     private Attribute randomAttribute() {
         return CANDIDATE_ATTRIBUTES.get(random.nextInt(CANDIDATE_ATTRIBUTES.size()));
-    }
-
-    EquipmentSlot determineSlot(ItemStack stack) {
-        Material type = stack.getType();
-        String name = type.name();
-
-        if (name.endsWith("_HELMET") || type == Material.TURTLE_HELMET || type == Material.CARVED_PUMPKIN) {
-            return EquipmentSlot.HEAD;
-        }
-        if (name.endsWith("_CHESTPLATE") || type == Material.ELYTRA) {
-            return EquipmentSlot.CHEST;
-        }
-        if (name.endsWith("_LEGGINGS")) {
-            return EquipmentSlot.LEGS;
-        }
-        if (name.endsWith("_BOOTS")) {
-            return EquipmentSlot.FEET;
-        }
-        if (type == Material.SHIELD || type == Material.TOTEM_OF_UNDYING) {
-            return EquipmentSlot.OFF_HAND;
-        }
-
-        return EquipmentSlot.HAND;
     }
 
     Map<Attribute, Double> collectAttributeBonuses(AttributeConfig config, int nights) {
