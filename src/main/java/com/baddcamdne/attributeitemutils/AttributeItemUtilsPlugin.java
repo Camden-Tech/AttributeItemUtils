@@ -1,8 +1,9 @@
 package com.baddcamdne.attributeitemutils;
 
 import com.baddcamdne.attributeitemutils.config.AttributeBonus;
-import com.baddcamdne.attributeitemutils.config.AttributeConfigSource;
 import com.baddcamdne.attributeitemutils.config.AttributeAffixConfig;
+import com.baddcamdne.attributeitemutils.config.AttributeConfigSource;
+import com.baddcamdne.attributeitemutils.config.AttributeLoreConfig;
 import com.baddcamdne.attributeitemutils.config.AttributePoolConfig;
 import com.baddcamdne.attributeitemutils.config.DropChanceConfigSource;
 import com.baddcamdne.attributeitemutils.config.EnchantmentConfigSource;
@@ -39,6 +40,7 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
     private EnchantmentPoolConfig enchantmentPoolConfig;
     private AttributeService attributeService;
     private EnchantmentService enchantmentService;
+    private AttributeLoreConfig attributeLoreConfig;
     private AttributeConfigSource attributeConfigSource;
     private EnchantmentConfigSource enchantmentConfigSource;
     private DropChanceConfigSource dropChanceConfigSource;
@@ -91,9 +93,10 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
         enchantmentConfigSource = EnchantmentConfigSource.fromConfig(getConfig());
         dropChanceConfigSource = DropChanceConfigSource.fromConfig(getConfig());
         AttributeAffixConfig attributeAffixConfig = AttributeAffixConfig.load(this);
+        attributeLoreConfig = AttributeLoreConfig.load(this, getLogger());
 
         registerAttributeUtilities(attributePoolConfig);
-        attributeService = new AttributeService(attributeFacade, attributeAffixConfig, attributePoolConfig);
+        attributeService = new AttributeService(attributeFacade, attributeAffixConfig, attributePoolConfig, attributeLoreConfig);
         enchantmentService = new EnchantmentService(attributeFacade, enchantmentPoolConfig);
         gearService = new GearService(gearConfigLoader, attributeService, enchantmentService, attributeConfigSource, enchantmentConfigSource, dropChanceConfigSource, chanceHooks);
     }
