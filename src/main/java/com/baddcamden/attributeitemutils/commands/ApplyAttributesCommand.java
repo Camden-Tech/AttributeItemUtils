@@ -23,11 +23,17 @@ public class ApplyAttributesCommand implements CommandExecutor, TabCompleter {
     private final AttributeService attributeService;
     private final AttributeItemUtilsPlugin plugin;
 
+    /**
+     * Creates a new attributes command bound to the plugin's attribute service.
+     */
     public ApplyAttributesCommand(AttributeItemUtilsPlugin plugin) {
         this.plugin = plugin;
         this.attributeService = plugin.getAttributeService();
     }
 
+    /**
+     * Parses command arguments and applies attribute bonuses to the targeted equipment slot.
+     */
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!sender.hasPermission("attributeitemutils.test.attributes")) {
@@ -99,6 +105,9 @@ public class ApplyAttributesCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    /**
+     * Retrieves the item currently equipped in the specified slot.
+     */
     private ItemStack getItem(EntityEquipment equipment, EquipmentSlot slot) {
         return switch (slot) {
             case HAND -> equipment.getItemInMainHand();
@@ -111,6 +120,9 @@ public class ApplyAttributesCommand implements CommandExecutor, TabCompleter {
         };
     }
 
+    /**
+     * Updates the provided equipment slot with the modified item stack.
+     */
     private void setItem(EntityEquipment equipment, EquipmentSlot slot, ItemStack stack) {
         switch (slot) {
             case HAND -> equipment.setItemInMainHand(stack);
@@ -122,6 +134,9 @@ public class ApplyAttributesCommand implements CommandExecutor, TabCompleter {
         }
     }
 
+    /**
+     * Supplies tab completion suggestions for slot names and attribute configuration values.
+     */
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         switch (args.length) {

@@ -26,11 +26,17 @@ public class ApplyKitCommand implements CommandExecutor, TabCompleter {
     private final GearService gearService;
     private final GearConfigLoader gearConfigLoader;
 
+    /**
+     * Creates a command executor that can apply predefined kits to players or other living entities.
+     */
     public ApplyKitCommand(AttributeItemUtilsPlugin plugin) {
         this.gearService = plugin.getGearService();
         this.gearConfigLoader = plugin.getGearConfigLoader();
     }
 
+    /**
+     * Resolves the desired kit, target entity, and optional weight overrides before applying gear.
+     */
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!sender.hasPermission("attributeitemutils.test.kit")) {
@@ -98,6 +104,9 @@ public class ApplyKitCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    /**
+     * Offers tab completion hints for kit names, player targets, and kit weight parameters.
+     */
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         List<String> kits = new ArrayList<>(gearConfigLoader.getKits().keySet());

@@ -28,11 +28,17 @@ public class SpawnKitCommand implements CommandExecutor, TabCompleter {
     private final GearService gearService;
     private final GearConfigLoader gearConfigLoader;
 
+    /**
+     * Builds a command executor that can spawn entities equipped with configured kits.
+     */
     public SpawnKitCommand(AttributeItemUtilsPlugin plugin) {
         this.gearService = plugin.getGearService();
         this.gearConfigLoader = plugin.getGearConfigLoader();
     }
 
+    /**
+     * Handles spawning a living entity and equipping it with a chosen kit and optional weight parameters.
+     */
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!sender.hasPermission("attributeitemutils.test.spawn")) {
@@ -111,6 +117,9 @@ public class SpawnKitCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    /**
+     * Supplies tab completion suggestions for entity types, kit names, and weight overrides.
+     */
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         switch (args.length) {
