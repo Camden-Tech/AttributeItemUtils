@@ -1,16 +1,23 @@
 package com.baddcamdne.attributeitemutils.items;
 
+import com.baddcamdne.attributeitemutils.config.AttributeAffixConfig;
 import com.baddcamdne.attributeitemutils.config.AttributeConfig;
 import com.baddcamdne.attributeutils.AttributeFacade;
+import com.baddcamdne.attributeutils.AttributeDefinition;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeModifier;
+import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.Material;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AttributeServiceTest {
@@ -19,7 +26,7 @@ class AttributeServiceTest {
     void collectAttributeBonusesAggregatesDuplicates() {
         AttributeConfig attributeConfig = new AttributeConfig(1.0, 0.0, 0.05, 1.0);
         StubRandom random = new StubRandom(new int[]{0, 0}, new double[]{0.0, 1.0});
-        AttributeService service = new AttributeService(new AttributeFacade(), affixes(), affixes(), random);
+        AttributeService service = new AttributeService(new AttributeFacade(), emptyAffixes(), random);
 
         Map<Attribute, Double> bonuses = service.collectAttributeBonuses(attributeConfig, 0);
 
@@ -31,7 +38,7 @@ class AttributeServiceTest {
     void collectAttributeBonusesReturnsEmptyWhenFirstRollFails() {
         AttributeConfig attributeConfig = new AttributeConfig(0.0, 0.0, 0.05, 1.0);
         StubRandom random = new StubRandom(new int[]{}, new double[]{1.0});
-        AttributeService service = new AttributeService(new AttributeFacade(), affixes(), affixes(), random);
+        AttributeService service = new AttributeService(new AttributeFacade(), emptyAffixes(), random);
 
         Map<Attribute, Double> bonuses = service.collectAttributeBonuses(attributeConfig, 0);
 
@@ -41,7 +48,7 @@ class AttributeServiceTest {
     @Test
     void resolveAmountHandlesSpecialCases() {
         AttributeConfig attributeConfig = new AttributeConfig(1.0, 0.0, 0.05, 1.0);
-        AttributeService service = new AttributeService(new AttributeFacade(), affixes(), affixes(), new StubRandom(new int[]{0}, new double[]{1.0}));
+        AttributeService service = new AttributeService(new AttributeFacade(), emptyAffixes(), new StubRandom(new int[]{0}, new double[]{1.0}));
 
         double scaleAmount = service.resolveAmount(Attribute.GENERIC_SCALE, 0.05);
         assertEquals(Math.cbrt(1.05) - 1, scaleAmount, 1.0e-9);
@@ -88,9 +95,50 @@ class AttributeServiceTest {
         assertIterableEquals(expected, candidates);
     }
 
-    private Map<Attribute, String> affixes() {
-        return AttributeService.CANDIDATE_ATTRIBUTES.stream()
-                .collect(Collectors.toMap(attribute -> attribute, attribute -> ""));
+    @Test
+    void decoratesNameWhenAllModifiersMatchConfig() {
+        AttributeFacade facade = facadeWithDefinitions(Attribute.GENERIC_ATTACK_DAMAGE, Attribute.GENERIC_ATTACK_SPEED);
+        AttributeAffixConfig affixConfig = new AttributeAffixConfig(
+                Map.of(Set.of(Attribute.GENERIC_ATTACK_DAMAGE, Attribute.GENERIC_ATTACK_SPEED), "Relentless "),
+                Map.of(Set.of(Attribute.GENERIC_ATTACK_DAMAGE, Attribute.GENERIC_ATTACK_SPEED), " of Fury")
+        );
+        AttributeService service = new AttributeService(facade, affixConfig, new StubRandom(new int[]{3, 4}, new double[]{0.0, 0.0, 1.0}));
+
+        AttributeConfig config = new AttributeConfig(1.0, 0.0, 0.05, 1.0);
+        ItemStack stack = new ItemStack(Material.DIAMOND_SWORD);
+
+        ItemStack result = service.applyAttributes(stack, config, EquipmentSlot.HAND, 0);
+
+        assertEquals("Relentless DIAMOND_SWORD of Fury", result.getItemMeta().getDisplayName());
+    }
+
+    @Test
+    void leavesNameUnchangedWhenModifiersDoNotMatchConfig() {
+        AttributeFacade facade = facadeWithDefinitions(Attribute.GENERIC_ATTACK_DAMAGE, Attribute.GENERIC_ATTACK_SPEED);
+        AttributeAffixConfig affixConfig = new AttributeAffixConfig(
+                Map.of(Set.of(Attribute.GENERIC_ATTACK_DAMAGE, Attribute.GENERIC_ATTACK_SPEED), "Relentless "),
+                Map.of(Set.of(Attribute.GENERIC_ATTACK_DAMAGE, Attribute.GENERIC_ATTACK_SPEED), " of Fury")
+        );
+        AttributeService service = new AttributeService(facade, affixConfig, new StubRandom(new int[]{3}, new double[]{0.0, 1.0}));
+
+        AttributeConfig config = new AttributeConfig(1.0, 0.0, 0.05, 1.0);
+        ItemStack stack = new ItemStack(Material.DIAMOND_SWORD);
+
+        ItemStack result = service.applyAttributes(stack, config, EquipmentSlot.HAND, 0);
+
+        assertFalse(result.getItemMeta().hasDisplayName());
+    }
+
+    private AttributeAffixConfig emptyAffixes() {
+        return new AttributeAffixConfig(Map.of(), Map.of());
+    }
+
+    private AttributeFacade facadeWithDefinitions(Attribute... attributes) {
+        AttributeFacade facade = new AttributeFacade();
+        for (Attribute attribute : attributes) {
+            facade.registerDefinition(new AttributeDefinition(attribute, AttributeModifier.Operation.MULTIPLY_SCALAR_1, 1.0));
+        }
+        return facade;
     }
 
     private static final class StubRandom extends java.util.Random {

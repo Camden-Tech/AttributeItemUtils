@@ -1,5 +1,6 @@
 package com.baddcamdne.attributeitemutils.items;
 
+import com.baddcamdne.attributeitemutils.config.AttributeAffixConfig;
 import com.baddcamdne.attributeitemutils.config.AttributeConfig;
 import com.baddcamdne.attributeutils.AttributeFacade;
 import org.bukkit.Material;
@@ -19,7 +20,7 @@ class AttributeServiceSlotTest {
     void appliesAttributesUsingProvidedSlot() {
         AttributeFacade facade = mock(AttributeFacade.class);
         Random random = new StubRandom(new int[]{0}, new double[]{0.0, 1.0});
-        AttributeService service = new AttributeService(facade, Map.of(Attribute.GENERIC_MAX_HEALTH, ""), Map.of(), random);
+        AttributeService service = new AttributeService(facade, new AttributeAffixConfig(Map.of(), Map.of()), random);
 
         AttributeConfig config = new AttributeConfig(0.6, 0.0, 0.05, 1.0);
         ItemStack stack = new ItemStack(Material.DIAMOND_SWORD);

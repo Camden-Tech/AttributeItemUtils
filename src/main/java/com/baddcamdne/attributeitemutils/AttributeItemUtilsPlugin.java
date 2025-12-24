@@ -69,7 +69,7 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
         DropChanceConfigSource dropChanceConfigSource = DropChanceConfigSource.fromConfig(getConfig(), getLogger());
         AttributeAffixConfig attributeAffixConfig = AttributeAffixConfig.load(this);
 
-        gearService = new GearService(gearConfigLoader, new AttributeService(attributeFacade, attributeAffixConfig.prefixes(), attributeAffixConfig.suffixes()), new EnchantmentService(attributeFacade), attributeConfigSource, enchantmentConfigSource, dropChanceConfigSource);
+        gearService = new GearService(gearConfigLoader, new AttributeService(attributeFacade, attributeAffixConfig), new EnchantmentService(attributeFacade), attributeConfigSource, enchantmentConfigSource, dropChanceConfigSource);
     }
 
     private void saveDefaultGearConfig() {
