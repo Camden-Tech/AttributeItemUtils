@@ -53,21 +53,15 @@ public class GearService {
         double dropChance = dropChanceConfigSource.dropChanceFor(entity.getType());
         Map<EquipmentSlot, ItemStack> equipment = new EnumMap<>(EquipmentSlot.class);
         for (GearSlot slot : GearSlot.values()) {
+            EquipmentSlot equipmentSlot = mapSlot(slot);
             WeightedItem selection = selector.select(kit.items().getOrDefault(slot, java.util.List.of()), kit.targetWeight(), kit.steepness(), kit.range());
             Material material = selection == null ? Material.AIR : selection.material();
             ItemStack stack = material == Material.AIR ? null : new ItemStack(material);
             if (stack != null) {
-                stack = attributeService.applyAttributes(stack, attributeConfig, nights);
+                stack = attributeService.applyAttributes(stack, attributeConfig, equipmentSlot, nights);
                 stack = enchantmentService.applyEnchants(stack, enchantmentConfig, nights);
             }
-            switch (slot) {
-                case HELMET -> equipment.put(EquipmentSlot.HEAD, stack);
-                case CHESTPLATE -> equipment.put(EquipmentSlot.CHEST, stack);
-                case LEGGINGS -> equipment.put(EquipmentSlot.LEGS, stack);
-                case BOOTS -> equipment.put(EquipmentSlot.FEET, stack);
-                case HAND -> equipment.put(EquipmentSlot.HAND, stack);
-                case OFF_HAND -> equipment.put(EquipmentSlot.OFF_HAND, stack);
-            }
+            equipment.put(equipmentSlot, stack);
         }
         EntityEquipment entityEquipment = entity.getEquipment();
         if (entityEquipment == null) {
@@ -90,5 +84,16 @@ public class GearService {
             case HAND -> equipment.setItemInMainHandDropChance(chance);
             case OFF_HAND -> equipment.setItemInOffHandDropChance(chance);
         }
+    }
+
+    private EquipmentSlot mapSlot(GearSlot slot) {
+        return switch (slot) {
+            case HELMET -> EquipmentSlot.HEAD;
+            case CHESTPLATE -> EquipmentSlot.CHEST;
+            case LEGGINGS -> EquipmentSlot.LEGS;
+            case BOOTS -> EquipmentSlot.FEET;
+            case HAND -> EquipmentSlot.HAND;
+            case OFF_HAND -> EquipmentSlot.OFF_HAND;
+        };
     }
 }
