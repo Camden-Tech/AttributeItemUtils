@@ -126,7 +126,7 @@ class GearServiceDropChanceTest {
     }
 
     private KitConfig kitWithGear(WeightedItem helmet, WeightedItem mainHand) {
-        Map<GearSlot, List<WeightedItem>> items = new EnumMap<>(GearSlot.class);
+        Map<GearSlot, List<WeightedItem>> items = new EnumMap<GearSlot, List<WeightedItem>>(GearSlot.class);
         items.put(GearSlot.HELMET, helmet == null ? List.of() : List.of(helmet));
         items.put(GearSlot.CHESTPLATE, List.of());
         items.put(GearSlot.LEGGINGS, List.of());
@@ -137,7 +137,7 @@ class GearServiceDropChanceTest {
     }
 
     private KitConfig kitWithGear(WeightedItem helmet, WeightedItem mainHand, WeightedItem offHand) {
-        Map<GearSlot, List<WeightedItem>> items = new EnumMap<>(GearSlot.class);
+        Map<GearSlot, List<WeightedItem>> items = new EnumMap<GearSlot, List<WeightedItem>>(GearSlot.class);
         items.put(GearSlot.HELMET, helmet == null ? List.of() : List.of(helmet));
         items.put(GearSlot.CHESTPLATE, List.of());
         items.put(GearSlot.LEGGINGS, List.of());

@@ -15,8 +15,8 @@ public class AttributeFacade {
     private static final Attribute GENERIC_SCALE = findAttribute("GENERIC_SCALE");
     private static final Attribute GENERIC_FALL_DAMAGE_MULTIPLIER = findAttribute("GENERIC_FALL_DAMAGE_MULTIPLIER");
 
-    private final Map<Attribute, AttributeDefinition> definitions = new EnumMap<>(Attribute.class);
-    private final Map<Attribute, AttributeBaseline> baselines = new EnumMap<>(Attribute.class);
+    private final Map<Attribute, AttributeDefinition> definitions = new EnumMap<Attribute, AttributeDefinition>(Attribute.class);
+    private final Map<Attribute, AttributeBaseline> baselines = new EnumMap<Attribute, AttributeBaseline>(Attribute.class);
 
     public void registerDefinition(AttributeDefinition definition) {
         definitions.put(definition.attribute(), definition);

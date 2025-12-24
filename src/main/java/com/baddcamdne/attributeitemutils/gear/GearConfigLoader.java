@@ -42,7 +42,7 @@ public class GearConfigLoader {
             double target = kitSection.getDouble("target-weight", 5.0);
             double steepness = kitSection.getDouble("steepness", 1.0);
             double range = kitSection.getDouble("range", 4.0);
-            Map<GearSlot, List<WeightedItem>> map = new EnumMap<>(GearSlot.class);
+            Map<GearSlot, List<WeightedItem>> map = new EnumMap<GearSlot, List<WeightedItem>>(GearSlot.class);
             for (GearSlot slot : GearSlot.values()) {
                 List<WeightedItem> entries = kitSection.getStringList(slot.name().toLowerCase())
                         .stream()
