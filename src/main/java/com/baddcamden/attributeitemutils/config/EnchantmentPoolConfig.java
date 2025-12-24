@@ -16,10 +16,16 @@ public class EnchantmentPoolConfig {
 
     private final List<Enchantment> enchantments;
 
+    /**
+     * Creates a pool configuration from the provided enchantments list.
+     */
     public EnchantmentPoolConfig(List<Enchantment> enchantments) {
         this.enchantments = List.copyOf(enchantments);
     }
 
+    /**
+     * Picks a random enchantment from the pool when available.
+     */
     public Optional<Enchantment> random(java.util.Random random) {
         if (enchantments.isEmpty()) {
             return Optional.empty();
@@ -27,10 +33,16 @@ public class EnchantmentPoolConfig {
         return Optional.of(enchantments.get(random.nextInt(enchantments.size())));
     }
 
+    /**
+     * Returns all enchantments configured in the pool.
+     */
     public List<Enchantment> enchantments() {
         return enchantments;
     }
 
+    /**
+     * Loads enchantment pool entries from the EnchantmentPool.yml file, creating it when missing.
+     */
     public static EnchantmentPoolConfig load(JavaPlugin plugin, Logger logger) {
         File file = new File(plugin.getDataFolder(), "EnchantmentPool.yml");
         if (!file.exists()) {
@@ -50,6 +62,9 @@ public class EnchantmentPoolConfig {
         return new EnchantmentPoolConfig(Collections.unmodifiableList(enchantments));
     }
 
+    /**
+     * Parses an enchantment identifier from configuration, logging unknown entries.
+     */
     private static Enchantment parseEnchantment(Object rawEnchantment, Logger logger) {
         if (!(rawEnchantment instanceof String value)) {
             return null;
