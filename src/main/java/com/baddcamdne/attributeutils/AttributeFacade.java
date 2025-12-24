@@ -12,6 +12,9 @@ import java.util.EnumMap;
 import java.util.Map;
 
 public class AttributeFacade {
+    private static final String GENERIC_SCALE_KEY = "generic.scale";
+    private static final String GENERIC_FALL_DAMAGE_MULTIPLIER_KEY = "generic.fall_damage_multiplier";
+
     private static final Attribute GENERIC_SCALE = findAttribute("GENERIC_SCALE");
     private static final Attribute GENERIC_FALL_DAMAGE_MULTIPLIER = findAttribute("GENERIC_FALL_DAMAGE_MULTIPLIER");
 
@@ -28,9 +31,9 @@ public class AttributeFacade {
 
     public double computeAmount(Attribute attribute, double baseAmount) {
         double amount = baseAmount;
-        if (attribute == GENERIC_SCALE) {
+        if (isAttributeMatch(attribute, GENERIC_SCALE, GENERIC_SCALE_KEY)) {
             amount = Math.cbrt(1 + baseAmount) - 1;
-        } else if (attribute == GENERIC_FALL_DAMAGE_MULTIPLIER) {
+        } else if (isAttributeMatch(attribute, GENERIC_FALL_DAMAGE_MULTIPLIER, GENERIC_FALL_DAMAGE_MULTIPLIER_KEY)) {
             amount = -baseAmount;
         }
 
@@ -47,6 +50,18 @@ public class AttributeFacade {
         } catch (IllegalArgumentException ignored) {
             return null;
         }
+    }
+
+    private static boolean isAttributeMatch(Attribute attribute, Attribute optionalEnum, String key) {
+        if (attribute == null) {
+            return false;
+        }
+
+        if (optionalEnum != null) {
+            return attribute == optionalEnum;
+        }
+
+        return attribute.getKey().getKey().equalsIgnoreCase(key);
     }
 
     public void refresh(ItemStack stack, EquipmentSlot slot) {
