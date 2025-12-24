@@ -1,8 +1,10 @@
 package com.baddcamdne.attributeitemutils.items;
 
 import com.baddcamdne.attributeitemutils.config.AttributeBonus;
-import com.baddcamdne.attributeitemutils.config.AttributeConfig;
 import com.baddcamdne.attributeitemutils.config.AttributeAffixConfig;
+import com.baddcamdne.attributeitemutils.config.AttributeAffixConfig.AttributeAffix;
+import com.baddcamdne.attributeitemutils.config.AttributeAffixConfig.PrefixSelection;
+import com.baddcamdne.attributeitemutils.config.AttributeConfig;
 import com.baddcamdne.attributeitemutils.config.AttributePoolConfig;
 import com.baddcamdne.attributeutils.AttributeFacade;
 import com.google.common.collect.Multimap;
@@ -14,6 +16,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
@@ -64,10 +67,19 @@ public class AttributeService {
             return;
         }
 
-        Optional<String> prefix = affixConfig.prefixFor(appliedAttributes);
-        Optional<String> suffix = affixConfig.suffixFor(appliedAttributes);
+        boolean overflow = false;
+        Optional<AttributeAffix> suffix = Optional.empty();
+        PrefixSelection prefixSelection;
+        try {
+            prefixSelection = affixConfig.matchingPrefixes(appliedAttributes);
+            suffix = affixConfig.matchingSuffix(appliedAttributes);
+            overflow = prefixSelection.overflowed();
+        } catch (Exception ex) {
+            overflow = true;
+            prefixSelection = new PrefixSelection(List.of(), true);
+        }
 
-        if (prefix.isEmpty() && suffix.isEmpty()) {
+        if (!overflow && prefixSelection.prefixes().isEmpty() && suffix.isEmpty()) {
             return;
         }
 
@@ -75,7 +87,18 @@ public class AttributeService {
         if (display == null || display.isEmpty()) {
             display = stack.getType().name();
         }
-        meta.setDisplayName(prefix.orElse("") + display + suffix.orElse(""));
+
+        StringBuilder decoratedName = new StringBuilder();
+        if (overflow) {
+            decoratedName.append("Unique ");
+        } else {
+            prefixSelection.prefixes().stream()
+                    .map(AttributeAffix::value)
+                    .forEach(decoratedName::append);
+        }
+        decoratedName.append(display);
+        suffix.map(AttributeAffix::value).ifPresent(decoratedName::append);
+        meta.setDisplayName(decoratedName.toString());
     }
 
     private Optional<AttributeBonus> randomAttribute() {

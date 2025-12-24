@@ -9,20 +9,53 @@ import java.util.*;
 import java.util.logging.Logger;
 
 public class AttributeAffixConfig {
-    private final Map<Set<Attribute>, String> prefixes;
-    private final Map<Set<Attribute>, String> suffixes;
+    private final List<AttributeAffix> prefixes;
+    private final List<AttributeAffix> suffixes;
 
-    public AttributeAffixConfig(Map<Set<Attribute>, String> prefixes, Map<Set<Attribute>, String> suffixes) {
+    public AttributeAffixConfig(List<AttributeAffix> prefixes, List<AttributeAffix> suffixes) {
         this.prefixes = prefixes;
         this.suffixes = suffixes;
     }
 
-    public Optional<String> prefixFor(Set<Attribute> attributes) {
-        return Optional.ofNullable(prefixes.get(attributes));
+    public PrefixSelection matchingPrefixes(Set<Attribute> attributes) {
+        List<AttributeAffix> applicable = applicableAffixes(prefixes, attributes);
+        if (applicable.isEmpty()) {
+            return new PrefixSelection(List.of(), false);
+        }
+
+        List<AttributeAffix> selected = new ArrayList<>();
+        Set<Attribute> multiAttributeCoverage = new HashSet<>();
+        for (AttributeAffix affix : applicable) {
+            if (affix.requirementCount() > 1) {
+                selected.add(affix);
+                multiAttributeCoverage.addAll(affix.attributes());
+            } else if (!multiAttributeCoverage.containsAll(affix.attributes())) {
+                selected.add(affix);
+            }
+        }
+
+        boolean overflowed = selected.size() > 5;
+        if (overflowed) {
+            selected = selected.subList(0, 5);
+        }
+        return new PrefixSelection(selected, overflowed);
     }
 
-    public Optional<String> suffixFor(Set<Attribute> attributes) {
-        return Optional.ofNullable(suffixes.get(attributes));
+    public Optional<AttributeAffix> matchingSuffix(Set<Attribute> attributes) {
+        List<AttributeAffix> applicable = applicableAffixes(suffixes, attributes);
+        if (applicable.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(applicable.get(0));
+    }
+
+    private List<AttributeAffix> applicableAffixes(List<AttributeAffix> candidates, Set<Attribute> attributes) {
+        return candidates.stream()
+                .filter(affix -> !affix.attributes().isEmpty())
+                .filter(affix -> attributes.containsAll(affix.attributes()))
+                .sorted(Comparator.comparingInt(AttributeAffix::requirementCount).reversed())
+                .toList();
     }
 
     public static AttributeAffixConfig load(JavaPlugin plugin) {
@@ -33,19 +66,19 @@ public class AttributeAffixConfig {
 
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
         Logger logger = plugin.getLogger();
-        Map<Set<Attribute>, String> prefixes = loadSection(config, "prefixes", logger);
-        Map<Set<Attribute>, String> suffixes = loadSection(config, "suffixes", logger);
+        List<AttributeAffix> prefixes = loadSection(config, "prefixes", logger);
+        List<AttributeAffix> suffixes = loadSection(config, "suffixes", logger);
         return new AttributeAffixConfig(prefixes, suffixes);
     }
 
-    private static Map<Set<Attribute>, String> loadSection(YamlConfiguration config, String key, Logger logger) {
-        Map<Set<Attribute>, String> values = new LinkedHashMap<>();
+    private static List<AttributeAffix> loadSection(YamlConfiguration config, String key, Logger logger) {
+        List<AttributeAffix> values = new ArrayList<>();
         List<Map<?, ?>> entries = config.getMapList(key);
         for (Map<?, ?> entry : entries) {
             Set<Attribute> attributes = parseAttributes(entry.get("attributes"), logger);
             String value = parseValue(entry.get("value"), logger);
             if (!attributes.isEmpty() && value != null) {
-                values.put(attributes, value);
+                values.add(new AttributeAffix(attributes, value));
             }
         }
         return values;
@@ -85,5 +118,14 @@ public class AttributeAffixConfig {
         }
         logger.warning("Ignoring affix with non-string value in AttributeUffixes.yml");
         return null;
+    }
+
+    public record AttributeAffix(Set<Attribute> attributes, String value) {
+        public int requirementCount() {
+            return attributes.size();
+        }
+    }
+
+    public record PrefixSelection(List<AttributeAffix> prefixes, boolean overflowed) {
     }
 }
