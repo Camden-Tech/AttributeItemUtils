@@ -14,12 +14,18 @@ public class AttributeAffixConfig {
     private final List<AttributeAffix> suffixes;
     private final String defaultPrefix;
 
+    /**
+     * Creates a new affix configuration containing separate prefix and suffix collections and a fallback prefix.
+     */
     public AttributeAffixConfig(List<AttributeAffix> prefixes, List<AttributeAffix> suffixes, String defaultPrefix) {
         this.prefixes = prefixes;
         this.suffixes = suffixes;
         this.defaultPrefix = defaultPrefix;
     }
 
+    /**
+     * Finds applicable prefixes for a set of attributes, prioritizing multi-attribute affixes and limiting the total to five.
+     */
     public PrefixSelection matchingPrefixes(Set<Attribute> attributes) {
         List<AttributeAffix> applicable = applicableAffixes(prefixes, attributes);
         if (applicable.isEmpty()) {
@@ -47,6 +53,9 @@ public class AttributeAffixConfig {
         return new PrefixSelection(selected, overflowed);
     }
 
+    /**
+     * Returns the first suffix that matches all provided attributes, if any exist.
+     */
     public Optional<AttributeAffix> matchingSuffix(Set<Attribute> attributes) {
         List<AttributeAffix> applicable = applicableAffixes(suffixes, attributes);
         if (applicable.isEmpty()) {
@@ -56,6 +65,9 @@ public class AttributeAffixConfig {
         return Optional.of(applicable.get(0));
     }
 
+    /**
+     * Filters and sorts affix candidates that match all required attributes.
+     */
     private List<AttributeAffix> applicableAffixes(List<AttributeAffix> candidates, Set<Attribute> attributes) {
         return candidates.stream()
                 .filter(affix -> !affix.attributes().isEmpty())
@@ -64,6 +76,9 @@ public class AttributeAffixConfig {
                 .toList();
     }
 
+    /**
+     * Loads affix configuration from AttributeUffixes.yml, creating the file if it does not exist.
+     */
     public static AttributeAffixConfig load(JavaPlugin plugin) {
         File file = new File(plugin.getDataFolder(), "AttributeUffixes.yml");
         if (!file.exists()) {
@@ -78,6 +93,9 @@ public class AttributeAffixConfig {
         return new AttributeAffixConfig(prefixes, suffixes, defaultPrefix);
     }
 
+    /**
+     * Reads a prefix or suffix section from configuration and converts each entry into an {@link AttributeAffix}.
+     */
     private static List<AttributeAffix> loadSection(YamlConfiguration config, String key, Logger logger) {
         List<AttributeAffix> values = new ArrayList<>();
         List<Map<?, ?>> entries = config.getMapList(key);
@@ -91,6 +109,9 @@ public class AttributeAffixConfig {
         return values;
     }
 
+    /**
+     * Attempts to resolve an attribute key, logging a warning for unknown values.
+     */
     private static Attribute parseAttribute(String key, Logger logger) {
         try {
             return Attribute.valueOf(key);
@@ -100,6 +121,9 @@ public class AttributeAffixConfig {
         }
     }
 
+    /**
+     * Converts a raw attributes list into a set of Bukkit attributes, ignoring invalid entries.
+     */
     private static Set<Attribute> parseAttributes(Object rawAttributes, Logger logger) {
         if (!(rawAttributes instanceof List<?> attributeList)) {
             return Set.of();
@@ -116,6 +140,9 @@ public class AttributeAffixConfig {
         return attributes;
     }
 
+    /**
+     * Parses and colorizes an affix string value, logging a warning for unsupported types.
+     */
     private static String parseValue(Object rawValue, Logger logger) {
         if (rawValue == null) {
             return null;
@@ -127,11 +154,17 @@ public class AttributeAffixConfig {
         return null;
     }
 
+    /**
+     * Returns the configured default prefix used when no matching prefix is found.
+     */
     public String defaultPrefix() {
         return defaultPrefix;
     }
 
     public record AttributeAffix(Set<Attribute> attributes, String value) {
+        /**
+         * Reports how many attributes must be present for the affix to apply.
+         */
         public int requirementCount() {
             return attributes.size();
         }

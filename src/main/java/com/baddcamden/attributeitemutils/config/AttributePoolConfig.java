@@ -16,14 +16,23 @@ public class AttributePoolConfig {
 
     private final List<AttributeBonus> attributes;
 
+    /**
+     * Creates a pool configuration with the provided attribute bonuses.
+     */
     public AttributePoolConfig(List<AttributeBonus> attributes) {
         this.attributes = List.copyOf(attributes);
     }
 
+    /**
+     * Returns an immutable view of all configured attribute bonuses.
+     */
     public List<AttributeBonus> attributes() {
         return attributes;
     }
 
+    /**
+     * Picks a random attribute bonus from the pool when available.
+     */
     public Optional<AttributeBonus> random(java.util.Random random) {
         if (attributes.isEmpty()) {
             return Optional.empty();
@@ -31,6 +40,9 @@ public class AttributePoolConfig {
         return Optional.of(attributes.get(random.nextInt(attributes.size())));
     }
 
+    /**
+     * Loads attribute bonuses from the AttributePool.yml file, creating the file when absent.
+     */
     public static AttributePoolConfig load(JavaPlugin plugin, Logger logger) {
         File file = new File(plugin.getDataFolder(), "AttributePool.yml");
         if (!file.exists()) {
@@ -52,6 +64,9 @@ public class AttributePoolConfig {
         return new AttributePoolConfig(Collections.unmodifiableList(bonuses));
     }
 
+    /**
+     * Parses a string or namespaced attribute key into a Bukkit {@link Attribute} while logging invalid values.
+     */
     private static Attribute parseAttribute(Object rawAttribute, Logger logger) {
         if (!(rawAttribute instanceof String value)) {
             return null;
@@ -64,6 +79,9 @@ public class AttributePoolConfig {
         }
     }
 
+    /**
+     * Attempts to parse a numeric bonus percent value from configuration input.
+     */
     private static double parseBonus(Object rawBonus, Logger logger) {
         if (rawBonus instanceof Number number) {
             return number.doubleValue();

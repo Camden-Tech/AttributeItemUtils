@@ -8,11 +8,17 @@ public record EnchantmentConfig(double baseChance,
                                 int levelBonus,
                                 double maxChance) {
 
+    /**
+     * Loads enchantment configuration values from the plugin configuration, falling back to sensible defaults.
+     */
     public static EnchantmentConfig fromConfig(FileConfiguration config) {
         ConfigurationSection section = config.getConfigurationSection("enchants");
         return fromSection(section, new EnchantmentConfig(0.02, 0.0, 1, 0.95));
     }
 
+    /**
+     * Builds an {@link EnchantmentConfig} from a configuration section or uses the provided default when missing.
+     */
     public static EnchantmentConfig fromSection(ConfigurationSection section, EnchantmentConfig defaultConfig) {
         if (section == null) {
             return defaultConfig;
