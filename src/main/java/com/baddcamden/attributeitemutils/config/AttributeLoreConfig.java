@@ -14,7 +14,6 @@ import java.io.File;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -70,7 +69,7 @@ public class AttributeLoreConfig {
         Map<String, String> slotNames = loadSlotNames(formats);
 
         ConfigurationSection attributeSection = config.getConfigurationSection("attributes");
-        Map<Attribute, AttributeLore> attributes = new EnumMap<Attribute, AttributeLore>(Attribute.class);
+        Map<Attribute, AttributeLore> attributes = new LinkedHashMap<>();
         if (attributeSection != null) {
             for (String key : attributeSection.getKeys(false)) {
                 Attribute attribute = parseAttribute(key, logger);
