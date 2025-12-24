@@ -30,6 +30,9 @@ public class GearService {
     private final DropChanceConfigSource dropChanceConfigSource;
     private final EntityChanceHooks chanceHooks;
     private final BellCurveSelector selector = new BellCurveSelector();
+    /**
+     * Constructs the gear service with all supporting services and config sources used when populating entity equipment.
+     */
     public GearService(GearConfigLoader loader,
                        AttributeService attributeService,
                        EnchantmentService enchantmentService,
@@ -46,10 +49,16 @@ public class GearService {
         this.chanceHooks = chanceHooks;
     }
 
+    /**
+     * Retrieves the configured kit definition by name if one exists.
+     */
     public Optional<KitConfig> getKit(String name) {
         return loader.getKit(name);
     }
 
+    /**
+     * Populates the given entity's equipment using the provided kit and applies attributes, enchants, and drop chances.
+     */
     public void applyKit(LivingEntity entity, KitConfig kit) {
         int nights = (int) (entity.getWorld().getFullTime() / 24000L);
         AttributeConfig attributeConfig = chanceHooks.attributeConfigFor(entity.getType())
@@ -82,6 +91,9 @@ public class GearService {
         });
     }
 
+    /**
+     * Sets the drop chance on the entity equipment for the provided slot.
+     */
     private void setDropChance(EntityEquipment equipment, EquipmentSlot slot, float chance) {
         switch (slot) {
             case HEAD -> equipment.setHelmetDropChance(chance);
@@ -93,6 +105,9 @@ public class GearService {
         }
     }
 
+    /**
+     * Maps the internal gear slot type to the corresponding Bukkit equipment slot.
+     */
     private EquipmentSlot mapSlot(GearSlot slot) {
         return switch (slot) {
             case HELMET -> EquipmentSlot.HEAD;

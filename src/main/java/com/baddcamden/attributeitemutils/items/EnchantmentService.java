@@ -15,16 +15,25 @@ public class EnchantmentService {
     private final Random random;
     private final EnchantmentPoolConfig enchantmentPool;
 
+    /**
+     * Creates an enchantment service with default randomness to apply enchants from the configured pool.
+     */
     public EnchantmentService(AttributeFacade attributeFacade, EnchantmentPoolConfig enchantmentPool) {
         this(attributeFacade, enchantmentPool, new Random());
     }
 
+    /**
+     * Package-private constructor that accepts a seeded random instance for testing purposes.
+     */
     EnchantmentService(AttributeFacade attributeFacade, EnchantmentPoolConfig enchantmentPool, Random random) {
         this.attributeFacade = attributeFacade;
         this.enchantmentPool = enchantmentPool;
         this.random = random;
     }
 
+    /**
+     * Applies random enchants to the given item stack while the roll succeeds, increasing existing levels with a bonus.
+     */
     public ItemStack applyEnchants(ItemStack stack, EnchantmentConfig config, EquipmentSlot slot, int nights) {
         if (stack == null) return null;
         while (roll(config, nights)) {
@@ -37,11 +46,17 @@ public class EnchantmentService {
         return stack;
     }
 
+    /**
+     * Determines whether to apply another enchantment based on nightly scaling probability.
+     */
     boolean roll(EnchantmentConfig config, int nights) {
         double chance = Math.min(config.maxChance(), config.baseChance() + (config.nightlyIncrease() * nights));
         return random.nextDouble() < chance;
     }
 
+    /**
+     * Picks a random enchantment from the pool that can be applied to the provided item stack.
+     */
     private Enchantment randomEnchantment(ItemStack stack) {
         List<Enchantment> valid = enchantmentPool.enchantments()
                 .stream()

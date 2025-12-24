@@ -34,10 +34,16 @@ public class AttributeService {
     private final AttributeFacade attributeFacade;
     private final AttributeLoreConfig attributeLoreConfig;
     private final Random random;
+    /**
+     * Creates an attribute service using the provided facade and configs with a new random number generator.
+     */
     public AttributeService(AttributeFacade attributeFacade, AttributeAffixConfig affixConfig, AttributePoolConfig attributePool, AttributeLoreConfig attributeLoreConfig) {
         this(attributeFacade, affixConfig, attributePool, attributeLoreConfig, new Random());
     }
 
+    /**
+     * Package-private constructor primarily used for testing that allows injecting a specific {@link Random} instance.
+     */
     AttributeService(AttributeFacade attributeFacade, AttributeAffixConfig affixConfig, AttributePoolConfig attributePool, AttributeLoreConfig attributeLoreConfig, Random random) {
         this.attributeFacade = attributeFacade;
         this.affixConfig = affixConfig;
@@ -46,10 +52,16 @@ public class AttributeService {
         this.random = random;
     }
 
+    /**
+     * Alternative package-private constructor kept for backwards compatibility when parameter ordering differs.
+     */
     AttributeService(AttributeFacade attributeFacade, AttributeAffixConfig affixConfig, AttributePoolConfig attributePool, Random random, AttributeLoreConfig attributeLoreConfig) {
         this(attributeFacade, affixConfig, attributePool, attributeLoreConfig, random);
     }
 
+    /**
+     * Applies randomly rolled attribute bonuses and related lore/decorations to the given item stack.
+     */
     public ItemStack applyAttributes(ItemStack stack, AttributeConfig config, EquipmentSlot slot, int nights) {
         if (stack == null) return null;
         if (stack.getItemMeta() == null) return stack;
@@ -69,11 +81,17 @@ public class AttributeService {
         return stack;
     }
 
+    /**
+     * Determines whether another attribute bonus should be applied based on nightly scaling chance.
+     */
     boolean roll(AttributeConfig config, int nights) {
         double chance = Math.min(config.maxChance(), config.baseChance() + (config.nightlyIncrease() * nights));
         return random.nextDouble() < chance;
     }
 
+    /**
+     * Adds prefix and suffix affixes to an item's display name when attributes have been applied.
+     */
     private void decorateName(ItemStack stack, ItemMeta meta) {
         Set<Attribute> appliedAttributes = appliedAttributes(meta);
         if (appliedAttributes.isEmpty()) {
@@ -117,6 +135,9 @@ public class AttributeService {
         meta.setDisplayName(ChatColor.RESET+decoratedName.toString());
     }
 
+    /**
+     * Formats an enum-style material name into a spaced and capitalized display string.
+     */
     private String formatMaterialName(String materialName) {
         return Arrays.stream(materialName.split("_"))
                 .filter(part -> !part.isEmpty())
@@ -124,10 +145,16 @@ public class AttributeService {
                 .collect(Collectors.joining(" "));
     }
 
+    /**
+     * Selects a random attribute bonus from the configured pool.
+     */
     private Optional<AttributeBonus> randomAttribute() {
         return attributePool.random(random);
     }
 
+    /**
+     * Rolls for attribute bonuses until the chance fails and aggregates the resulting amounts by attribute.
+     */
     Map<Attribute, Double> collectAttributeBonuses(AttributeConfig config, int nights) {
         Map<Attribute, Double> bonuses = new LinkedHashMap<>();
         if (!roll(config, nights)) {
@@ -146,10 +173,16 @@ public class AttributeService {
         return bonuses;
     }
 
+    /**
+     * Computes the final modifier amount for the given attribute using the attribute facade.
+     */
     double resolveAmount(Attribute attribute, double baseAmount) {
         return attributeFacade.computeAmount(attribute, baseAmount);
     }
 
+    /**
+     * Extracts attributes already applied to the item meta that have a non-zero modifier.
+     */
     private Set<Attribute> appliedAttributes(ItemMeta meta) {
         Multimap<Attribute, AttributeModifier> modifiers = meta.getAttributeModifiers();
         if (modifiers == null) {
@@ -165,6 +198,9 @@ public class AttributeService {
         return attributes;
     }
 
+    /**
+     * Appends lore entries describing applied attributes, including separators when lore already exists.
+     */
     private void decorateLore(ItemMeta meta) {
         if (meta.getAttributeModifiers() == null || meta.getAttributeModifiers().isEmpty()) {
             return;
