@@ -14,12 +14,18 @@ public class AttributeAffixConfig {
     private final List<AttributeAffix> suffixes;
     private final String defaultPrefix;
 
+    /**
+     * Creates a new affix configuration with defined prefixes, suffixes, and fallback prefix text.
+     */
     public AttributeAffixConfig(List<AttributeAffix> prefixes, List<AttributeAffix> suffixes, String defaultPrefix) {
         this.prefixes = prefixes;
         this.suffixes = suffixes;
         this.defaultPrefix = defaultPrefix;
     }
 
+    /**
+     * Selects prefixes that apply to the provided attributes while attempting to cover multi-attribute options first.
+     */
     public PrefixSelection matchingPrefixes(Set<Attribute> attributes) {
         List<AttributeAffix> applicable = applicableAffixes(prefixes, attributes);
         if (applicable.isEmpty()) {
@@ -47,6 +53,9 @@ public class AttributeAffixConfig {
         return new PrefixSelection(selected, overflowed);
     }
 
+    /**
+     * Finds the first suffix that satisfies the supplied attributes, if one exists.
+     */
     public Optional<AttributeAffix> matchingSuffix(Set<Attribute> attributes) {
         List<AttributeAffix> applicable = applicableAffixes(suffixes, attributes);
         if (applicable.isEmpty()) {
@@ -56,6 +65,9 @@ public class AttributeAffixConfig {
         return Optional.of(applicable.get(0));
     }
 
+    /**
+     * Filters and sorts affixes that match the provided attribute set, prioritizing those with more requirements.
+     */
     private List<AttributeAffix> applicableAffixes(List<AttributeAffix> candidates, Set<Attribute> attributes) {
         return candidates.stream()
                 .filter(affix -> !affix.attributes().isEmpty())
@@ -64,6 +76,9 @@ public class AttributeAffixConfig {
                 .toList();
     }
 
+    /**
+     * Loads affix data from the AttributeUffixes.yml file, creating it if it does not already exist.
+     */
     public static AttributeAffixConfig load(JavaPlugin plugin) {
         File file = new File(plugin.getDataFolder(), "AttributeUffixes.yml");
         if (!file.exists()) {
@@ -78,6 +93,9 @@ public class AttributeAffixConfig {
         return new AttributeAffixConfig(prefixes, suffixes, defaultPrefix);
     }
 
+    /**
+     * Reads and parses a list of affix entries from the specified configuration section.
+     */
     private static List<AttributeAffix> loadSection(YamlConfiguration config, String key, Logger logger) {
         List<AttributeAffix> values = new ArrayList<>();
         List<Map<?, ?>> entries = config.getMapList(key);
@@ -91,6 +109,9 @@ public class AttributeAffixConfig {
         return values;
     }
 
+    /**
+     * Attempts to convert a configuration key to an {@link Attribute}, logging when the value is invalid.
+     */
     private static Attribute parseAttribute(String key, Logger logger) {
         try {
             return Attribute.valueOf(key);
@@ -100,6 +121,9 @@ public class AttributeAffixConfig {
         }
     }
 
+    /**
+     * Extracts attribute requirements from a configuration entry.
+     */
     private static Set<Attribute> parseAttributes(Object rawAttributes, Logger logger) {
         if (!(rawAttributes instanceof List<?> attributeList)) {
             return Set.of();
@@ -116,6 +140,9 @@ public class AttributeAffixConfig {
         return attributes;
     }
 
+    /**
+     * Parses affix display text while applying color codes and ignoring invalid types.
+     */
     private static String parseValue(Object rawValue, Logger logger) {
         if (rawValue == null) {
             return null;
@@ -127,11 +154,17 @@ public class AttributeAffixConfig {
         return null;
     }
 
+    /**
+     * Retrieves the fallback prefix used when no matching affixes are available.
+     */
     public String defaultPrefix() {
         return defaultPrefix;
     }
 
     public record AttributeAffix(Set<Attribute> attributes, String value) {
+        /**
+         * Reports how many attribute requirements this affix has.
+         */
         public int requirementCount() {
             return attributes.size();
         }

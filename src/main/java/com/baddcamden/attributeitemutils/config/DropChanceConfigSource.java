@@ -6,14 +6,23 @@ import org.bukkit.configuration.file.FileConfiguration;
 public class DropChanceConfigSource {
     private final double defaultChance;
 
+    /**
+     * Creates a configuration source with the given default drop chance.
+     */
     public DropChanceConfigSource(double defaultChance) {
         this.defaultChance = defaultChance;
     }
 
+    /**
+     * Returns the default chance used when no drop configuration is available.
+     */
     public double defaultChance() {
         return defaultChance;
     }
 
+    /**
+     * Builds a configuration source from the plugin configuration, applying defaults when necessary.
+     */
     public static DropChanceConfigSource fromConfig(FileConfiguration config) {
         ConfigurationSection section = config.getConfigurationSection("drops");
         DropChanceConfig defaultConfig = DropChanceConfig.fromSection(section, new DropChanceConfig(0.015));

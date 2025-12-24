@@ -34,6 +34,9 @@ public class AttributeLoreConfig {
     private final String otherSlotCondition;
     private final Map<String, String> slotNames;
 
+    /**
+     * Builds an attribute lore configuration instance with the supplied formatting and lookup settings.
+     */
     public AttributeLoreConfig(Map<Attribute, AttributeLore> attributes,
                                String headerFormat,
                                String valueFormat,
@@ -52,6 +55,9 @@ public class AttributeLoreConfig {
         this.slotNames = slotNames;
     }
 
+    /**
+     * Loads the attribute lore configuration from disk, ensuring a default file exists when missing.
+     */
     public static AttributeLoreConfig load(JavaPlugin plugin, Logger logger) {
         File file = new File(plugin.getDataFolder(), "AttributeLore.yml");
         if (!file.exists()) {
@@ -84,6 +90,9 @@ public class AttributeLoreConfig {
         return new AttributeLoreConfig(attributes, headerFormat, valueFormat, anySlotCondition, mainHandCondition, offHandCondition, otherSlotCondition, slotNames);
     }
 
+    /**
+     * Reads the slot name overrides from the configuration, returning sensible defaults when omitted.
+     */
     private static Map<String, String> loadSlotNames(ConfigurationSection formats) {
         Map<String, String> slotNames = new LinkedHashMap<>();
         if (formats == null) {
@@ -109,6 +118,9 @@ public class AttributeLoreConfig {
         return slotNames;
     }
 
+    /**
+     * Attempts to convert a configuration key to a Bukkit {@link Attribute}, logging unknown values.
+     */
     private static Attribute parseAttribute(String key, Logger logger) {
         try {
             return Attribute.valueOf(key);
@@ -118,6 +130,9 @@ public class AttributeLoreConfig {
         }
     }
 
+    /**
+     * Builds lore lines for the supplied item metadata based on configured formatting and modifiers.
+     */
     public List<String> buildLore(ItemMeta meta) {
         Multimap<Attribute, AttributeModifier> modifiers = meta.getAttributeModifiers();
         if (modifiers == null || modifiers.isEmpty()) {
@@ -147,6 +162,9 @@ public class AttributeLoreConfig {
         return lore;
     }
 
+    /**
+     * Formats all modifier lines for an attribute, grouping them by fulfillment condition.
+     */
     private List<String> formatLines(Attribute attribute, Collection<AttributeModifier> modifiers) {
         Map<String, List<String>> linesByCondition = new LinkedHashMap<>();
         for (AttributeModifier modifier : modifiers) {
@@ -170,6 +188,9 @@ public class AttributeLoreConfig {
         return lines;
     }
 
+    /**
+     * Formats a single modifier into a value line and optional condition string.
+     */
     private FormattedLine formatLine(Attribute attribute, AttributeModifier modifier) {
         double percentValue = modifier.getAmount() * 100.0;
         String slotName = slotName(modifier.getSlot());
@@ -189,6 +210,9 @@ public class AttributeLoreConfig {
         return new FormattedLine(valueLine, condition.isBlank() ? null : condition);
     }
 
+    /**
+     * Formats the header line for a specific attribute using configured templates.
+     */
     private String formatHeader(Attribute attribute) {
         AttributeLore lore = attributes.get(attribute);
         String color = lore == null ? ChatColor.GOLD.toString() : lore.color();
@@ -198,6 +222,9 @@ public class AttributeLoreConfig {
                 .replace("{color}", color);
     }
 
+    /**
+     * Produces the appropriate fulfillment condition text for the provided slot.
+     */
     private String formatCondition(EquipmentSlot slot, String slotName) {
         if (slot == EquipmentSlot.HAND) {
             return mainHandCondition;
@@ -211,6 +238,9 @@ public class AttributeLoreConfig {
         return otherSlotCondition.replace("{slot}", slotName);
     }
 
+    /**
+     * Resolves the display name for a slot, using overrides when present.
+     */
     private String slotName(EquipmentSlot slot) {
         if (slot == null) {
             return "";
@@ -219,11 +249,17 @@ public class AttributeLoreConfig {
                 .orElseGet(() -> formatSlotName(slot));
     }
 
+    /**
+     * Generates a human friendly slot name from the enum constant when no override is provided.
+     */
     private String formatSlotName(EquipmentSlot slot) {
         String name = slot.name().toLowerCase(Locale.ROOT).replace('_', ' ');
         return Character.toUpperCase(name.charAt(0)) + name.substring(1);
     }
 
+    /**
+     * Applies Bukkit color translation to the provided string while guarding against null values.
+     */
     private static String translate(String value) {
         return ChatColor.translateAlternateColorCodes('&', Objects.requireNonNullElse(value, ""));
     }
