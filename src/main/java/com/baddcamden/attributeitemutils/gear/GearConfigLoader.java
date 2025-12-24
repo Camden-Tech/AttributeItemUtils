@@ -18,16 +18,26 @@ import java.util.Optional;
 
 public class GearConfigLoader {
 
+    /** Parent plugin used to resolve configuration paths and log warnings. */
     private final JavaPlugin plugin;
+    /** Gear configuration file on disk that backs the in-memory representation. */
     private final File gearConfigFile;
+    /** Cached kit definitions keyed by kit name to avoid reparsing. */
     private final Map<String, KitConfig> kits = new HashMap<>();
+    /** Parsed YAML configuration including defaults from the bundled resource. */
     private YamlConfiguration gearConfig;
 
+    /**
+     * Creates a loader bound to the given plugin's data directory.
+     */
     public GearConfigLoader(JavaPlugin plugin) {
         this.plugin = plugin;
         this.gearConfigFile = new File(plugin.getDataFolder(), "Gear.yml");
     }
 
+    /**
+     * Refreshes the cached kit definitions from disk, merging bundled defaults when present.
+     */
     public void reload() {
         kits.clear();
         gearConfig = YamlConfiguration.loadConfiguration(gearConfigFile);
@@ -42,7 +52,7 @@ public class GearConfigLoader {
             double target = kitSection.getDouble("target-weight", 5.0);
             double steepness = kitSection.getDouble("steepness", 1.0);
             double range = kitSection.getDouble("range", 4.0);
-            Map<GearSlot, List<WeightedItem>> map = new EnumMap<GearSlot, List<WeightedItem>>(GearSlot.class);
+            Map<GearSlot, List<WeightedItem>> map = new EnumMap<>(GearSlot.class);
             for (GearSlot slot : GearSlot.values()) {
                 List<WeightedItem> entries = kitSection.getStringList(slot.name().toLowerCase())
                         .stream()
@@ -55,6 +65,9 @@ public class GearConfigLoader {
         }
     }
 
+    /**
+     * Loads default values from the packaged Gear.yml and applies them as configuration defaults.
+     */
     private void loadDefaults() {
         try (InputStream stream = plugin.getResource("Gear.yml")) {
             if (stream == null) {
@@ -68,6 +81,9 @@ public class GearConfigLoader {
         }
     }
 
+    /**
+     * Parses a colon-delimited material:weight string into a weighted item entry.
+     */
     private Optional<WeightedItem> parseWeightedItem(String raw) {
         String[] parts = raw.split(":");
         if (parts.length != 2) return Optional.empty();
@@ -82,10 +98,16 @@ public class GearConfigLoader {
         }
     }
 
+    /**
+     * Retrieves a kit definition by name when available.
+     */
     public Optional<KitConfig> getKit(String name) {
         return Optional.ofNullable(kits.get(name));
     }
 
+    /**
+     * Exposes all loaded kit definitions keyed by name.
+     */
     public Map<String, KitConfig> getKits() {
         return kits;
     }
