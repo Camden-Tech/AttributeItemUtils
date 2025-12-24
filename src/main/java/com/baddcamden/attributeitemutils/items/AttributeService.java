@@ -30,10 +30,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class AttributeService {
+    // Provides the configured prefix/suffix text that decorates attribute-heavy item names.
     private final AttributeAffixConfig affixConfig;
+    // Supplies randomizable attribute options and rolling weights for item generation.
     private final AttributePoolConfig attributePool;
+    // Applies attribute math and modifier wiring to item metadata.
     private final AttributeFacade attributeFacade;
+    // Builds lore lines summarizing applied attributes for players.
     private final AttributeLoreConfig attributeLoreConfig;
+    // Centralized RNG so seeded tests and production follow the same flow.
     private final Random random;
     /**
      * Creates an attribute service using the provided facade and configs with a new random number generator.
@@ -64,8 +69,14 @@ public class AttributeService {
      * Applies randomly rolled attribute bonuses and related lore/decorations to the given item stack.
      */
     public ItemStack applyAttributes(ItemStack stack, AttributeConfig config, EquipmentSlot slot, long nights) {
-        if (stack == null) return null;
-        if (stack.getItemMeta() == null) return stack;
+        if (stack == null) {
+            return null;
+        }
+
+        ItemMeta meta = stack.getItemMeta();
+        if (meta == null) {
+            return stack;
+        }
         Map<Attribute, Double> bonuses = collectAttributeBonuses(config, NightCalculator.clampNights(nights));
         if (bonuses.isEmpty()) {
             return stack;
@@ -73,12 +84,14 @@ public class AttributeService {
 
         attributeFacade.refresh(stack, slot);
         bonuses.forEach((attribute, amount) -> attributeFacade.mutate(stack, attribute, amount, slot));
-        ItemMeta decoratedMeta = stack.getItemMeta();
-        if (decoratedMeta != null) {
-            decorateName(stack, decoratedMeta);
-            decorateLore(decoratedMeta);
-            stack.setItemMeta(decoratedMeta);
+        meta = stack.getItemMeta();
+        if (meta == null) {
+            return stack;
         }
+
+        decorateName(stack, meta);
+        decorateLore(meta);
+        stack.setItemMeta(meta);
         return stack;
     }
 
@@ -166,6 +179,7 @@ public class AttributeService {
         }
 
         int remainingApplications = Math.max(1, attributePool.attributes().size());
+        //VAGUE/IMPROVEMENT NEEDED {Number of rolls scales with pool size without clear balance rationale}
         do {
             Optional<AttributeBonus> attributeBonus = randomAttribute();
             if (attributeBonus.isEmpty()) {

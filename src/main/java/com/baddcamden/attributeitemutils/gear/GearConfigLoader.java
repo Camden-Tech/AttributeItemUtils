@@ -21,9 +21,13 @@ import java.util.Optional;
  */
 public class GearConfigLoader {
 
+    /** Owning plugin used to access resources and log warnings. */
     private final JavaPlugin plugin;
+    /** Physical config file path resolved from the plugin data folder. */
     private final File gearConfigFile;
+    /** Parsed kit definitions keyed by name. */
     private final Map<String, KitConfig> kits = new HashMap<>();
+    /** In-memory YAML configuration loaded from disk and defaults. */
     private YamlConfiguration gearConfig;
 
     /**
