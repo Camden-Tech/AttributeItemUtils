@@ -16,6 +16,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Loads gear kits from configuration files and exposes parsed kit definitions.
+ */
 public class GearConfigLoader {
 
     private final JavaPlugin plugin;
@@ -23,11 +26,17 @@ public class GearConfigLoader {
     private final Map<String, KitConfig> kits = new HashMap<>();
     private YamlConfiguration gearConfig;
 
+    /**
+     * Prepares a loader for the plugin's Gear.yml configuration file.
+     */
     public GearConfigLoader(JavaPlugin plugin) {
         this.plugin = plugin;
         this.gearConfigFile = new File(plugin.getDataFolder(), "Gear.yml");
     }
 
+    /**
+     * Reloads all kit definitions from disk, merging defaults before parsing entries.
+     */
     public void reload() {
         kits.clear();
         gearConfig = YamlConfiguration.loadConfiguration(gearConfigFile);
@@ -55,6 +64,9 @@ public class GearConfigLoader {
         }
     }
 
+    /**
+     * Copies bundled Gear.yml defaults into the active configuration so optional values resolve correctly.
+     */
     private void loadDefaults() {
         try (InputStream stream = plugin.getResource("Gear.yml")) {
             if (stream == null) {
@@ -68,6 +80,9 @@ public class GearConfigLoader {
         }
     }
 
+    /**
+     * Parses a weighted material entry in the form "MATERIAL:weight", logging malformed data.
+     */
     private Optional<WeightedItem> parseWeightedItem(String raw) {
         String[] parts = raw.split(":");
         if (parts.length != 2) return Optional.empty();
@@ -82,10 +97,16 @@ public class GearConfigLoader {
         }
     }
 
+    /**
+     * Retrieves a kit definition by name when it exists in the current configuration.
+     */
     public Optional<KitConfig> getKit(String name) {
         return Optional.ofNullable(kits.get(name));
     }
 
+    /**
+     * Exposes all loaded kit definitions keyed by their configuration name.
+     */
     public Map<String, KitConfig> getKits() {
         return kits;
     }
