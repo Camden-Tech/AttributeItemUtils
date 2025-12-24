@@ -59,9 +59,9 @@ public class ApplyAttributesCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        int nights;
+        long nights;
         try {
-            nights = Integer.parseInt(args[1]);
+            nights = Long.parseLong(args[1]);
         } catch (NumberFormatException ex) {
             sender.sendMessage("Invalid nights value: " + args[1]);
             return true;

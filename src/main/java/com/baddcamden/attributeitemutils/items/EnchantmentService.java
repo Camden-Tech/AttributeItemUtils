@@ -3,6 +3,7 @@ package com.baddcamden.attributeitemutils.items;
 import com.baddcamden.attributeitemutils.config.EnchantmentConfig;
 import com.baddcamden.attributeitemutils.config.EnchantmentPoolConfig;
 import com.baddcamden.attributeutils.AttributeFacade;
+import com.baddcamden.attributeitemutils.util.NightCalculator;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -34,7 +35,7 @@ public class EnchantmentService {
     /**
      * Applies random enchants to the given item stack while the roll succeeds, increasing existing levels with a bonus.
      */
-    public ItemStack applyEnchants(ItemStack stack, EnchantmentConfig config, EquipmentSlot slot, int nights) {
+    public ItemStack applyEnchants(ItemStack stack, EnchantmentConfig config, EquipmentSlot slot, long nights) {
         if (stack == null) return null;
         while (roll(config, nights)) {
             Enchantment enchantment = randomEnchantment(stack);
@@ -49,8 +50,9 @@ public class EnchantmentService {
     /**
      * Determines whether to apply another enchantment based on nightly scaling probability.
      */
-    boolean roll(EnchantmentConfig config, int nights) {
-        double chance = Math.min(config.maxChance(), config.baseChance() + (config.nightlyIncrease() * nights));
+    boolean roll(EnchantmentConfig config, long nights) {
+        long clampedNights = NightCalculator.clampNights(nights);
+        double chance = Math.min(config.maxChance(), config.baseChance() + (config.nightlyIncrease() * clampedNights));
         return random.nextDouble() < chance;
     }
 
