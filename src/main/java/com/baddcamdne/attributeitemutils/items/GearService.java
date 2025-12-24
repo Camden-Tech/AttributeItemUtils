@@ -58,7 +58,7 @@ public class GearService {
                 .orElse(enchantmentConfigSource.defaultConfig());
         double dropChance = chanceHooks.dropChanceFor(entity.getType())
                 .orElse(dropChanceConfigSource.defaultChance());
-        Map<EquipmentSlot, ItemStack> equipment = new EnumMap<>(EquipmentSlot.class);
+        Map<EquipmentSlot, ItemStack> equipment = new EnumMap<EquipmentSlot, ItemStack>(EquipmentSlot.class);
         for (GearSlot slot : GearSlot.values()) {
             EquipmentSlot equipmentSlot = mapSlot(slot);
             WeightedItem selection = selector.select(kit.items().getOrDefault(slot, java.util.List.of()), kit.targetWeight(), kit.steepness(), kit.range());
