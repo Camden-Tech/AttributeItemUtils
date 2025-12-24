@@ -52,11 +52,17 @@ class AttributeServiceTest {
         AttributeConfig attributeConfig = new AttributeConfig(1.0, 0.0, 0.05, 1.0);
         AttributeService service = new AttributeService(new AttributeFacade(), emptyAffixes(), singleAttributePool(), new StubRandom(new int[]{0}, new double[]{1.0}));
 
-        double scaleAmount = service.resolveAmount(Attribute.GENERIC_SCALE, 0.05);
-        assertEquals(Math.cbrt(1.05) - 1, scaleAmount, 1.0e-9);
+        Attribute scale = findAttribute("GENERIC_SCALE");
+        if (scale != null) {
+            double scaleAmount = service.resolveAmount(scale, 0.05);
+            assertEquals(Math.cbrt(1.05) - 1, scaleAmount, 1.0e-9);
+        }
 
-        double fallDamageAmount = service.resolveAmount(Attribute.GENERIC_FALL_DAMAGE_MULTIPLIER, 0.05);
-        assertEquals(-0.05, fallDamageAmount, 1.0e-9);
+        Attribute fallDamage = findAttribute("GENERIC_FALL_DAMAGE_MULTIPLIER");
+        if (fallDamage != null) {
+            double fallDamageAmount = service.resolveAmount(fallDamage, 0.05);
+            assertEquals(-0.05, fallDamageAmount, 1.0e-9);
+        }
 
         double normalAmount = service.resolveAmount(Attribute.GENERIC_ATTACK_DAMAGE, 0.05);
         assertEquals(0.05, normalAmount, 1.0e-9);
@@ -132,6 +138,14 @@ class AttributeServiceTest {
             facade.registerDefinition(new AttributeDefinition(attribute, AttributeModifier.Operation.MULTIPLY_SCALAR_1, 1.0));
         }
         return facade;
+    }
+
+    private Attribute findAttribute(String name) {
+        try {
+            return Attribute.valueOf(name);
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
     }
 
     private static final class StubRandom extends java.util.Random {

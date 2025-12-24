@@ -12,6 +12,9 @@ import java.util.EnumMap;
 import java.util.Map;
 
 public class AttributeFacade {
+    private static final Attribute GENERIC_SCALE = findAttribute("GENERIC_SCALE");
+    private static final Attribute GENERIC_FALL_DAMAGE_MULTIPLIER = findAttribute("GENERIC_FALL_DAMAGE_MULTIPLIER");
+
     private final Map<Attribute, AttributeDefinition> definitions = new EnumMap<>(Attribute.class);
     private final Map<Attribute, AttributeBaseline> baselines = new EnumMap<>(Attribute.class);
 
@@ -24,17 +27,26 @@ public class AttributeFacade {
     }
 
     public double computeAmount(Attribute attribute, double baseAmount) {
-        double amount = switch (attribute) {
-            case GENERIC_SCALE -> Math.cbrt(1 + baseAmount) - 1;
-            case GENERIC_FALL_DAMAGE_MULTIPLIER -> -baseAmount;
-            default -> baseAmount;
-        };
+        double amount = baseAmount;
+        if (attribute == GENERIC_SCALE) {
+            amount = Math.cbrt(1 + baseAmount) - 1;
+        } else if (attribute == GENERIC_FALL_DAMAGE_MULTIPLIER) {
+            amount = -baseAmount;
+        }
 
         AttributeDefinition definition = definitions.get(attribute);
         if (definition == null) {
             return amount;
         }
         return definition.applyCap(amount);
+    }
+
+    private static Attribute findAttribute(String name) {
+        try {
+            return Attribute.valueOf(name);
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
     }
 
     public void refresh(ItemStack stack, EquipmentSlot slot) {
