@@ -1,91 +1,91 @@
 prefixes:
-  - attributes: [GENERIC_MAX_HEALTH]
+  - attributes: [MAX_HEALTH]
     value: "Bulky "
-  - attributes: [GENERIC_ARMOR]
+  - attributes: [ARMOR]
     value: "Hardened "
-  - attributes: [GENERIC_ARMOR_TOUGHNESS]
+  - attributes: [ARMOR_TOUGHNESS]
     value: "Tough "
-  - attributes: [GENERIC_ATTACK_DAMAGE]
+  - attributes: [ATTACK_DAMAGE]
     value: "Strengthening "
-  - attributes: [GENERIC_ATTACK_SPEED]
+  - attributes: [ATTACK_SPEED]
     value: "Speedster "
-  - attributes: [GENERIC_ATTACK_KNOCKBACK]
+  - attributes: [ATTACK_KNOCKBACK]
     value: "Forceful "
-  - attributes: [GENERIC_MOVEMENT_SPEED]
+  - attributes: [MOVEMENT_SPEED]
     value: "Fast "
-  - attributes: [GENERIC_FLYING_SPEED]
+  - attributes: [FLYING_SPEED]
     value: "Soaring "
-  - attributes: [GENERIC_KNOCKBACK_RESISTANCE]
+  - attributes: [KNOCKBACK_RESISTANCE]
     value: "Immovable "
-  - attributes: [GENERIC_LUCK]
+  - attributes: [LUCK]
     value: "Lucky "
-  - attributes: [GENERIC_FOLLOW_RANGE]
+  - attributes: [FOLLOW_RANGE]
     value: "Watchful "
-  - attributes: [GENERIC_BLOCK_INTERACTION_RANGE]
+  - attributes: [BLOCK_INTERACTION_RANGE]
     value: "Long-Armed "
-  - attributes: [GENERIC_ENTITY_INTERACTION_RANGE]
+  - attributes: [ENTITY_INTERACTION_RANGE]
     value: "Stretching "
-  - attributes: [GENERIC_MINING_EFFICIENCY]
+  - attributes: [MINING_EFFICIENCY]
     value: "Industrious "
-  - attributes: [GENERIC_MAX_ABSORPTION]
+  - attributes: [MAX_ABSORPTION]
     value: "Absorbing "
-  - attributes: [GENERIC_STEP_HEIGHT]
+  - attributes: [STEP_HEIGHT]
     value: "Stilted "
-  - attributes: [GENERIC_SAFE_FALL_DISTANCE]
+  - attributes: [SAFE_FALL_DISTANCE]
     value: "Springy "
-  - attributes: [GENERIC_SCALE]
+  - attributes: [SCALE]
     value: "Giant "
-  - attributes: [GENERIC_JUMP_STRENGTH]
+  - attributes: [JUMP_STRENGTH]
     value: "Bounding "
-  - attributes: [GENERIC_GRAVITY]
+  - attributes: [GRAVITY]
     value: "Weightless "
-  - attributes: [GENERIC_FALL_DAMAGE_MULTIPLIER]
+  - attributes: [FALL_DAMAGE_MULTIPLIER]
     value: "Featherweight "
-  - attributes: [GENERIC_ATTACK_DAMAGE, GENERIC_ATTACK_SPEED]
+  - attributes: [ATTACK_DAMAGE, ATTACK_SPEED]
     value: "Relentless "
 
 suffixes:
-  - attributes: [GENERIC_MAX_HEALTH]
+  - attributes: [MAX_HEALTH]
     value: " of the Tank"
-  - attributes: [GENERIC_ARMOR]
+  - attributes: [ARMOR]
     value: " of the Bulwark"
-  - attributes: [GENERIC_ARMOR_TOUGHNESS]
+  - attributes: [ARMOR_TOUGHNESS]
     value: " of Fortitude"
-  - attributes: [GENERIC_ATTACK_DAMAGE]
+  - attributes: [ATTACK_DAMAGE]
     value: " of Power"
-  - attributes: [GENERIC_ATTACK_KNOCKBACK]
+  - attributes: [ATTACK_KNOCKBACK]
     value: " of the Boxer"
-  - attributes: [GENERIC_ATTACK_SPEED]
+  - attributes: [ATTACK_SPEED]
     value: " of Dexterity"
-  - attributes: [GENERIC_MOVEMENT_SPEED]
+  - attributes: [MOVEMENT_SPEED]
     value: " of the Runner"
-  - attributes: [GENERIC_FLYING_SPEED]
+  - attributes: [FLYING_SPEED]
     value: " of the Skystrider"
-  - attributes: [GENERIC_KNOCKBACK_RESISTANCE]
+  - attributes: [KNOCKBACK_RESISTANCE]
     value: " of Obesity"
-  - attributes: [GENERIC_LUCK]
+  - attributes: [LUCK]
     value: " of Fortune"
-  - attributes: [GENERIC_FOLLOW_RANGE]
+  - attributes: [FOLLOW_RANGE]
     value: " of the Lookout"
-  - attributes: [GENERIC_BLOCK_INTERACTION_RANGE]
+  - attributes: [BLOCK_INTERACTION_RANGE]
     value: " of the Reacher"
-  - attributes: [GENERIC_ENTITY_INTERACTION_RANGE]
+  - attributes: [ENTITY_INTERACTION_RANGE]
     value: " of the Longarm"
-  - attributes: [GENERIC_MINING_EFFICIENCY]
+  - attributes: [MINING_EFFICIENCY]
     value: " of the Miner"
-  - attributes: [GENERIC_MAX_ABSORPTION]
+  - attributes: [MAX_ABSORPTION]
     value: " of the Sponge"
-  - attributes: [GENERIC_STEP_HEIGHT]
+  - attributes: [STEP_HEIGHT]
     value: " of the Climber"
-  - attributes: [GENERIC_SAFE_FALL_DISTANCE]
+  - attributes: [SAFE_FALL_DISTANCE]
     value: " of the Acrobat"
-  - attributes: [GENERIC_SCALE]
+  - attributes: [SCALE]
     value: " of the Giant"
-  - attributes: [GENERIC_JUMP_STRENGTH]
+  - attributes: [JUMP_STRENGTH]
     value: " of the Hopper"
-  - attributes: [GENERIC_GRAVITY]
+  - attributes: [GRAVITY]
     value: " of the Moonwalker"
-  - attributes: [GENERIC_FALL_DAMAGE_MULTIPLIER]
+  - attributes: [FALL_DAMAGE_MULTIPLIER]
     value: " of Soft Landings"
-  - attributes: [GENERIC_ATTACK_DAMAGE, GENERIC_ATTACK_SPEED]
+  - attributes: [ATTACK_DAMAGE, ATTACK_SPEED]
     value: " of Fury"

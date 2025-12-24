@@ -1,8 +1,8 @@
 kits:
   defaultGearDistribution:
     target-weight: 5.0
-    steepness: 1.5
-    range: 6.0
+    steepness: 5
+    range: 10.0
     helmet:
       - AIR:0
       - LEATHER_HELMET:2

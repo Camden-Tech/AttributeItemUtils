@@ -92,6 +92,7 @@ public class ApplyEnchantsCommand implements CommandExecutor, TabCompleter {
             case CHEST -> equipment.getChestplate();
             case LEGS -> equipment.getLeggings();
             case FEET -> equipment.getBoots();
+            default -> equipment.getItemInMainHand();
         };
 
         if (item == null) {
