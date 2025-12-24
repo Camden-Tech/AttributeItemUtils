@@ -114,7 +114,7 @@ public class AttributeService {
         if (!fallback) {
             suffix.map(AttributeAffix::value).ifPresent(decoratedName::append);
         }
-        meta.setDisplayName(decoratedName.toString());
+        meta.setDisplayName(ChatColor.RESET+decoratedName.toString());
     }
 
     private String formatMaterialName(String materialName) {
