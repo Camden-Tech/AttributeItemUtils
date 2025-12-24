@@ -5,16 +5,14 @@ prefixes:
     value: "Hardened "
   - attributes: [GENERIC_ARMOR_TOUGHNESS]
     value: "Tough "
-  - attributes: [GENERIC_ATTACK_DAMAGE]
-    value: "Strengthening "
-  - attributes: [GENERIC_ATTACK_SPEED]
-    value: "Speedster "
+  - attributes: [GENERIC_ATTACK_DAMAGE, GENERIC_ATTACK_SPEED]
+    value: "Relentless "
   - attributes: [GENERIC_ATTACK_KNOCKBACK]
     value: "Forceful "
   - attributes: [GENERIC_MOVEMENT_SPEED]
-    value: "Fast "
+    value: "Speedster "
   - attributes: [GENERIC_FLYING_SPEED]
-    value: "Soaring "
+    value: "Speedster "
   - attributes: [GENERIC_KNOCKBACK_RESISTANCE]
     value: "Immovable "
   - attributes: [GENERIC_LUCK]
@@ -41,8 +39,6 @@ prefixes:
     value: "Weightless "
   - attributes: [GENERIC_FALL_DAMAGE_MULTIPLIER]
     value: "Featherweight "
-  - attributes: [GENERIC_ATTACK_DAMAGE, GENERIC_ATTACK_SPEED]
-    value: "Relentless "
 
 suffixes:
   - attributes: [GENERIC_MAX_HEALTH]
@@ -51,17 +47,19 @@ suffixes:
     value: " of the Bulwark"
   - attributes: [GENERIC_ARMOR_TOUGHNESS]
     value: " of Fortitude"
-  - attributes: [GENERIC_ATTACK_DAMAGE]
-    value: " of Power"
+  - attributes: [GENERIC_ATTACK_DAMAGE, GENERIC_ATTACK_SPEED]
+    value: " of Fury"
   - attributes: [GENERIC_ATTACK_KNOCKBACK]
     value: " of the Boxer"
-  - attributes: [GENERIC_ATTACK_SPEED]
-    value: " of Dexterity"
   - attributes: [GENERIC_MOVEMENT_SPEED]
     value: " of the Runner"
   - attributes: [GENERIC_FLYING_SPEED]
     value: " of the Skystrider"
   - attributes: [GENERIC_KNOCKBACK_RESISTANCE]
+    value: " of Obesity"
+  - attributes: [GENERIC_SCALE]
+    value: " of Obesity"
+  - attributes: [GENERIC_GRAVITY]
     value: " of Obesity"
   - attributes: [GENERIC_LUCK]
     value: " of Fortune"
@@ -79,13 +77,7 @@ suffixes:
     value: " of the Climber"
   - attributes: [GENERIC_SAFE_FALL_DISTANCE]
     value: " of the Acrobat"
-  - attributes: [GENERIC_SCALE]
-    value: " of the Giant"
   - attributes: [GENERIC_JUMP_STRENGTH]
     value: " of the Hopper"
-  - attributes: [GENERIC_GRAVITY]
-    value: " of the Moonwalker"
   - attributes: [GENERIC_FALL_DAMAGE_MULTIPLIER]
     value: " of Soft Landings"
-  - attributes: [GENERIC_ATTACK_DAMAGE, GENERIC_ATTACK_SPEED]
-    value: " of Fury"
