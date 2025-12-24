@@ -1,19 +1,22 @@
 package com.baddcamdne.attributeitemutils.items;
 
-import com.baddcamdne.attributeitemutils.config.AttributeBonus;
 import com.baddcamdne.attributeitemutils.config.AttributeAffixConfig;
 import com.baddcamdne.attributeitemutils.config.AttributeAffixConfig.AttributeAffix;
 import com.baddcamdne.attributeitemutils.config.AttributeAffixConfig.PrefixSelection;
+import com.baddcamdne.attributeitemutils.config.AttributeBonus;
 import com.baddcamdne.attributeitemutils.config.AttributeConfig;
+import com.baddcamdne.attributeitemutils.config.AttributeLoreConfig;
 import com.baddcamdne.attributeitemutils.config.AttributePoolConfig;
 import com.baddcamdne.attributeutils.AttributeFacade;
 import com.google.common.collect.Multimap;
+import org.bukkit.ChatColor;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -26,15 +29,17 @@ public class AttributeService {
     private final AttributeAffixConfig affixConfig;
     private final AttributePoolConfig attributePool;
     private final AttributeFacade attributeFacade;
+    private final AttributeLoreConfig attributeLoreConfig;
     private final Random random;
-    public AttributeService(AttributeFacade attributeFacade, AttributeAffixConfig affixConfig, AttributePoolConfig attributePool) {
-        this(attributeFacade, affixConfig, attributePool, new Random());
+    public AttributeService(AttributeFacade attributeFacade, AttributeAffixConfig affixConfig, AttributePoolConfig attributePool, AttributeLoreConfig attributeLoreConfig) {
+        this(attributeFacade, affixConfig, attributePool, attributeLoreConfig, new Random());
     }
 
-    AttributeService(AttributeFacade attributeFacade, AttributeAffixConfig affixConfig, AttributePoolConfig attributePool, Random random) {
+    AttributeService(AttributeFacade attributeFacade, AttributeAffixConfig affixConfig, AttributePoolConfig attributePool, AttributeLoreConfig attributeLoreConfig, Random random) {
         this.attributeFacade = attributeFacade;
         this.affixConfig = affixConfig;
         this.attributePool = attributePool;
+        this.attributeLoreConfig = attributeLoreConfig;
         this.random = random;
     }
 
@@ -51,6 +56,7 @@ public class AttributeService {
         ItemMeta decoratedMeta = stack.getItemMeta();
         if (decoratedMeta != null) {
             decorateName(stack, decoratedMeta);
+            decorateLore(decoratedMeta);
             stack.setItemMeta(decoratedMeta);
         }
         return stack;
@@ -140,6 +146,25 @@ public class AttributeService {
             }
         }
         return attributes;
+    }
+
+    private void decorateLore(ItemMeta meta) {
+        if (meta.getAttributeModifiers() == null || meta.getAttributeModifiers().isEmpty()) {
+            return;
+        }
+
+        List<String> lore = meta.hasLore() ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
+        List<String> attributeLore = attributeLoreConfig.buildLore(meta);
+        if (attributeLore.isEmpty()) {
+            return;
+        }
+
+        if (!lore.isEmpty()) {
+            lore.add("");
+            lore.add(ChatColor.DARK_GRAY + "―――――――――――――――――――――――――――――――――――――――");
+        }
+        lore.addAll(attributeLore);
+        meta.setLore(lore);
     }
 
 }

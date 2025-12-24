@@ -1,0 +1,74 @@
+formats:
+  header: "&6{name}"
+  any-slot: "&7+{amount}% {color}{name}"
+  main-hand: "&7+{amount}% {color}{name} &8(Main Hand)"
+  off-hand: "&7+{amount}% {color}{name} &8(Off Hand)"
+  other-slot: "&7+{amount}% {color}{name} &8({slot})"
+  slot-names:
+    HAND: "Main Hand"
+    OFF_HAND: "Off Hand"
+
+attributes:
+  MAX_HEALTH:
+    name: "Max Health"
+    color: "&c"
+  ARMOR:
+    name: "Armor"
+    color: "&b"
+  ARMOR_TOUGHNESS:
+    name: "Armor Toughness"
+    color: "&3"
+  ATTACK_DAMAGE:
+    name: "Attack Damage"
+    color: "&c"
+  ATTACK_SPEED:
+    name: "Attack Speed"
+    color: "&e"
+  ATTACK_KNOCKBACK:
+    name: "Attack Knockback"
+    color: "&6"
+  MOVEMENT_SPEED:
+    name: "Movement Speed"
+    color: "&a"
+  FLYING_SPEED:
+    name: "Flying Speed"
+    color: "&a"
+  KNOCKBACK_RESISTANCE:
+    name: "Knockback Resistance"
+    color: "&b"
+  LUCK:
+    name: "Luck"
+    color: "&d"
+  FOLLOW_RANGE:
+    name: "Follow Range"
+    color: "&f"
+  BLOCK_INTERACTION_RANGE:
+    name: "Block Interaction Range"
+    color: "&7"
+  ENTITY_INTERACTION_RANGE:
+    name: "Entity Interaction Range"
+    color: "&7"
+  MINING_EFFICIENCY:
+    name: "Mining Efficiency"
+    color: "&e"
+  MAX_ABSORPTION:
+    name: "Max Absorption"
+    color: "&c"
+  STEP_HEIGHT:
+    name: "Step Height"
+    color: "&f"
+  SAFE_FALL_DISTANCE:
+    name: "Safe Fall Distance"
+    color: "&f"
+  SCALE:
+    name: "Scale"
+    color: "&b"
+  JUMP_STRENGTH:
+    name: "Jump Strength"
+    color: "&a"
+  GRAVITY:
+    name: "Gravity"
+    color: "&8"
+  FALL_DAMAGE_MULTIPLIER:
+    name: "Fall Damage Multiplier"
+    color: "&8"
