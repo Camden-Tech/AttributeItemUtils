@@ -17,13 +17,16 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class AttributeService {
     private final AttributeAffixConfig affixConfig;
@@ -92,8 +95,11 @@ public class AttributeService {
         }
 
         String display = Optional.ofNullable(meta.getDisplayName()).orElse(meta.getLocalizedName());
+        String typeName = stack.getType().name();
         if (display == null || display.isEmpty()) {
-            display = stack.getType().name();
+            display = formatMaterialName(typeName);
+        } else if (display.equalsIgnoreCase(typeName)) {
+            display = formatMaterialName(display);
         }
 
         StringBuilder decoratedName = new StringBuilder();
@@ -109,6 +115,13 @@ public class AttributeService {
             suffix.map(AttributeAffix::value).ifPresent(decoratedName::append);
         }
         meta.setDisplayName(decoratedName.toString());
+    }
+
+    private String formatMaterialName(String materialName) {
+        return Arrays.stream(materialName.split("_"))
+                .filter(part -> !part.isEmpty())
+                .map(part -> part.substring(0, 1).toUpperCase(Locale.ENGLISH) + part.substring(1).toLowerCase(Locale.ENGLISH))
+                .collect(Collectors.joining(" "));
     }
 
     private Optional<AttributeBonus> randomAttribute() {
