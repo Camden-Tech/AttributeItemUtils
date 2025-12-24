@@ -1,21 +1,25 @@
 package com.baddcamdne.attributeitemutils.items;
 
 import com.baddcamdne.attributeitemutils.config.AttributeConfig;
+import com.baddcamdne.attributeitemutils.config.AttributeAffixConfig;
 import com.baddcamdne.attributeutils.AttributeFacade;
+import com.google.common.collect.Multimap;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
 
 public class AttributeService {
-    private final Map<Attribute, String> prefixes;
-    private final Map<Attribute, String> suffixes;
+    private final AttributeAffixConfig affixConfig;
     public static final List<Attribute> CANDIDATE_ATTRIBUTES = List.of(
             Attribute.MAX_HEALTH,
             Attribute.GENERIC_ARMOR,
@@ -42,14 +46,13 @@ public class AttributeService {
 
     private final AttributeFacade attributeFacade;
     private final Random random;
-    public AttributeService(AttributeFacade attributeFacade, Map<Attribute, String> prefixes, Map<Attribute, String> suffixes) {
-        this(attributeFacade, prefixes, suffixes, new Random());
+    public AttributeService(AttributeFacade attributeFacade, AttributeAffixConfig affixConfig) {
+        this(attributeFacade, affixConfig, new Random());
     }
 
-    AttributeService(AttributeFacade attributeFacade, Map<Attribute, String> prefixes, Map<Attribute, String> suffixes, Random random) {
+    AttributeService(AttributeFacade attributeFacade, AttributeAffixConfig affixConfig, Random random) {
         this.attributeFacade = attributeFacade;
-        this.prefixes = prefixes;
-        this.suffixes = suffixes;
+        this.affixConfig = affixConfig;
         this.random = random;
     }
 
@@ -63,10 +66,9 @@ public class AttributeService {
 
         attributeFacade.refresh(stack, slot);
         bonuses.forEach((attribute, amount) -> attributeFacade.mutate(stack, attribute, amount, slot));
-        Attribute decoratedAttribute = bonuses.keySet().iterator().next();
         ItemMeta decoratedMeta = stack.getItemMeta();
         if (decoratedMeta != null) {
-            decorateName(stack, decoratedMeta, decoratedAttribute);
+            decorateName(stack, decoratedMeta);
             stack.setItemMeta(decoratedMeta);
         }
         return stack;
@@ -77,14 +79,24 @@ public class AttributeService {
         return random.nextDouble() < chance;
     }
 
-    private void decorateName(ItemStack stack, ItemMeta meta, Attribute attribute) {
+    private void decorateName(ItemStack stack, ItemMeta meta) {
+        Set<Attribute> appliedAttributes = appliedAttributes(meta);
+        if (appliedAttributes.isEmpty()) {
+            return;
+        }
+
+        Optional<String> prefix = affixConfig.prefixFor(appliedAttributes);
+        Optional<String> suffix = affixConfig.suffixFor(appliedAttributes);
+
+        if (prefix.isEmpty() && suffix.isEmpty()) {
+            return;
+        }
+
         String display = Optional.ofNullable(meta.getDisplayName()).orElse(meta.getLocalizedName());
         if (display == null || display.isEmpty()) {
             display = stack.getType().name();
         }
-        String prefix = prefixes.getOrDefault(attribute, "");
-        String suffix = suffixes.getOrDefault(attribute, "");
-        meta.setDisplayName(prefix + display + suffix);
+        meta.setDisplayName(prefix.orElse("") + display + suffix.orElse(""));
     }
 
     private Attribute randomAttribute() {
@@ -106,6 +118,21 @@ public class AttributeService {
 
     double resolveAmount(Attribute attribute, double baseAmount) {
         return attributeFacade.computeAmount(attribute, baseAmount);
+    }
+
+    private Set<Attribute> appliedAttributes(ItemMeta meta) {
+        Multimap<Attribute, AttributeModifier> modifiers = meta.getAttributeModifiers();
+        if (modifiers == null) {
+            return Set.of();
+        }
+
+        Set<Attribute> attributes = new HashSet<>();
+        for (Map.Entry<Attribute, AttributeModifier> entry : modifiers.entries()) {
+            if (entry.getValue().getAmount() != 0.0) {
+                attributes.add(entry.getKey());
+            }
+        }
+        return attributes;
     }
 
 }

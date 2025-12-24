@@ -1,30 +1,28 @@
 package com.baddcamdne.attributeitemutils.config;
 
 import org.bukkit.attribute.Attribute;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
-import java.util.EnumMap;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
 public class AttributeAffixConfig {
-    private final Map<Attribute, String> prefixes;
-    private final Map<Attribute, String> suffixes;
+    private final Map<Set<Attribute>, String> prefixes;
+    private final Map<Set<Attribute>, String> suffixes;
 
-    public AttributeAffixConfig(Map<Attribute, String> prefixes, Map<Attribute, String> suffixes) {
+    public AttributeAffixConfig(Map<Set<Attribute>, String> prefixes, Map<Set<Attribute>, String> suffixes) {
         this.prefixes = prefixes;
         this.suffixes = suffixes;
     }
 
-    public Map<Attribute, String> prefixes() {
-        return prefixes;
+    public Optional<String> prefixFor(Set<Attribute> attributes) {
+        return Optional.ofNullable(prefixes.get(attributes));
     }
 
-    public Map<Attribute, String> suffixes() {
-        return suffixes;
+    public Optional<String> suffixFor(Set<Attribute> attributes) {
+        return Optional.ofNullable(suffixes.get(attributes));
     }
 
     public static AttributeAffixConfig load(JavaPlugin plugin) {
@@ -35,23 +33,20 @@ public class AttributeAffixConfig {
 
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
         Logger logger = plugin.getLogger();
-        Map<Attribute, String> prefixes = loadSection(config.getConfigurationSection("prefixes"), logger);
-        Map<Attribute, String> suffixes = loadSection(config.getConfigurationSection("suffixes"), logger);
+        Map<Set<Attribute>, String> prefixes = loadSection(config, "prefixes", logger);
+        Map<Set<Attribute>, String> suffixes = loadSection(config, "suffixes", logger);
         return new AttributeAffixConfig(prefixes, suffixes);
     }
 
-    private static Map<Attribute, String> loadSection(ConfigurationSection section, Logger logger) {
-        Map<Attribute, String> values = new EnumMap<>(Attribute.class);
-        if (section == null) {
-            return values;
-        }
-        for (String key : section.getKeys(false)) {
-            Attribute attribute = parseAttribute(key, logger);
-            if (attribute == null) {
-                continue;
+    private static Map<Set<Attribute>, String> loadSection(YamlConfiguration config, String key, Logger logger) {
+        Map<Set<Attribute>, String> values = new LinkedHashMap<>();
+        List<Map<?, ?>> entries = config.getMapList(key);
+        for (Map<?, ?> entry : entries) {
+            Set<Attribute> attributes = parseAttributes(entry.get("attributes"), logger);
+            String value = parseValue(entry.get("value"), logger);
+            if (!attributes.isEmpty() && value != null) {
+                values.put(attributes, value);
             }
-            String value = section.getString(key, "");
-            values.put(attribute, value);
         }
         return values;
     }
@@ -63,5 +58,32 @@ public class AttributeAffixConfig {
             logger.warning("Unknown attribute in AttributeUffixes.yml: " + key);
             return null;
         }
+    }
+
+    private static Set<Attribute> parseAttributes(Object rawAttributes, Logger logger) {
+        if (!(rawAttributes instanceof List<?> attributeList)) {
+            return Set.of();
+        }
+        Set<Attribute> attributes = EnumSet.noneOf(Attribute.class);
+        for (Object value : attributeList) {
+            if (value instanceof String key) {
+                Attribute attribute = parseAttribute(key, logger);
+                if (attribute != null) {
+                    attributes.add(attribute);
+                }
+            }
+        }
+        return attributes;
+    }
+
+    private static String parseValue(Object rawValue, Logger logger) {
+        if (rawValue == null) {
+            return null;
+        }
+        if (rawValue instanceof String string) {
+            return string;
+        }
+        logger.warning("Ignoring affix with non-string value in AttributeUffixes.yml");
+        return null;
     }
 }
