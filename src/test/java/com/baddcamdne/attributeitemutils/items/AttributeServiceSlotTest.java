@@ -2,6 +2,8 @@ package com.baddcamdne.attributeitemutils.items;
 
 import com.baddcamdne.attributeitemutils.config.AttributeAffixConfig;
 import com.baddcamdne.attributeitemutils.config.AttributeConfig;
+import com.baddcamdne.attributeitemutils.config.AttributeBonus;
+import com.baddcamdne.attributeitemutils.config.AttributePoolConfig;
 import com.baddcamdne.attributeutils.AttributeFacade;
 import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
@@ -9,6 +11,7 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -20,7 +23,8 @@ class AttributeServiceSlotTest {
     void appliesAttributesUsingProvidedSlot() {
         AttributeFacade facade = mock(AttributeFacade.class);
         Random random = new StubRandom(new int[]{0}, new double[]{0.0, 1.0});
-        AttributeService service = new AttributeService(facade, new AttributeAffixConfig(Map.of(), Map.of()), random);
+        AttributePoolConfig pool = new AttributePoolConfig(List.of(new AttributeBonus(Attribute.GENERIC_MAX_HEALTH, 0.05)));
+        AttributeService service = new AttributeService(facade, new AttributeAffixConfig(Map.of(), Map.of()), pool, random);
 
         AttributeConfig config = new AttributeConfig(0.6, 0.0, 0.05, 1.0);
         ItemStack stack = new ItemStack(Material.DIAMOND_SWORD);

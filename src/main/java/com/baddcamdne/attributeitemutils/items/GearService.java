@@ -10,6 +10,7 @@ import com.baddcamdne.attributeitemutils.gear.GearSlot;
 import com.baddcamdne.attributeitemutils.gear.KitConfig;
 import com.baddcamdne.attributeitemutils.gear.WeightedItem;
 import com.baddcamdne.attributeitemutils.util.BellCurveSelector;
+import com.baddcamdne.attributeitemutils.hooks.EntityChanceHooks;
 import org.bukkit.Material;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.EntityEquipment;
@@ -27,19 +28,22 @@ public class GearService {
     private final AttributeConfigSource attributeConfigSource;
     private final EnchantmentConfigSource enchantmentConfigSource;
     private final DropChanceConfigSource dropChanceConfigSource;
+    private final EntityChanceHooks chanceHooks;
     private final BellCurveSelector selector = new BellCurveSelector();
     public GearService(GearConfigLoader loader,
                        AttributeService attributeService,
                        EnchantmentService enchantmentService,
                        AttributeConfigSource attributeConfigSource,
                        EnchantmentConfigSource enchantmentConfigSource,
-                       DropChanceConfigSource dropChanceConfigSource) {
+                       DropChanceConfigSource dropChanceConfigSource,
+                       EntityChanceHooks chanceHooks) {
         this.loader = loader;
         this.attributeService = attributeService;
         this.enchantmentService = enchantmentService;
         this.attributeConfigSource = attributeConfigSource;
         this.enchantmentConfigSource = enchantmentConfigSource;
         this.dropChanceConfigSource = dropChanceConfigSource;
+        this.chanceHooks = chanceHooks;
     }
 
     public Optional<KitConfig> getKit(String name) {
@@ -48,9 +52,12 @@ public class GearService {
 
     public void applyKit(LivingEntity entity, KitConfig kit) {
         int nights = (int) (entity.getWorld().getFullTime() / 24000L);
-        AttributeConfig attributeConfig = attributeConfigSource.configFor(entity.getType());
-        EnchantmentConfig enchantmentConfig = enchantmentConfigSource.configFor(entity.getType());
-        double dropChance = dropChanceConfigSource.dropChanceFor(entity.getType());
+        AttributeConfig attributeConfig = chanceHooks.attributeConfigFor(entity.getType())
+                .orElse(attributeConfigSource.defaultConfig());
+        EnchantmentConfig enchantmentConfig = chanceHooks.enchantmentConfigFor(entity.getType())
+                .orElse(enchantmentConfigSource.defaultConfig());
+        double dropChance = chanceHooks.dropChanceFor(entity.getType())
+                .orElse(dropChanceConfigSource.defaultChance());
         Map<EquipmentSlot, ItemStack> equipment = new EnumMap<>(EquipmentSlot.class);
         for (GearSlot slot : GearSlot.values()) {
             EquipmentSlot equipmentSlot = mapSlot(slot);

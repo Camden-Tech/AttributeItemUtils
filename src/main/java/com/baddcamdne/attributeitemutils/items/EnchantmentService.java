@@ -1,25 +1,27 @@
 package com.baddcamdne.attributeitemutils.items;
 
 import com.baddcamdne.attributeitemutils.config.EnchantmentConfig;
+import com.baddcamdne.attributeitemutils.config.EnchantmentPoolConfig;
 import com.baddcamdne.attributeutils.AttributeFacade;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
 public class EnchantmentService {
     private final AttributeFacade attributeFacade;
     private final Random random;
+    private final EnchantmentPoolConfig enchantmentPool;
 
-    public EnchantmentService(AttributeFacade attributeFacade) {
-        this(attributeFacade, new Random());
+    public EnchantmentService(AttributeFacade attributeFacade, EnchantmentPoolConfig enchantmentPool) {
+        this(attributeFacade, enchantmentPool, new Random());
     }
 
-    EnchantmentService(AttributeFacade attributeFacade, Random random) {
+    EnchantmentService(AttributeFacade attributeFacade, EnchantmentPoolConfig enchantmentPool, Random random) {
         this.attributeFacade = attributeFacade;
+        this.enchantmentPool = enchantmentPool;
         this.random = random;
     }
 
@@ -41,7 +43,8 @@ public class EnchantmentService {
     }
 
     private Enchantment randomEnchantment(ItemStack stack) {
-        List<Enchantment> valid = Arrays.stream(Enchantment.values())
+        List<Enchantment> valid = enchantmentPool.enchantments()
+                .stream()
                 .filter(e -> e.canEnchantItem(stack))
                 .toList();
         if (valid.isEmpty()) return null;

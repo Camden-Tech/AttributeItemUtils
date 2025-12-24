@@ -1,0 +1,43 @@
+attributes:
+  - attribute: GENERIC_MAX_HEALTH
+    bonus-percent: 0.05
+  - attribute: GENERIC_ARMOR
+    bonus-percent: 0.05
+  - attribute: GENERIC_ARMOR_TOUGHNESS
+    bonus-percent: 0.05
+  - attribute: GENERIC_ATTACK_DAMAGE
+    bonus-percent: 0.05
+  - attribute: GENERIC_ATTACK_SPEED
+    bonus-percent: 0.05
+  - attribute: GENERIC_ATTACK_KNOCKBACK
+    bonus-percent: 0.05
+  - attribute: GENERIC_MOVEMENT_SPEED
+    bonus-percent: 0.05
+  - attribute: GENERIC_FLYING_SPEED
+    bonus-percent: 0.05
+  - attribute: GENERIC_KNOCKBACK_RESISTANCE
+    bonus-percent: 0.05
+  - attribute: GENERIC_LUCK
+    bonus-percent: 0.05
+  - attribute: GENERIC_FOLLOW_RANGE
+    bonus-percent: 0.05
+  - attribute: GENERIC_BLOCK_INTERACTION_RANGE
+    bonus-percent: 0.05
+  - attribute: GENERIC_ENTITY_INTERACTION_RANGE
+    bonus-percent: 0.05
+  - attribute: GENERIC_MINING_EFFICIENCY
+    bonus-percent: 0.05
+  - attribute: GENERIC_MAX_ABSORPTION
+    bonus-percent: 0.05
+  - attribute: GENERIC_STEP_HEIGHT
+    bonus-percent: 0.05
+  - attribute: GENERIC_SAFE_FALL_DISTANCE
+    bonus-percent: 0.05
+  - attribute: GENERIC_SCALE
+    bonus-percent: 0.05
+  - attribute: GENERIC_JUMP_STRENGTH
+    bonus-percent: 0.05
+  - attribute: GENERIC_GRAVITY
+    bonus-percent: 0.05
+  - attribute: GENERIC_FALL_DAMAGE_MULTIPLIER
+    bonus-percent: 0.05
