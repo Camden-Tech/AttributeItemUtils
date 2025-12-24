@@ -59,7 +59,7 @@ public class GearService {
             ItemStack stack = material == Material.AIR ? null : new ItemStack(material);
             if (stack != null) {
                 stack = attributeService.applyAttributes(stack, attributeConfig, equipmentSlot, nights);
-                stack = enchantmentService.applyEnchants(stack, enchantmentConfig, nights);
+                stack = enchantmentService.applyEnchants(stack, enchantmentConfig, equipmentSlot, nights);
             }
             equipment.put(equipmentSlot, stack);
         }
