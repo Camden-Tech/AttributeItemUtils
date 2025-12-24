@@ -74,6 +74,14 @@ public class AttributeFacade {
         }
 
         Multimap<Attribute, AttributeModifier> modifiers = meta.getAttributeModifiers();
+        if (modifiers == null || modifiers.isEmpty()) {
+            Multimap<Attribute, AttributeModifier> defaults = defaultModifiers(stack, slot);
+            if (defaults != null) {
+                defaults.forEach(meta::addAttributeModifier);
+            }
+            modifiers = meta.getAttributeModifiers();
+        }
+
         definitions.keySet().forEach(attribute -> {
             if (modifiers == null) {
                 return;
@@ -91,6 +99,20 @@ public class AttributeFacade {
             }
         });
         stack.setItemMeta(meta);
+    }
+
+    private Multimap<Attribute, AttributeModifier> defaultModifiers(ItemStack stack, EquipmentSlot slot) {
+        ItemMeta vanillaMeta = new ItemStack(stack.getType()).getItemMeta();
+        if (vanillaMeta == null) {
+            return null;
+        }
+
+        Multimap<Attribute, AttributeModifier> defaultForSlot = vanillaMeta.getAttributeModifiers(slot);
+        if (defaultForSlot != null && !defaultForSlot.isEmpty()) {
+            return defaultForSlot;
+        }
+
+        return vanillaMeta.getAttributeModifiers();
     }
 
     public void mutate(ItemStack stack, Attribute attribute, double baseAmount, EquipmentSlot slot) {
