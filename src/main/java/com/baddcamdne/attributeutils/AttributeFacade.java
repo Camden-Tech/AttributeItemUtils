@@ -8,7 +8,7 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
 
 public class AttributeFacade {
@@ -18,8 +18,8 @@ public class AttributeFacade {
     private static final Attribute GENERIC_SCALE = findAttribute("GENERIC_SCALE");
     private static final Attribute GENERIC_FALL_DAMAGE_MULTIPLIER = findAttribute("GENERIC_FALL_DAMAGE_MULTIPLIER");
 
-    private final Map<Attribute, AttributeDefinition> definitions = new EnumMap<Attribute, AttributeDefinition>(Attribute.class);
-    private final Map<Attribute, AttributeBaseline> baselines = new EnumMap<Attribute, AttributeBaseline>(Attribute.class);
+    private final Map<Attribute, AttributeDefinition> definitions = new HashMap<Attribute, AttributeDefinition>();
+    private final Map<Attribute, AttributeBaseline> baselines = new HashMap<Attribute, AttributeBaseline>();
 
     public void registerDefinition(AttributeDefinition definition) {
         definitions.put(definition.attribute(), definition);
