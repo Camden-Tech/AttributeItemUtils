@@ -5,10 +5,17 @@ import com.baddcamden.attributeitemutils.gear.WeightedItem;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * Selects {@link WeightedItem} instances using a bell-curve style weighting function
+ * centered around a target value. The selector biases results toward the target while
+ * still allowing nearby weights to be selected probabilistically.
+ */
 public class BellCurveSelector {
 
+    /** Minimum width value to avoid division by zero when normalizing inputs. */
     private static final double MIN_WIDTH = 1.0e-6;
 
+    /** Random source injected for deterministic testing or pseudorandom selection. */
     private final Random random;
 
     public BellCurveSelector() {
@@ -19,6 +26,14 @@ public class BellCurveSelector {
         this.random = random;
     }
 
+    /**
+     * Chooses a weighted item by applying a bell-curve weighting relative to the target.
+     * @param options candidate items with base weights.
+     * @param targetWeight ideal weight the selector should favor.
+     * @param steepness bell-curve steepness (sigma) controlling falloff around the target.
+     * @param range maximum distance from the target where results remain eligible.
+     * @return selected weighted item, or {@code null} if no options were provided.
+     */
     public WeightedItem select(List<WeightedItem> options, double targetWeight, double steepness, double range) {
         if (options.isEmpty()) {
             return null;
@@ -33,7 +48,7 @@ public class BellCurveSelector {
             double distance = Math.abs(item.weight() - targetWeight);
             double normalized = Math.max(0, 1 - (distance / safeRange));
             double bell = Math.exp(-Math.pow(distance, 2) / (2 * safeSteepness * safeSteepness));
-            double w = normalized * bell;
+            double w = normalized * bell; //VAGUE/IMPROVEMENT NEEDED combine normalized linear falloff with bell curve without clear rationale for dual scaling
             weights[i] = Double.isFinite(w) ? w : 0;
             total += weights[i];
         }
