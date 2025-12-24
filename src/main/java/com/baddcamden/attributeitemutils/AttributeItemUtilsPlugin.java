@@ -33,16 +33,27 @@ import java.util.Optional;
 
 public class AttributeItemUtilsPlugin extends JavaPlugin {
 
+    // Coordinates kit application and item generation across the plugin.
     private GearService gearService;
+    // Delegates attribute modifier math and baseline wiring to downstream services.
     private AttributeFacade attributeFacade;
+    // Loads gear definitions and weighted item pools from disk.
     private GearConfigLoader gearConfigLoader;
+    // Configures which attributes may roll and how they scale.
     private AttributePoolConfig attributePoolConfig;
+    // Configures which enchants may roll and how they scale.
     private EnchantmentPoolConfig enchantmentPoolConfig;
+    // Applies attribute rolls and lore to generated items.
     private AttributeService attributeService;
+    // Applies enchantment rolls to generated items.
     private EnchantmentService enchantmentService;
+    // Builds lore text and separators for attribute descriptions.
     private AttributeLoreConfig attributeLoreConfig;
+    // Supplies per-entity attribute configuration overrides.
     private AttributeConfigSource attributeConfigSource;
+    // Supplies per-entity enchantment configuration overrides.
     private EnchantmentConfigSource enchantmentConfigSource;
+    // Supplies per-entity drop chance configuration overrides.
     private DropChanceConfigSource dropChanceConfigSource;
     private final EntityChanceHooks chanceHooks = new EntityChanceHooks();
 
