@@ -37,10 +37,14 @@ public class EnchantmentService {
      */
     public ItemStack applyEnchants(ItemStack stack, EnchantmentConfig config, EquipmentSlot slot, long nights) {
         if (stack == null) return null;
-        int remainingApplications = Math.max(1, enchantmentPool.enchantments().size());
+        if (config.levelBonus() <= 0) return stack;
+
+        List<Enchantment> validEnchantments = validEnchantments(stack);
+        if (validEnchantments.isEmpty()) return stack;
+
+        int remainingApplications = Math.max(1, validEnchantments.size());
         while (remainingApplications-- > 0 && roll(config, nights)) {
-            Enchantment enchantment = randomEnchantment(stack);
-            if (enchantment == null) break;
+            Enchantment enchantment = validEnchantments.get(random.nextInt(validEnchantments.size()));
             int currentLevel = stack.getEnchantmentLevel(enchantment);
             int level = currentLevel + config.levelBonus();
             if (level <= currentLevel) break;
@@ -60,15 +64,10 @@ public class EnchantmentService {
         return random.nextDouble() < effectiveChance;
     }
 
-    /**
-     * Picks a random enchantment from the pool that can be applied to the provided item stack.
-     */
-    private Enchantment randomEnchantment(ItemStack stack) {
-        List<Enchantment> valid = enchantmentPool.enchantments()
+    private List<Enchantment> validEnchantments(ItemStack stack) {
+        return enchantmentPool.enchantments()
                 .stream()
                 .filter(e -> e.canEnchantItem(stack))
                 .toList();
-        if (valid.isEmpty()) return null;
-        return valid.get(random.nextInt(valid.size()));
     }
 }

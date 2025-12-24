@@ -88,7 +88,8 @@ public class AttributeService {
     boolean roll(AttributeConfig config, long nights) {
         long clampedNights = NightCalculator.clampNights(nights);
         double chance = Math.min(config.maxChance(), config.baseChance() + (config.nightlyIncrease() * clampedNights));
-        return random.nextDouble() < chance;
+        double effectiveChance = Math.min(chance, Math.nextAfter(1.0d, 0.0d));
+        return random.nextDouble() < effectiveChance;
     }
 
     /**
@@ -159,10 +160,11 @@ public class AttributeService {
      */
     Map<Attribute, Double> collectAttributeBonuses(AttributeConfig config, long nights) {
         Map<Attribute, Double> bonuses = new LinkedHashMap<>();
-        if (!roll(config, nights)) {
+        if (attributePool.attributes().isEmpty() || !roll(config, nights)) {
             return bonuses;
         }
 
+        int remainingApplications = Math.max(1, attributePool.attributes().size());
         do {
             Optional<AttributeBonus> attributeBonus = randomAttribute();
             if (attributeBonus.isEmpty()) {
@@ -171,7 +173,7 @@ public class AttributeService {
             AttributeBonus bonus = attributeBonus.get();
             double amount = bonus.bonusPercent() == 0.0 ? config.bonusPercent() : bonus.bonusPercent();
             bonuses.merge(bonus.attribute(), amount, Double::sum);
-        } while (roll(config, nights));
+        } while (--remainingApplications > 0 && roll(config, nights));
         return bonuses;
     }
 
