@@ -1,5 +1,6 @@
 package com.baddcamdne.attributeitemutils.config;
 
+import org.bukkit.ChatColor;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -11,10 +12,12 @@ import java.util.logging.Logger;
 public class AttributeAffixConfig {
     private final List<AttributeAffix> prefixes;
     private final List<AttributeAffix> suffixes;
+    private final String defaultPrefix;
 
-    public AttributeAffixConfig(List<AttributeAffix> prefixes, List<AttributeAffix> suffixes) {
+    public AttributeAffixConfig(List<AttributeAffix> prefixes, List<AttributeAffix> suffixes, String defaultPrefix) {
         this.prefixes = prefixes;
         this.suffixes = suffixes;
+        this.defaultPrefix = defaultPrefix;
     }
 
     public PrefixSelection matchingPrefixes(Set<Attribute> attributes) {
@@ -25,11 +28,14 @@ public class AttributeAffixConfig {
 
         List<AttributeAffix> selected = new ArrayList<>();
         Set<Attribute> multiAttributeCoverage = new HashSet<>();
+        Set<Attribute> coveredAttributes = new HashSet<>();
         for (AttributeAffix affix : applicable) {
             if (affix.requirementCount() > 1) {
                 selected.add(affix);
                 multiAttributeCoverage.addAll(affix.attributes());
-            } else if (!multiAttributeCoverage.containsAll(affix.attributes())) {
+                coveredAttributes.addAll(affix.attributes());
+            } else if (!multiAttributeCoverage.containsAll(affix.attributes())
+                    && coveredAttributes.addAll(affix.attributes())) {
                 selected.add(affix);
             }
         }
@@ -68,7 +74,8 @@ public class AttributeAffixConfig {
         Logger logger = plugin.getLogger();
         List<AttributeAffix> prefixes = loadSection(config, "prefixes", logger);
         List<AttributeAffix> suffixes = loadSection(config, "suffixes", logger);
-        return new AttributeAffixConfig(prefixes, suffixes);
+        String defaultPrefix = ChatColor.translateAlternateColorCodes('&', config.getString("default-prefix", "Unique "));
+        return new AttributeAffixConfig(prefixes, suffixes, defaultPrefix);
     }
 
     private static List<AttributeAffix> loadSection(YamlConfiguration config, String key, Logger logger) {
@@ -114,10 +121,14 @@ public class AttributeAffixConfig {
             return null;
         }
         if (rawValue instanceof String string) {
-            return string;
+            return ChatColor.translateAlternateColorCodes('&', string);
         }
         logger.warning("Ignoring affix with non-string value in AttributeUffixes.yml");
         return null;
+    }
+
+    public String defaultPrefix() {
+        return defaultPrefix;
     }
 
     public record AttributeAffix(Set<Attribute> attributes, String value) {

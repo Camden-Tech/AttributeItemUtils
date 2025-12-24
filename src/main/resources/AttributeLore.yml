@@ -1,74 +1,95 @@
 formats:
-  header: "&6{name}"
-  any-slot: "&7+{amount}% {color}{name}"
-  main-hand: "&7+{amount}% {color}{name} &8(Main Hand)"
-  off-hand: "&7+{amount}% {color}{name} &8(Off Hand)"
-  other-slot: "&7+{amount}% {color}{name} &8({slot})"
+  header: "&6{color}{name}"
+  value: "&7+{amount}% {color}{name}"
+  fulfillment:
+    any-slot: "&8Applies in any slot."
+    main-hand: "&8Only when held in main hand."
+    off-hand: "&8Only when held in off hand."
+    other-slot: "&8Only when in {slot}."
   slot-names:
-    HAND: "Main Hand"
-    OFF_HAND: "Off Hand"
+    HAND: "Main hand"
+    OFF_HAND: "Off hand"
+    HEAD: "Head"
+    CHEST: "Chest"
+    LEGS: "Legs"
+    FEET: "Feet"
 
 attributes:
   MAX_HEALTH:
     name: "Max Health"
-    color: "&c"
+    color: "&x&f&f&5&5&5&5"
   ARMOR:
     name: "Armor"
-    color: "&b"
+    color: "&x&5&5&b&b&f&f"
   ARMOR_TOUGHNESS:
     name: "Armor Toughness"
-    color: "&3"
+    color: "&x&0&0&7&7&f&f"
   ATTACK_DAMAGE:
     name: "Attack Damage"
-    color: "&c"
+    color: "&x&f&f&2&f&2&f"
   ATTACK_SPEED:
     name: "Attack Speed"
-    color: "&e"
+    color: "&x&f&f&d&7&0&0"
   ATTACK_KNOCKBACK:
     name: "Attack Knockback"
-    color: "&6"
+    color: "&x&f&f&a&5&3&b"
   MOVEMENT_SPEED:
     name: "Movement Speed"
-    color: "&a"
+    color: "&x&2&8&d&7&0&0"
+  BLOCK_BREAK_SPEED:
+    name: "Block Break Speed"
+    color: "&x&2&2&8&b&2&2"
+  SNEAKING_SPEED:
+    name: "Sneaking Speed"
+    color: "&x&0&0&b&b&b&f"
+  SPRINT_SPEED:
+    name: "Sprint Speed"
+    color: "&x&0&0&e&6&f&f"
+  SWIM_SPEED:
+    name: "Swim Speed"
+    color: "&x&0&7&a&f&f&f"
   FLYING_SPEED:
     name: "Flying Speed"
-    color: "&a"
+    color: "&x&b&8&e&6&f&f"
   KNOCKBACK_RESISTANCE:
     name: "Knockback Resistance"
-    color: "&b"
+    color: "&x&c&6&b&7&f&f"
   LUCK:
     name: "Luck"
-    color: "&d"
+    color: "&x&d&5&8&b&f&f"
   FOLLOW_RANGE:
     name: "Follow Range"
-    color: "&f"
+    color: "&x&f&2&f&f&d&0"
   BLOCK_INTERACTION_RANGE:
-    name: "Block Interaction Range"
-    color: "&7"
+    name: "Block Range"
+    color: "&x&a&0&f&f&e&0"
   ENTITY_INTERACTION_RANGE:
-    name: "Entity Interaction Range"
-    color: "&7"
+    name: "Interaction Range"
+    color: "&x&8&0&f&f&b&0"
   MINING_EFFICIENCY:
     name: "Mining Efficiency"
-    color: "&e"
+    color: "&x&f&f&c&8&0&0"
   MAX_ABSORPTION:
     name: "Max Absorption"
-    color: "&c"
+    color: "&x&f&f&a&c&c&0"
   STEP_HEIGHT:
     name: "Step Height"
-    color: "&f"
+    color: "&x&f&f&f&f&8&0"
   SAFE_FALL_DISTANCE:
     name: "Safe Fall Distance"
-    color: "&f"
+    color: "&x&b&f&f&f&8&0"
   SCALE:
     name: "Scale"
-    color: "&b"
+    color: "&x&8&8&e&5&f&f"
   JUMP_STRENGTH:
     name: "Jump Strength"
-    color: "&a"
+    color: "&x&9&f&f&f&d&0"
   GRAVITY:
     name: "Gravity"
-    color: "&8"
+    color: "&x&6&6&6&6&6&6"
   FALL_DAMAGE_MULTIPLIER:
     name: "Fall Damage Multiplier"
-    color: "&8"
+    color: "&x&9&9&5&5&f&f"
+  DAMAGE_REDUCTION:
+    name: "Damage Reduction"
+    color: "&x&f&f&9&5&6&0"
