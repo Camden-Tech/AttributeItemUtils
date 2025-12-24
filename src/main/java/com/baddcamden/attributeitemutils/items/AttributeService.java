@@ -15,6 +15,7 @@ import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import com.baddcamden.attributeitemutils.util.NightCalculator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,10 +63,10 @@ public class AttributeService {
     /**
      * Applies randomly rolled attribute bonuses and related lore/decorations to the given item stack.
      */
-    public ItemStack applyAttributes(ItemStack stack, AttributeConfig config, EquipmentSlot slot, int nights) {
+    public ItemStack applyAttributes(ItemStack stack, AttributeConfig config, EquipmentSlot slot, long nights) {
         if (stack == null) return null;
         if (stack.getItemMeta() == null) return stack;
-        Map<Attribute, Double> bonuses = collectAttributeBonuses(config, nights);
+        Map<Attribute, Double> bonuses = collectAttributeBonuses(config, NightCalculator.clampNights(nights));
         if (bonuses.isEmpty()) {
             return stack;
         }
@@ -84,8 +85,9 @@ public class AttributeService {
     /**
      * Determines whether another attribute bonus should be applied based on nightly scaling chance.
      */
-    boolean roll(AttributeConfig config, int nights) {
-        double chance = Math.min(config.maxChance(), config.baseChance() + (config.nightlyIncrease() * nights));
+    boolean roll(AttributeConfig config, long nights) {
+        long clampedNights = NightCalculator.clampNights(nights);
+        double chance = Math.min(config.maxChance(), config.baseChance() + (config.nightlyIncrease() * clampedNights));
         return random.nextDouble() < chance;
     }
 
@@ -155,7 +157,7 @@ public class AttributeService {
     /**
      * Rolls for attribute bonuses until the chance fails and aggregates the resulting amounts by attribute.
      */
-    Map<Attribute, Double> collectAttributeBonuses(AttributeConfig config, int nights) {
+    Map<Attribute, Double> collectAttributeBonuses(AttributeConfig config, long nights) {
         Map<Attribute, Double> bonuses = new LinkedHashMap<>();
         if (!roll(config, nights)) {
             return bonuses;

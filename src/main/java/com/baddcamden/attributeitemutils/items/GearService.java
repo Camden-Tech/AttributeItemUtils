@@ -10,6 +10,7 @@ import com.baddcamden.attributeitemutils.gear.GearSlot;
 import com.baddcamden.attributeitemutils.gear.KitConfig;
 import com.baddcamden.attributeitemutils.gear.WeightedItem;
 import com.baddcamden.attributeitemutils.util.BellCurveSelector;
+import com.baddcamden.attributeitemutils.util.NightCalculator;
 import com.baddcamden.attributeitemutils.hooks.EntityChanceHooks;
 import org.bukkit.Material;
 import org.bukkit.entity.LivingEntity;
@@ -60,7 +61,7 @@ public class GearService {
      * Populates the given entity's equipment using the provided kit and applies attributes, enchants, and drop chances.
      */
     public void applyKit(LivingEntity entity, KitConfig kit) {
-        int nights = (int) (entity.getWorld().getFullTime() / 24000L);
+        long nights = NightCalculator.nightsFromWorldTime(entity.getWorld().getFullTime());
         AttributeConfig attributeConfig = chanceHooks.attributeConfigFor(entity.getType())
                 .orElse(attributeConfigSource.defaultConfig());
         EnchantmentConfig enchantmentConfig = chanceHooks.enchantmentConfigFor(entity.getType())
