@@ -82,11 +82,12 @@ public class AttributeFacade {
             modifiers = meta.getAttributeModifiers();
         }
 
+        final Multimap<Attribute, AttributeModifier> finalModifiers = modifiers;
         definitions.keySet().forEach(attribute -> {
-            if (modifiers == null) {
+            if (finalModifiers == null) {
                 return;
             }
-            for (AttributeModifier modifier : List.copyOf(modifiers.get(attribute))) {
+            for (AttributeModifier modifier : List.copyOf(finalModifiers.get(attribute))) {
                 if (isPluginModifier(modifier)) {
                     meta.removeAttributeModifier(attribute, modifier);
                 }
