@@ -438,19 +438,13 @@ public class EntityAttributeHandler {
             return;
         }
 
+        // "vanillaValue" represents the live attribute before AttributeUtils touches it (base + equipment modifiers).
+        // The computed pipeline already incorporates the player/entity's staged value (including caps), so the
+        // transient modifier should only add the difference between what vanilla currently has and the staged value.
         double vanillaValue = VanillaAttributeResolver.resolveVanillaValue(instance, instance.getBaseValue());
 
-        double defaultAdditive = computed.defaultPermanent() - computed.rawDefault();
-        double defaultMultiplier = resolveMultiplier(computed.defaultPermanent(), computed.defaultFinal());
-        double currentAdditive = computed.currentPermanent() - computed.rawCurrent();
-        double currentMultiplier = resolveMultiplier(computed.currentPermanent(), computed.currentFinal());
-
-        double rebuilt = computed.rawDefault() + defaultAdditive;
-        rebuilt *= defaultMultiplier;
-        rebuilt = vanillaValue + currentAdditive;
-        rebuilt *= currentMultiplier;
-
-        double delta = rebuilt - vanillaValue;
+        double stagedValue = computed.currentFinal();
+        double delta = stagedValue - vanillaValue;
         if (Math.abs(delta) < ATTRIBUTE_DELTA_EPSILON) {
             return;
         }
@@ -469,13 +463,6 @@ public class EntityAttributeHandler {
     private boolean hasModifierById(AttributeInstance instance, UUID modifierId) {
         return instance.getModifiers().stream()
                 .anyMatch(modifier -> modifier.getUniqueId().equals(modifierId));
-    }
-
-    private double resolveMultiplier(double valueBefore, double valueAfter) {
-        if (Math.abs(valueBefore) < ATTRIBUTE_DELTA_EPSILON) {
-            return 1.0d;
-        }
-        return valueAfter / valueBefore;
     }
 
     /**
