@@ -37,7 +37,12 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
         saveDefaultConfig();
         saveDefaultGearConfig();
 
-        AttributeUtilitiesPlugin attributeUtils = JavaPlugin.getPlugin(AttributeUtilitiesPlugin.class);
+        AttributeUtilitiesPlugin attributeUtils = resolveAttributeUtils();
+        if (attributeUtils == null) {
+            getLogger().severe("AttributeUtils dependency is missing or failed to load. Disabling AttributeItemUtils.");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
         attributeFacade = attributeUtils.getAttributeFacade();
         itemAttributeHandler = attributeUtils.getItemAttributeHandler();
         entityAttributeHandler = attributeUtils.getEntityAttributeHandler();
@@ -91,6 +96,15 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
 
     public GearConfigLoader getGearConfigLoader() {
         return gearConfigLoader;
+    }
+
+    private AttributeUtilitiesPlugin resolveAttributeUtils() {
+        var plugin = getServer().getPluginManager().getPlugin("AttributeUtils");
+        if (plugin instanceof AttributeUtilitiesPlugin attributeUtils) {
+            return attributeUtils;
+        }
+
+        return null;
     }
 
     private void registerCommands() {
