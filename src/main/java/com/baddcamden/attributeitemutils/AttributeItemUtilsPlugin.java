@@ -74,9 +74,9 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
     private void registerAttributeUtilities(AttributePoolConfig poolConfig) {
         for (AttributeBonus attributeBonus : poolConfig.attributes()) {
             Attribute attribute = attributeBonus.attribute();
-            AttributeDefinition definition = new AttributeDefinition(attribute, AttributeModifier.Operation.MULTIPLY_SCALAR_1, 1.0);
+            AttributeDefinition definition = new AttributeDefinition(attribute, attributeBonus.operation(), 1.0);
             attributeFacade.registerDefinition(definition);
-            attributeFacade.registerBaseline(new AttributeBaseline(attribute, 0.0));
+            attributeFacade.registerBaseline(new AttributeBaseline(attribute, attributeBonus.baseline()));
         }
     }
 
