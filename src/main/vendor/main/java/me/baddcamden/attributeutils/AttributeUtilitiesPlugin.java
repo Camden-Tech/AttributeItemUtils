@@ -366,17 +366,17 @@ public class AttributeUtilitiesPlugin extends JavaPlugin {
      */
     private VanillaAttributeSupplier createDynamicSupplier(String attributeId, Attribute attribute, double defaultBase) {
         switch (attributeId) {
-            case "armor":
+            case "armor", "generic.armor":
                 return player -> resolveArmorValue(player, attribute, defaultBase);
-            case "armor_toughness":
+            case "armor_toughness", "generic.armor_toughness":
                 return player -> resolveArmorToughnessValue(player, attribute, defaultBase);
-            case "knockback_resistance":
+            case "knockback_resistance", "generic.knockback_resistance":
                 return player -> resolveKnockbackResistanceValue(player, attribute, defaultBase);
-            case "attack_damage":
+            case "attack_damage", "generic.attack_damage":
                 return player -> resolveAttackDamage(player, attribute, defaultBase);
-            case "attack_knockback":
+            case "attack_knockback", "generic.attack_knockback":
                 return player -> resolveAttackKnockback(player, attribute, defaultBase);
-            case "attack_speed":
+            case "attack_speed", "generic.attack_speed":
                 return player -> resolveAttackSpeed(player, attribute, defaultBase);
             default:
                 return null;

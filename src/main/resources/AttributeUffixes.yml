@@ -13,15 +13,15 @@ prefixes:
     value: "Fast "
   - attributes: [SNEAKING_SPEED]
     value: "Stealthy "
-  - attributes: [SPRINT_SPEED]
+  - attributes: [MOVEMENT_EFFICIENCY]
     value: "Untiring "
-  - attributes: [ MOVEMENT_SPEED, SPRINT_SPEED, SNEAKING_SPEED, SWIMMING_SPEED, FLYING_SPEED, BLOCK_BREAK_SPEED]
+  - attributes: [ MOVEMENT_SPEED, MOVEMENT_EFFICIENCY, SNEAKING_SPEED, WATER_MOVEMENT_EFFICIENCY, FLYING_SPEED, BLOCK_BREAK_SPEED]
     value: "Speedster "
   - attributes: [ARMOR]
     value: "Hardened "
   - attributes: [ARMOR_TOUGHNESS]
     value: "Tough "
-  - attributes: [ ARMOR, ARMOR_TOUGHNESS, KNOCKBACK_RESISTANCE, DAMAGE_REDUCTION]
+  - attributes: [ ARMOR, ARMOR_TOUGHNESS, KNOCKBACK_RESISTANCE, EXPLOSION_KNOCKBACK_RESISTANCE]
     value: "Durable "
   - attributes: [LUCK]
     value: "Lucky "
@@ -35,13 +35,13 @@ prefixes:
     value: "Athletic "
   - attributes: [SAFE_FALL_DISTANCE, JUMP_STRENGTH, FALL_DAMAGE_MULTIPLIER]
     value: "Springy "
-  - attributes: [DAMAGE_REDUCTION]
+  - attributes: [EXPLOSION_KNOCKBACK_RESISTANCE]
     value: "Protecting "
 
 suffixes:
   - attributes: [KNOCKBACK_RESISTANCE, SCALE, GRAVITY]
     value: " of Obesity"
-  - attributes: [ KNOCKBACK_RESISTANCE, SCALE, GRAVITY, MAXIMUM_HEALTH, ARMOR, ARMOR_TOUGHNESS]
+  - attributes: [ KNOCKBACK_RESISTANCE, SCALE, GRAVITY, MAX_HEALTH, ARMOR, ARMOR_TOUGHNESS]
     value: " of Morbid Obesity"
   - attributes: [MAX_HEALTH]
     value: " of the Tank"
@@ -53,7 +53,7 @@ suffixes:
     value: " of the Boxer"
   - attributes: [ATTACK_SPEED]
     value: " of Dexterity"
-  - attributes: [SPRINT_SPEED]
+  - attributes: [MOVEMENT_EFFICIENCY]
     value: " of the Runner"
   - attributes: [FLYING_SPEED]
     value: " of the Bird"

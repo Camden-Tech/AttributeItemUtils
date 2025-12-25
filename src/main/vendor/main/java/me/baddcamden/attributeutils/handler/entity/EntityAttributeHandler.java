@@ -58,8 +58,8 @@ public class EntityAttributeHandler {
     /**
      * Deterministic modifier id for swim speed adjustments.
      */
-    private static final java.util.UUID SWIM_SPEED_MODIFIER_ID = java.util.UUID.nameUUIDFromBytes(
-            (VanillaAttributeResolver.ATTRIBUTEUTILS_PREFIX + "swim_speed").getBytes(StandardCharsets.UTF_8));
+    private static final java.util.UUID WATER_SPEED_MODIFIER_ID = java.util.UUID.nameUUIDFromBytes(
+            (VanillaAttributeResolver.ATTRIBUTEUTILS_PREFIX + "generic.water_movement_efficiency").getBytes(StandardCharsets.UTF_8));
     /**
      * Entry point into the attribute computation pipeline.
      */
@@ -693,7 +693,7 @@ public class EntityAttributeHandler {
      * @param player player whose flying speed should mirror the computed value
      */
     private void applyFlySpeed(Player player) {
-        AttributeValueStages stages = attributeFacade.compute("flying_speed", player);
+        AttributeValueStages stages = attributeFacade.compute("generic.flying_speed", player);
         float clamped = (float) Math.max(-1.0d, Math.min(1.0d, stages.currentFinal() / FLY_SPEED_SCALE));
         if (Math.abs(player.getFlySpeed() - clamped) > ATTRIBUTE_DELTA_EPSILON) {
             player.setFlySpeed(clamped);
@@ -714,7 +714,7 @@ public class EntityAttributeHandler {
         VanillaAttributeResolver.scrubLegacyPluginModifiers(instance);
 
         instance.getModifiers().stream()
-                .filter(modifier -> modifier.getUniqueId().equals(SWIM_SPEED_MODIFIER_ID))
+                .filter(modifier -> modifier.getUniqueId().equals(WATER_SPEED_MODIFIER_ID))
                 .findFirst()
                 .ifPresent(instance::removeModifier);
 
@@ -723,7 +723,7 @@ public class EntityAttributeHandler {
             return;
         }
 
-        double swimSpeed = attributeFacade.compute("swim_speed", player).currentFinal();
+        double swimSpeed = attributeFacade.compute("generic.water_movement_efficiency", player).currentFinal();
         if (swimSpeed <= 0) {
             return;
         }
@@ -734,8 +734,8 @@ public class EntityAttributeHandler {
         }
 
         AttributeModifier modifier = new AttributeModifier(
-                SWIM_SPEED_MODIFIER_ID,
-                VanillaAttributeResolver.ATTRIBUTEUTILS_PREFIX + "swim_speed",
+                WATER_SPEED_MODIFIER_ID,
+                VanillaAttributeResolver.ATTRIBUTEUTILS_PREFIX + "generic.water_movement_efficiency",
                 multiplier,
                 AttributeModifier.Operation.MULTIPLY_SCALAR_1
         );
