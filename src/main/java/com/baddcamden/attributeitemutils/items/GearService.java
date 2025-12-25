@@ -95,13 +95,13 @@ public class GearService {
             WeightedItem selection = selector.select(kit.items().getOrDefault(slot, java.util.List.of()), kit.targetWeight(), kit.steepness(), kit.range());
             Material material = selection == null ? Material.AIR : selection.material();
             ItemStack stack = material == Material.AIR ? null : new ItemStack(material);
-            logger.info(() -> "[GEAR] Built base item for " + equipmentSlot + " -> " + (stack == null ? "none" : stack.getType().name()));
+            logger.info("[GEAR] Built base item for " + equipmentSlot + " -> " + (stack == null ? "none" : stack.getType().name()));
             if (stack != null) {
-                logger.info(() -> "[GEAR] Pre-attribute modifiers for " + equipmentSlot + ": " + summarize(stack));
+                logger.info("[GEAR] Pre-attribute modifiers for " + equipmentSlot + ": " + summarize(stack));
                 stack = attributeService.applyAttributes(stack, attributeConfig, equipmentSlot, nights);
-                logger.info(() -> "[GEAR] After attributes " + equipmentSlot + ": " + summarize(stack));
+                logger.info("[GEAR] After attributes " + equipmentSlot + ": " + summarize(stack));
                 stack = enchantmentService.applyEnchants(stack, enchantmentConfig, equipmentSlot, nights);
-                logger.info(() -> "[GEAR] After enchants " + equipmentSlot + ": " + summarize(stack));
+                logger.info("[GEAR] After enchants " + equipmentSlot + ": " + summarize(stack));
             }
             equipment.put(equipmentSlot, stack);
         }

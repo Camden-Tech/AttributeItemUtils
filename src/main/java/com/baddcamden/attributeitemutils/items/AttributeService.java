@@ -108,7 +108,7 @@ public class AttributeService {
         decorateName(stack, meta);
         decorateLore(meta);
         stack.setItemMeta(meta);
-        logger.info(() -> "[ATTR] Completed attribute application for " + describeStack(stack, slot) + " with modifiers " +
+        logger.info("[ATTR] Completed attribute application for " + describeStack(stack, slot) + " with modifiers " +
                 summarizeModifiers(meta) + " and NBT " + serialize(stack));
         return stack;
     }
