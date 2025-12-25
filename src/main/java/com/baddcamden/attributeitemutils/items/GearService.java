@@ -21,6 +21,7 @@ import org.bukkit.inventory.ItemStack;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.logging.Logger;
 
 public class GearService {
     // Loads configured kits and weighted item selections from disk.
@@ -38,6 +39,7 @@ public class GearService {
     // Publishes hooks that may override attribute/enchant/drop settings per entity type.
     private final EntityChanceHooks chanceHooks;
     private final BellCurveSelector selector = new BellCurveSelector();
+    private final Logger logger;
     /**
      * Constructs the gear service with all supporting services and config sources used when populating entity equipment.
      */
@@ -48,6 +50,17 @@ public class GearService {
                        EnchantmentConfigSource enchantmentConfigSource,
                        DropChanceConfigSource dropChanceConfigSource,
                        EntityChanceHooks chanceHooks) {
+        this(loader, attributeService, enchantmentService, attributeConfigSource, enchantmentConfigSource, dropChanceConfigSource, chanceHooks, Logger.getLogger(GearService.class.getName()));
+    }
+
+    public GearService(GearConfigLoader loader,
+                       AttributeService attributeService,
+                       EnchantmentService enchantmentService,
+                       AttributeConfigSource attributeConfigSource,
+                       EnchantmentConfigSource enchantmentConfigSource,
+                       DropChanceConfigSource dropChanceConfigSource,
+                       EntityChanceHooks chanceHooks,
+                       Logger logger) {
         this.loader = loader;
         this.attributeService = attributeService;
         this.enchantmentService = enchantmentService;
@@ -55,6 +68,7 @@ public class GearService {
         this.enchantmentConfigSource = enchantmentConfigSource;
         this.dropChanceConfigSource = dropChanceConfigSource;
         this.chanceHooks = chanceHooks;
+        this.logger = logger;
     }
 
     /**
@@ -81,9 +95,13 @@ public class GearService {
             WeightedItem selection = selector.select(kit.items().getOrDefault(slot, java.util.List.of()), kit.targetWeight(), kit.steepness(), kit.range());
             Material material = selection == null ? Material.AIR : selection.material();
             ItemStack stack = material == Material.AIR ? null : new ItemStack(material);
+            logger.info(() -> "[GEAR] Built base item for " + equipmentSlot + " -> " + (stack == null ? "none" : stack.getType().name()));
             if (stack != null) {
+                logger.info(() -> "[GEAR] Pre-attribute modifiers for " + equipmentSlot + ": " + summarize(stack));
                 stack = attributeService.applyAttributes(stack, attributeConfig, equipmentSlot, nights);
+                logger.info(() -> "[GEAR] After attributes " + equipmentSlot + ": " + summarize(stack));
                 stack = enchantmentService.applyEnchants(stack, enchantmentConfig, equipmentSlot, nights);
+                logger.info(() -> "[GEAR] After enchants " + equipmentSlot + ": " + summarize(stack));
             }
             equipment.put(equipmentSlot, stack);
         }
@@ -125,5 +143,12 @@ public class GearService {
             case HAND -> EquipmentSlot.HAND;
             case OFF_HAND -> EquipmentSlot.OFF_HAND;
         };
+    }
+
+    private String summarize(ItemStack stack) {
+        if (stack == null) {
+            return "null";
+        }
+        return stack.serialize().toString();
     }
 }

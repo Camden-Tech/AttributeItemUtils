@@ -28,6 +28,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.logging.Logger;
 
 public class AttributeService {
     // Provides the configured prefix/suffix text that decorates attribute-heavy item names.
@@ -40,22 +41,33 @@ public class AttributeService {
     private final AttributeLoreConfig attributeLoreConfig;
     // Centralized RNG so seeded tests and production follow the same flow.
     private final Random random;
+    // Logger used for temporary debugging around attribute application.
+    private final Logger logger;
     /**
      * Creates an attribute service using the provided facade and configs with a new random number generator.
      */
     public AttributeService(AttributeFacade attributeFacade, AttributeAffixConfig affixConfig, AttributePoolConfig attributePool, AttributeLoreConfig attributeLoreConfig) {
-        this(attributeFacade, affixConfig, attributePool, attributeLoreConfig, new Random());
+        this(attributeFacade, affixConfig, attributePool, attributeLoreConfig, new Random(), Logger.getLogger(AttributeService.class.getName()));
+    }
+
+    public AttributeService(AttributeFacade attributeFacade, AttributeAffixConfig affixConfig, AttributePoolConfig attributePool, AttributeLoreConfig attributeLoreConfig, Logger logger) {
+        this(attributeFacade, affixConfig, attributePool, attributeLoreConfig, new Random(), logger);
     }
 
     /**
      * Package-private constructor primarily used for testing that allows injecting a specific {@link Random} instance.
      */
     AttributeService(AttributeFacade attributeFacade, AttributeAffixConfig affixConfig, AttributePoolConfig attributePool, AttributeLoreConfig attributeLoreConfig, Random random) {
+        this(attributeFacade, affixConfig, attributePool, attributeLoreConfig, random, Logger.getLogger(AttributeService.class.getName()));
+    }
+
+    AttributeService(AttributeFacade attributeFacade, AttributeAffixConfig affixConfig, AttributePoolConfig attributePool, AttributeLoreConfig attributeLoreConfig, Random random, Logger logger) {
         this.attributeFacade = attributeFacade;
         this.affixConfig = affixConfig;
         this.attributePool = attributePool;
         this.attributeLoreConfig = attributeLoreConfig;
         this.random = random;
+        this.logger = logger;
     }
 
     /**
@@ -77,12 +89,16 @@ public class AttributeService {
         if (meta == null) {
             return stack;
         }
+        logger.info(() -> "[ATTR] Starting attribute application for " + describeStack(stack, slot) + " at night " + nights +
+                " with base meta " + serialize(stack));
         Map<Attribute, Double> bonuses = collectAttributeBonuses(config, NightCalculator.clampNights(nights));
         if (bonuses.isEmpty()) {
+            logger.info(() -> "[ATTR] No attribute bonuses rolled for " + describeStack(stack, slot));
             return stack;
         }
-
+        logger.info(() -> "[ATTR] Rolled bonuses for " + describeStack(stack, slot) + ": " + bonuses);
         attributeFacade.refresh(stack, slot);
+        logModifiers("[ATTR] After refresh", stack.getItemMeta());
         bonuses.forEach((attribute, amount) -> attributeFacade.mutate(stack, attribute, amount, slot));
         meta = stack.getItemMeta();
         if (meta == null) {
@@ -92,6 +108,8 @@ public class AttributeService {
         decorateName(stack, meta);
         decorateLore(meta);
         stack.setItemMeta(meta);
+        logger.info(() -> "[ATTR] Completed attribute application for " + describeStack(stack, slot) + " with modifiers " +
+                summarizeModifiers(meta) + " and NBT " + serialize(stack));
         return stack;
     }
 
@@ -237,6 +255,29 @@ public class AttributeService {
         }
         lore.addAll(attributeLore);
         meta.setLore(lore);
+    }
+
+    private String describeStack(ItemStack stack, EquipmentSlot slot) {
+        return (slot == null ? "unknown" : slot.name()) + " stack " + (stack == null ? "null" : stack.getType().name());
+    }
+
+    private String summarizeModifiers(ItemMeta meta) {
+        Multimap<Attribute, AttributeModifier> modifiers = meta == null ? null : meta.getAttributeModifiers();
+        if (modifiers == null || modifiers.isEmpty()) {
+            return "[]";
+        }
+        return modifiers.entries().stream()
+                .map(entry -> entry.getKey().name() + "=" + entry.getValue().getAmount() + "@" + entry.getValue().getOperation()
+                        + " slot=" + entry.getValue().getSlot())
+                .collect(Collectors.joining(", ", "[", "]"));
+    }
+
+    private void logModifiers(String prefix, ItemMeta meta) {
+        logger.info(() -> prefix + " modifiers " + summarizeModifiers(meta));
+    }
+
+    private String serialize(ItemStack stack) {
+        return stack == null ? "null" : stack.serialize().toString();
     }
 
 }

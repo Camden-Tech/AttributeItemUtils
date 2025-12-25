@@ -65,6 +65,7 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
         saveDefaultEnchantmentPoolConfig();
 
         attributeFacade = AttributeUtilitiesPlugin.getInstance().getAttributeFacade();
+        attributeFacade.setLogger(getLogger());
         gearConfigLoader = new GearConfigLoader(this);
         reloadPluginConfigs();
         registerCommands();
@@ -107,9 +108,9 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
         attributeLoreConfig = AttributeLoreConfig.load(this, getLogger());
 
         registerAttributeUtilities(attributePoolConfig);
-        attributeService = new AttributeService(attributeFacade, attributeAffixConfig, attributePoolConfig, attributeLoreConfig);
+        attributeService = new AttributeService(attributeFacade, attributeAffixConfig, attributePoolConfig, attributeLoreConfig, getLogger());
         enchantmentService = new EnchantmentService(attributeFacade, enchantmentPoolConfig);
-        gearService = new GearService(gearConfigLoader, attributeService, enchantmentService, attributeConfigSource, enchantmentConfigSource, dropChanceConfigSource, chanceHooks);
+        gearService = new GearService(gearConfigLoader, attributeService, enchantmentService, attributeConfigSource, enchantmentConfigSource, dropChanceConfigSource, chanceHooks, getLogger());
     }
 
     private void saveDefaultGearConfig() {

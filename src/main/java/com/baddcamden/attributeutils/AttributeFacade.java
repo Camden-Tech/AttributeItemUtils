@@ -13,6 +13,7 @@ import com.google.common.collect.Multimap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 public class AttributeFacade {
     private static final String GENERIC_SCALE_KEY = "generic.scale";
@@ -24,6 +25,11 @@ public class AttributeFacade {
     private final Map<Attribute, AttributeDefinition> definitions = new HashMap<Attribute, AttributeDefinition>();
     private final Map<Attribute, AttributeBaseline> baselines = new HashMap<Attribute, AttributeBaseline>();
     private static final String ATTRIBUTEUTILS_PREFIX = "attributeutils:";
+    private Logger logger = Logger.getLogger(AttributeFacade.class.getName());
+
+    public void setLogger(Logger logger) {
+        this.logger = logger;
+    }
 
     public void registerDefinition(AttributeDefinition definition) {
         definitions.put(definition.attribute(), definition);
@@ -76,6 +82,7 @@ public class AttributeFacade {
 
         Multimap<Attribute, AttributeModifier> defaults = defaultModifiers(stack, slot);
         Multimap<Attribute, AttributeModifier> modifiers = meta.getAttributeModifiers();
+        logger.info(() -> "[ATTR] Refreshing modifiers for " + stack.getType() + " slot=" + slot + " existing=" + summarize(modifiers));
         if (modifiers == null || modifiers.isEmpty()) {
             if (defaults != null) {
                 defaults.forEach(meta::addAttributeModifier);
@@ -90,6 +97,7 @@ public class AttributeFacade {
             }
             for (AttributeModifier modifier : List.copyOf(initialModifiers.get(attribute))) {
                 if (isPluginModifier(modifier)) {
+                    logger.info(() -> "[ATTR] Removing plugin modifier " + modifier + " for attribute " + attribute);
                     meta.removeAttributeModifier(attribute, modifier);
                 }
             }
@@ -110,6 +118,7 @@ public class AttributeFacade {
                 meta.addAttributeModifier(attribute, baseline.asModifier(definition, slot));
             }
         });
+        logger.info(() -> "[ATTR] Final modifiers after refresh for " + stack.getType() + " slot=" + slot + " -> " + summarize(meta.getAttributeModifiers()));
         stack.setItemMeta(meta);
     }
 
@@ -157,6 +166,8 @@ public class AttributeFacade {
         AttributeModifier modifier = definition.newModifier(computeAmount(attribute, baseAmount), slot);
         meta.addAttributeModifier(attribute, modifier);
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+        logger.info(() -> "[ATTR] Applied modifier " + modifier + " to " + stack.getType() + " for attribute " + attribute +
+                " resulting modifiers=" + summarize(meta.getAttributeModifiers()));
         stack.setItemMeta(meta);
     }
 
@@ -179,6 +190,16 @@ public class AttributeFacade {
             }
         }
         return false;
+    }
+
+    private String summarize(Multimap<Attribute, AttributeModifier> modifiers) {
+        if (modifiers == null || modifiers.isEmpty()) {
+            return "[]";
+        }
+        return modifiers.entries().stream()
+                .map(entry -> entry.getKey().name() + "=" + entry.getValue().getAmount() + "@" + entry.getValue().getOperation() +
+                        " slot=" + entry.getValue().getSlot())
+                .collect(java.util.stream.Collectors.joining(", ", "[", "]"));
     }
 
     public void applyEnchant(ItemStack stack, Enchantment enchantment, int level) {
