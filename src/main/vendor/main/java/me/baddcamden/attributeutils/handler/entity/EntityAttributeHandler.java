@@ -440,16 +440,7 @@ public class EntityAttributeHandler {
 
         double vanillaValue = VanillaAttributeResolver.resolveVanillaValue(instance, instance.getBaseValue());
 
-        double defaultAdditive = computed.defaultPermanent() - computed.rawDefault();
-        double defaultMultiplier = resolveMultiplier(computed.defaultPermanent(), computed.defaultFinal());
-        double currentAdditive = computed.currentPermanent() - computed.rawCurrent();
-        double currentMultiplier = resolveMultiplier(computed.currentPermanent(), computed.currentFinal());
-
-        double rebuilt = computed.rawDefault() + defaultAdditive;
-        rebuilt *= defaultMultiplier;
-        rebuilt = vanillaValue + currentAdditive;
-        rebuilt *= currentMultiplier;
-
+        double rebuilt = computed.currentFinal();
         double delta = rebuilt - vanillaValue;
         if (Math.abs(delta) < ATTRIBUTE_DELTA_EPSILON) {
             return;
@@ -469,13 +460,6 @@ public class EntityAttributeHandler {
     private boolean hasModifierById(AttributeInstance instance, UUID modifierId) {
         return instance.getModifiers().stream()
                 .anyMatch(modifier -> modifier.getUniqueId().equals(modifierId));
-    }
-
-    private double resolveMultiplier(double valueBefore, double valueAfter) {
-        if (Math.abs(valueBefore) < ATTRIBUTE_DELTA_EPSILON) {
-            return 1.0d;
-        }
-        return valueAfter / valueBefore;
     }
 
     /**
