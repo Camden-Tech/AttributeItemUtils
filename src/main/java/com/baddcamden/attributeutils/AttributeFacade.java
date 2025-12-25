@@ -83,12 +83,12 @@ public class AttributeFacade {
             modifiers = meta.getAttributeModifiers();
         }
 
-        Multimap<Attribute, AttributeModifier> finalModifiers = modifiers;
+        Multimap<Attribute, AttributeModifier> initialModifiers = modifiers;
         definitions.keySet().forEach(attribute -> {
-            if (finalModifiers == null) {
+            if (initialModifiers == null) {
                 return;
             }
-            for (AttributeModifier modifier : List.copyOf(finalModifiers.get(attribute))) {
+            for (AttributeModifier modifier : List.copyOf(initialModifiers.get(attribute))) {
                 if (isPluginModifier(modifier)) {
                     meta.removeAttributeModifier(attribute, modifier);
                 }
@@ -96,7 +96,7 @@ public class AttributeFacade {
         });
 
         // Ensure vanilla baselines are reattached even when only plugin-authored modifiers are present.
-        finalModifiers = meta.getAttributeModifiers();
+        Multimap<Attribute, AttributeModifier> finalModifiers = meta.getAttributeModifiers();
         if (defaults != null) {
             defaults.forEach((attribute, modifier) -> {
                 if (finalModifiers == null || !hasNonPluginModifier(finalModifiers.get(attribute))) {
