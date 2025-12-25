@@ -120,6 +120,53 @@ class AttributeServiceIntegrationTest {
         assertThat(pluginModifiers).isEqualTo(1);
     }
 
+    @Test
+    void restoresVanillaWhenOnlyPluginModifiersExist() {
+        AttributeFacade attributeFacade = new AttributeFacade();
+        attributeFacade.registerDefinition(new AttributeDefinition(Attribute.GENERIC_ATTACK_DAMAGE, AttributeModifier.Operation.ADD_NUMBER, Double.NaN));
+        attributeFacade.registerDefinition(new AttributeDefinition(Attribute.GENERIC_ATTACK_SPEED, AttributeModifier.Operation.ADD_NUMBER, Double.NaN));
+
+        AttributeService attributeService = new AttributeService(
+                attributeFacade,
+                emptyAffixConfig(),
+                new AttributePoolConfig(List.of(
+                        new AttributeBonus(Attribute.GENERIC_ATTACK_DAMAGE, 0.1, AttributeModifier.Operation.ADD_NUMBER, 0.0),
+                        new AttributeBonus(Attribute.GENERIC_ATTACK_SPEED, 0.1, AttributeModifier.Operation.ADD_NUMBER, 0.0)
+                )),
+                emptyLoreConfig(),
+                new FixedRandom()
+        );
+
+        ItemStack stack = new ItemStack(Material.NETHERITE_SWORD);
+        EquipmentSlot slot = EquipmentSlot.HAND;
+
+        // Strip vanilla modifiers and replace them with legacy plugin-authored ones to mimic migrated items.
+        ItemMeta meta = stack.getItemMeta();
+        if (meta != null) {
+            Multimap<Attribute, AttributeModifier> modifiers = meta.getAttributeModifiers();
+            if (modifiers != null) {
+                modifiers.forEach(meta::removeAttributeModifier);
+            }
+            meta.addAttributeModifier(Attribute.GENERIC_ATTACK_DAMAGE, new AttributeModifier(
+                    java.util.UUID.randomUUID(),
+                    "attributeutils:attack_damage",
+                    1.0,
+                    AttributeModifier.Operation.ADD_NUMBER,
+                    slot));
+            stack.setItemMeta(meta);
+        }
+
+        Set<ModifierSignature> defaultModifiers = vanillaDefaults(Material.NETHERITE_SWORD, slot);
+        attributeService.applyAttributes(stack, guaranteedRolls(), slot, 0);
+
+        Multimap<Attribute, AttributeModifier> applied = modifiersForSlot(stack, slot);
+        Set<ModifierSignature> resulting = signatures(applied);
+
+        assertThat(resulting)
+                .as("Vanilla sword defaults are restored even when legacy plugin modifiers existed")
+                .containsAll(defaultModifiers);
+    }
+
     private AttributeLoreConfig emptyLoreConfig() {
         return new AttributeLoreConfig(Map.of(), "{name}", "{amount}", "", "", "", "", Map.of());
     }

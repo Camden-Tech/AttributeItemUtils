@@ -23,6 +23,7 @@ public class AttributeFacade {
 
     private final Map<Attribute, AttributeDefinition> definitions = new HashMap<Attribute, AttributeDefinition>();
     private final Map<Attribute, AttributeBaseline> baselines = new HashMap<Attribute, AttributeBaseline>();
+    private static final String ATTRIBUTEUTILS_PREFIX = "attributeutils:";
 
     public void registerDefinition(AttributeDefinition definition) {
         definitions.put(definition.attribute(), definition);
@@ -73,16 +74,16 @@ public class AttributeFacade {
             return;
         }
 
+        Multimap<Attribute, AttributeModifier> defaults = defaultModifiers(stack, slot);
         Multimap<Attribute, AttributeModifier> modifiers = meta.getAttributeModifiers();
         if (modifiers == null || modifiers.isEmpty()) {
-            Multimap<Attribute, AttributeModifier> defaults = defaultModifiers(stack, slot);
             if (defaults != null) {
                 defaults.forEach(meta::addAttributeModifier);
             }
             modifiers = meta.getAttributeModifiers();
         }
 
-        final Multimap<Attribute, AttributeModifier> finalModifiers = modifiers;
+        Multimap<Attribute, AttributeModifier> finalModifiers = modifiers;
         definitions.keySet().forEach(attribute -> {
             if (finalModifiers == null) {
                 return;
@@ -93,6 +94,16 @@ public class AttributeFacade {
                 }
             }
         });
+
+        // Ensure vanilla baselines are reattached even when only plugin-authored modifiers are present.
+        finalModifiers = meta.getAttributeModifiers();
+        if (defaults != null) {
+            defaults.forEach((attribute, modifier) -> {
+                if (finalModifiers == null || !hasNonPluginModifier(finalModifiers.get(attribute))) {
+                    meta.addAttributeModifier(attribute, modifier);
+                }
+            });
+        }
         baselines.forEach((attribute, baseline) -> {
             AttributeDefinition definition = definitions.get(attribute);
             if (definition != null) {
@@ -135,7 +146,23 @@ public class AttributeFacade {
 
     private boolean isPluginModifier(AttributeModifier modifier) {
         String name = modifier.getName();
-        return name != null && name.startsWith("attributeitemutils:");
+        if (name == null) {
+            return false;
+        }
+        String normalized = name.toLowerCase();
+        return normalized.startsWith("attributeitemutils:") || normalized.startsWith(ATTRIBUTEUTILS_PREFIX);
+    }
+
+    private boolean hasNonPluginModifier(Iterable<AttributeModifier> modifiers) {
+        if (modifiers == null) {
+            return false;
+        }
+        for (AttributeModifier modifier : modifiers) {
+            if (!isPluginModifier(modifier)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void applyEnchant(ItemStack stack, Enchantment enchantment, int level) {
