@@ -163,6 +163,31 @@ public class AttributeFacade {
             return;
         }
 
+        Multimap<Attribute, AttributeModifier> defaults = defaultModifiers(stack, slot);
+        Multimap<Attribute, AttributeModifier> existing = meta.getAttributeModifiers();
+
+        // Ensure vanilla attributes stick around before we apply plugin modifiers, mirroring the merge
+        // patterns recommended by the community to avoid NBT replacement wiping AttributeModifiers.
+        if (defaults != null) {
+            defaults.forEach((vanillaAttribute, modifier) -> {
+                Iterable<AttributeModifier> current = existing == null ? null : existing.get(vanillaAttribute);
+                if (!hasNonPluginModifier(current)) {
+                    meta.addAttributeModifier(vanillaAttribute, modifier);
+                }
+            });
+        }
+
+        // Remove any previously-applied plugin modifiers for the same attribute/slot so the deterministic
+        // UUIDs we generate do not collide and cause vanilla modifiers to be dropped.
+        existing = meta.getAttributeModifiers();
+        if (existing != null) {
+            for (AttributeModifier modifier : List.copyOf(existing.get(attribute))) {
+                if (isPluginModifier(modifier) && (slot == null || modifier.getSlot() == null || modifier.getSlot() == slot)) {
+                    meta.removeAttributeModifier(attribute, modifier);
+                }
+            }
+        }
+
         AttributeModifier modifier = definition.newModifier(computeAmount(attribute, baseAmount), slot);
         meta.addAttributeModifier(attribute, modifier);
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);

@@ -76,6 +76,15 @@ public final class AttributeDefinition {
      */
     public AttributeModifier newModifier(double amount, EquipmentSlot slot) {
         double bounded = applyCap(amount);
-        return new AttributeModifier(UUID.randomUUID(), name(), bounded, operation, slot);
+        return new AttributeModifier(stableId(slot), name(), bounded, operation, slot);
+    }
+
+    /**
+     * Generates a deterministic UUID so repeated applications for the same attribute/slot combination
+     * merge cleanly instead of creating duplicate entries or wiping other modifiers that collide.
+     */
+    private UUID stableId(EquipmentSlot slot) {
+        String slotKey = slot == null ? "any" : slot.name().toLowerCase();
+        return UUID.nameUUIDFromBytes((attribute.getKey().toString() + "|" + operation + "|" + slotKey).getBytes());
     }
 }
