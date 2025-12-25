@@ -438,10 +438,13 @@ public class EntityAttributeHandler {
             return;
         }
 
+        // "vanillaValue" represents the live attribute before AttributeUtils touches it (base + equipment modifiers).
+        // The computed pipeline already incorporates the player/entity's staged value (including caps), so the
+        // transient modifier should only add the difference between what vanilla currently has and the staged value.
         double vanillaValue = VanillaAttributeResolver.resolveVanillaValue(instance, instance.getBaseValue());
 
-        double rebuilt = computed.currentFinal();
-        double delta = rebuilt - vanillaValue;
+        double stagedValue = computed.currentFinal();
+        double delta = stagedValue - vanillaValue;
         if (Math.abs(delta) < ATTRIBUTE_DELTA_EPSILON) {
             return;
         }
