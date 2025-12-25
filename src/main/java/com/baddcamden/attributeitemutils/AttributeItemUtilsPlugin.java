@@ -99,9 +99,28 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
     }
 
     private AttributeUtilitiesPlugin resolveAttributeUtils() {
-        var plugin = getServer().getPluginManager().getPlugin("AttributeUtils");
-        if (plugin instanceof AttributeUtilitiesPlugin attributeUtils) {
-            return attributeUtils;
+        var pluginManager = getServer().getPluginManager();
+
+        // Prefer a name lookup so we do not rely on classloader equality when plugins are reloaded.
+        for (String candidate : new String[]{"AttributeUtils", "AttributeUtilities"}) {
+            var plugin = pluginManager.getPlugin(candidate);
+            if (plugin instanceof AttributeUtilitiesPlugin attributeUtils) {
+                if (!plugin.isEnabled()) {
+                    getLogger().severe(candidate + " is installed but not enabled.");
+                    return null;
+                }
+                return attributeUtils;
+            }
+        }
+
+        // Fallback to Bukkit's class-based lookup in case the dependency was renamed but uses the same API.
+        try {
+            AttributeUtilitiesPlugin attributeUtils = JavaPlugin.getPlugin(AttributeUtilitiesPlugin.class);
+            if (attributeUtils != null && attributeUtils.isEnabled()) {
+                return attributeUtils;
+            }
+        } catch (IllegalStateException | ClassCastException ignored) {
+            // Bukkit may throw if the plugin has not finished loading or if a classloader mismatch occurs.
         }
 
         return null;
