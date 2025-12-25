@@ -26,6 +26,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -163,11 +164,16 @@ public class GearService {
         int clampedNights = (int) Math.max(0, Math.min(nights, Integer.MAX_VALUE));
         int rollCount = Math.max(1, Math.min(3, 1 + clampedNights % 3));
         String criterion = criterionForSlot(slot);
-        return random.ints(rollCount, 0, definitions.size())
+
+        Map<String, AggregatedRoll> aggregatedRolls = new LinkedHashMap<>();
+        random.ints(rollCount, 0, definitions.size())
                 .mapToObj(definitions::get)
-                .map(definition -> new AttributeRoll(
-                        definition,
-                        new CommandParsingUtils.AttributeDefinition(resolveKey(definition.id()), randomAmount(), null, criterion)))
+                .forEach(definition -> aggregatedRolls
+                        .computeIfAbsent(definition.id(), ignored -> new AggregatedRoll(definition))
+                        .addAmount(randomAmount()));
+
+        return aggregatedRolls.values().stream()
+                .map(roll -> roll.toAttributeRoll(resolveKey(roll.definition().id()), criterion))
                 .collect(Collectors.toList());
     }
 
@@ -223,6 +229,27 @@ public class GearService {
                 .filter(segment -> !segment.isBlank())
                 .map(segment -> Character.toUpperCase(segment.charAt(0)) + segment.substring(1))
                 .collect(Collectors.joining(" "));
+    }
+
+    private static class AggregatedRoll {
+        private final AttributeDefinition definition;
+        private double amount = 0d;
+
+        private AggregatedRoll(AttributeDefinition definition) {
+            this.definition = definition;
+        }
+
+        private void addAmount(double additionalAmount) {
+            amount += additionalAmount;
+        }
+
+        private AttributeDefinition definition() {
+            return definition;
+        }
+
+        private AttributeRoll toAttributeRoll(CommandParsingUtils.NamespacedAttributeKey key, String criterion) {
+            return new AttributeRoll(definition, new CommandParsingUtils.AttributeDefinition(key, amount, null, criterion));
+        }
     }
 
     private record AttributeRoll(AttributeDefinition attributeDefinition, CommandParsingUtils.AttributeDefinition parsedDefinition) {
