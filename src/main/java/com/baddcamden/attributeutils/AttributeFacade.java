@@ -82,7 +82,7 @@ public class AttributeFacade {
 
         Multimap<Attribute, AttributeModifier> defaults = defaultModifiers(stack, slot);
         Multimap<Attribute, AttributeModifier> modifiers = meta.getAttributeModifiers();
-        logger.info(() -> "[ATTR] Refreshing modifiers for " + stack.getType() + " slot=" + slot + " existing=" + summarize(modifiers));
+        logger.info("[ATTR] Refreshing modifiers for " + stack.getType() + " slot=" + slot + " existing=" + summarize(modifiers));
         if (modifiers == null || modifiers.isEmpty()) {
             if (defaults != null) {
                 defaults.forEach(meta::addAttributeModifier);
@@ -97,7 +97,7 @@ public class AttributeFacade {
             }
             for (AttributeModifier modifier : List.copyOf(initialModifiers.get(attribute))) {
                 if (isPluginModifier(modifier)) {
-                    logger.info(() -> "[ATTR] Removing plugin modifier " + modifier + " for attribute " + attribute);
+                    logger.info("[ATTR] Removing plugin modifier " + modifier + " for attribute " + attribute);
                     meta.removeAttributeModifier(attribute, modifier);
                 }
             }
@@ -165,12 +165,13 @@ public class AttributeFacade {
 
         Multimap<Attribute, AttributeModifier> defaults = defaultModifiers(stack, slot);
         Multimap<Attribute, AttributeModifier> existing = meta.getAttributeModifiers();
+        final Multimap<Attribute, AttributeModifier> existingBefore = existing;
 
         // Ensure vanilla attributes stick around before we apply plugin modifiers, mirroring the merge
         // patterns recommended by the community to avoid NBT replacement wiping AttributeModifiers.
         if (defaults != null) {
             defaults.forEach((vanillaAttribute, modifier) -> {
-                Iterable<AttributeModifier> current = existing == null ? null : existing.get(vanillaAttribute);
+                Iterable<AttributeModifier> current = existingBefore == null ? null : existingBefore.get(vanillaAttribute);
                 if (!hasNonPluginModifier(current)) {
                     meta.addAttributeModifier(vanillaAttribute, modifier);
                 }
@@ -191,7 +192,7 @@ public class AttributeFacade {
         AttributeModifier modifier = definition.newModifier(computeAmount(attribute, baseAmount), slot);
         meta.addAttributeModifier(attribute, modifier);
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-        logger.info(() -> "[ATTR] Applied modifier " + modifier + " to " + stack.getType() + " for attribute " + attribute +
+        logger.info("[ATTR] Applied modifier " + modifier + " to " + stack.getType() + " for attribute " + attribute +
                 " resulting modifiers=" + summarize(meta.getAttributeModifiers()));
         stack.setItemMeta(meta);
     }
