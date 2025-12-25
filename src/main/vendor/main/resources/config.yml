@@ -1,0 +1,208 @@
+# Default attribute utility configuration
+
+# Vanilla attribute defaults
+# Each entry seeds both the global and player baselines for the built-in
+# attributes listed below. Values are mirrored to base/current by default;
+# per-stage customization can be added later if needed. Vanilla dynamic
+# attributes are limited to attack-damage, attack-speed, attack-knockback,
+# armor, armor-toughness, and knockback-resistance; the rest sync their
+# current baseline from the static default baseline.
+vanilla-attribute-defaults:
+  max-health:
+    bukkit-attributes: [MAX_HEALTH, GENERIC_MAX_HEALTH]
+    default-base: 20
+  follow-range:
+    bukkit-attributes: [FOLLOW_RANGE, GENERIC_FOLLOW_RANGE]
+    default-base: 32
+  attack-damage:
+    bukkit-attributes: [ATTACK_DAMAGE, GENERIC_ATTACK_DAMAGE]
+    default-base: 1
+  attack-knockback:
+    bukkit-attributes: [ATTACK_KNOCKBACK, GENERIC_ATTACK_KNOCKBACK]
+    default-base: 0
+  attack-speed:
+    bukkit-attributes: [ATTACK_SPEED, GENERIC_ATTACK_SPEED]
+    default-base: 4
+  movement-speed:
+    bukkit-attributes: [MOVEMENT_SPEED, GENERIC_MOVEMENT_SPEED]
+    default-base: 0.1
+  flying-speed:
+    bukkit-attributes: [FLYING_SPEED, GENERIC_FLYING_SPEED]
+    default-base: 0.4
+  armor:
+    bukkit-attributes: [ARMOR, GENERIC_ARMOR]
+    default-base: 0
+  armor-toughness:
+    bukkit-attributes: [ARMOR_TOUGHNESS, GENERIC_ARMOR_TOUGHNESS]
+    default-base: 0
+  luck:
+    bukkit-attributes: [LUCK, GENERIC_LUCK]
+    default-base: 0
+  knockback-resistance:
+    bukkit-attributes: [KNOCKBACK_RESISTANCE, GENERIC_KNOCKBACK_RESISTANCE]
+    default-base: 0
+  block-range:
+    bukkit-attributes: [BLOCK_INTERACTION_RANGE, PLAYER_BLOCK_INTERACTION_RANGE]
+    default-base: 5
+  interaction-range:
+    bukkit-attributes: [ENTITY_INTERACTION_RANGE, PLAYER_ENTITY_INTERACTION_RANGE]
+    default-base: 3
+  block-break-speed:
+    bukkit-attributes: [BLOCK_BREAK_SPEED, PLAYER_BLOCK_BREAK_SPEED]
+    default-base: 1
+  mining-efficiency:
+    bukkit-attributes: [MINING_EFFICIENCY, PLAYER_MINING_EFFICIENCY]
+    default-base: 1
+  gravity:
+    bukkit-attributes: [GRAVITY, GENERIC_GRAVITY]
+    default-base: 1
+  scale:
+    bukkit-attributes: [SCALE, GENERIC_SCALE]
+    default-base: 1
+  step-height:
+    bukkit-attributes: [STEP_HEIGHT, GENERIC_STEP_HEIGHT]
+    default-base: 0.6
+  safe-fall-distance:
+    bukkit-attributes: [SAFE_FALL_DISTANCE, GENERIC_SAFE_FALL_DISTANCE]
+    default-base: 3
+  fall-damage-multiplier:
+    bukkit-attributes: [FALL_DAMAGE_MULTIPLIER, GENERIC_FALL_DAMAGE_MULTIPLIER]
+    default-base: 1
+  jump-strength:
+    bukkit-attributes: [JUMP_STRENGTH, GENERIC_JUMP_STRENGTH]
+    default-base: 1
+  sneaking-speed:
+    bukkit-attributes: [SNEAKING_SPEED, PLAYER_SNEAKING_SPEED]
+    default-base: 1
+  sprint-speed:
+    # Bukkit 1.21.10 exposes no sprint-specific attribute; use a static baseline to avoid
+    # warning spam while retaining configurable defaults.
+    provider: static
+    default-base: 1
+  swim-speed:
+    # Bukkit 1.21.10 exposes no swim-specific attribute; use a static baseline to avoid
+    # warning spam while retaining configurable defaults.
+    provider: static
+    default-base: 1
+  damage-reduction:
+    provider: static
+    default-base: 0
+
+# Global caps for core attributes
+# Caps can be supplied as a scalar (max only) or a section with `min`,
+# `max`, and optional `overrides:` map entries for keyed caps.
+global-attribute-caps:
+  max-health: 100
+  follow-range: 256
+  attack-damage: 100
+  attack-knockback: 10
+  attack-speed: 40
+  movement-speed: 1
+  flying-speed: 1
+  armor: 40
+  armor-toughness: 20
+  luck: 1024
+  knockback-resistance: 1
+  block-range: 128
+  interaction-range: 64
+  block-break-speed: 1024
+  mining-efficiency: 1024
+  gravity: 10
+  scale: 10
+  step-height: 5
+  safe-fall-distance: 256
+  fall-damage-multiplier: 10
+  jump-strength: 5
+  sneaking-speed: 4
+  sprint-speed: 4
+  swim-speed: 4
+  damage-reduction: 1
+
+# Sample custom attributes
+custom-attribute-defaults:
+  example.maxmana:
+    display: "Max Mana"
+    default-base: 100
+    default-current: 100
+    dynamic: false
+    min: 0
+    max: 250
+
+# Custom attribute loading
+load-custom-attributes-from-folder: true
+custom-attributes-folder: custom-attributes
+
+entity-command:
+  disallowed-entities:
+    - PLAYER
+
+messages:
+  shared:
+    attribute-key-format: "&cAttribute keys must use alphanumeric plugin and name segments (e.g. example max_health)."
+    attribute-key-segments: "&cAttribute keys must include both a plugin and name segment."
+    invalid-numeric: "&cInvalid {label}: '{value}'. Provide a numeric value."
+    cap-format: "&cCap overrides must be provided as cap=<value>."
+    cap-nonnegative: "&cCap overrides must be zero or positive."
+    criteria-missing: "&cCriteria must specify a trigger such as held, inventory, or equipped."
+    criteria-invalid: "&cInvalid criteria '{criteria}'. Allowed: {allowed}"
+    operation-invalid: "&cOperation must be ADD or MULTIPLY, not '{value}'."
+    scope-invalid: "&cScope must be default, current, or both."
+    definition-missing: "&cProvide attribute definitions as <plugin> <name> <value> [cap=<cap> criteria=<criteria>]."
+    definition-missing-value: "&cAttribute definitions must include a numeric value after the key."
+    unknown-attribute: "&cUnknown attribute '{attribute}'."
+    negative-value: "&cAttribute values must be zero or positive."
+  attribute-command:
+    reload-no-permission: "&cYou do not have permission to reload attributes."
+    reload-success: "&aAttribute configuration reloaded."
+    invalid-sender: "&eAttributes are player-focused; use in-game for details."
+    header: "&bRegistered attributes:"
+  global-command:
+    no-permission: "&cYou do not have permission to edit global attribute defaults or caps."
+    usage: "&eUsage: /{label} <default|cap|modifier> ..."
+    usage-value: "&eUsage: /{label} {action} <plugin> <name> <value> (sets global {layer})"
+    usage-cap: "&eUsage: /{label} cap <plugin> <name> <capValue>"
+    unknown-attribute: "&cUnknown attribute: {attribute}"
+    negative-base: "&cBase values must be at least {minimum}."
+    cap-below-min: "&cCaps cannot be below the global minimum of {minimum}."
+    updated: "&aGlobal {layer} for {attribute} set to {value}."
+    cap-updated: "&aCap override for {attribute} set to {value}."
+    unknown-action: "&eUsage: /{label} <default|cap|modifier> ..."
+    modifier:
+      usage: "&eUsage: /{label} modifier <add|remove> ..."
+      usage-add: "&eUsage: /{label} modifier add <plugin> <name> <modifierKey> <add|multiply> <amount> [temporary|permanent] [durationSeconds] [scope=default|current|both] [multipliers=key1,key2]"
+      usage-remove: "&eUsage: /{label} modifier remove <plugin> <name> <modifierKey>"
+      unknown-action: "&cUnknown action '{action}'. Use add or remove."
+      unexpected-argument: "&cUnexpected argument '{argument}'."
+      positive-duration: "&cDuration must be greater than zero when provided."
+      permanent-duration: "&cPermanent modifiers cannot include a duration."
+      negative-amount: "&cModifier amounts must be zero or positive."
+      unknown-attribute: "&cUnknown attribute '{attribute}'."
+      missing-modifier: "&cNo modifier {modifier} set for {attribute}."
+      added: "&aApplied a {amount} {operation} modifier ({modifier}) to {attribute} ({duration})."
+      removed: "&aRemoved modifier {modifier} for {attribute}."
+  item-command:
+    no-permission: "&cYou do not have permission to generate attribute items."
+    usage: "&eUsage: /{label} <player> <material> <plugin> <name> <value> [cap=<cap> criteria=<criteria> ...]"
+    player-offline: "&cPlayer '{player}' is not online."
+    invalid-material: "&cUnknown material '{material}'."
+    unsupported-material: "&cThat material cannot hold attribute data."
+    unknown-attribute: "&cUnknown attribute '{attribute}'."
+    item-given: "&aGave {player} a {material} with attributes: {attributes}."
+    item-dropped: "&e{player}'s inventory was full; dropped a {material} with attributes: {attributes} at their feet."
+  entity-command:
+    no-permission: "&cYou do not have permission to spawn attributed entities."
+    invalid-sender: "&cOnly players can spawn attributed entities."
+    usage: "&eUsage: /{label} <entityType> <plugin> <name> <value> [cap=<cap> ...]"
+    invalid-entity: "&cUnknown entity type '{entity}'."
+    disallowed-entity: "&cThat entity type cannot be spawned with attributes."
+    missing-world: "&cCould not resolve your world to spawn the entity."
+    unknown-attribute: "&cUnknown attribute '{attribute}'."
+    spawn-failed: "&cAn error occurred while spawning the entity."
+    spawned: "&aSpawned {entity} with attributes: {attributes}."
+  test-horde-command:
+    invalid-sender: "&cOnly players can run this sandbox horde test."
+    no-permission: "&cYou do not have permission to spawn a test horde."
+    no-attributes: "&cNo attributes are registered; cannot build randomized gear."
+    dry-run: "&eDry run: would spawn {count} zombies with randomized gear."
+    spawn-failed: "&cA zombie failed to spawn or equip attributes."
+    spawned: "&aSpawned {count} zombies with randomized attribute gear."
