@@ -130,11 +130,14 @@ public class AttributeFacade {
         // Fall back to any modifiers currently on the stack so we never strip out vanilla values when the
         // Bukkit item factory fails to expose built-in defaults for the material. This mirrors the vendor
         // behavior that always reattaches vanilla baselines before layering plugin modifiers.
-        Multimap<Attribute, AttributeModifier> existing = slot == null
-                ? stack.getAttributeModifiers()
-                : stack.getAttributeModifiers(slot);
-        if (existing != null && !existing.isEmpty()) {
-            return existing;
+        ItemMeta existingMeta = stack.getItemMeta();
+        if (existingMeta != null) {
+            Multimap<Attribute, AttributeModifier> existing = slot == null
+                    ? existingMeta.getAttributeModifiers()
+                    : existingMeta.getAttributeModifiers(slot);
+            if (existing != null && !existing.isEmpty()) {
+                return existing;
+            }
         }
 
         return null;
