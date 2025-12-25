@@ -165,13 +165,26 @@ public class AttributeLoreFormatter {
         }
 
         List<String> lore = new ArrayList<>();
-        grouped.forEach((criterion, lines) -> {
+        if (!grouped.isEmpty()) {
+            lore.add("");
+        }
+
+        boolean firstSection = true;
+        for (Map.Entry<TriggerCriterion, List<String>> entry : grouped.entrySet()) {
+            List<String> lines = entry.getValue();
+            if (!firstSection) {
+                lore.add("");
+            }
             lore.addAll(lines);
-            String fulfillment = fulfillmentMessage(criterion, slot);
+
+            String fulfillment = fulfillmentMessage(entry.getKey(), slot);
             if (!fulfillment.isBlank()) {
+                lore.add("");
                 lore.add(fulfillment);
             }
-        });
+            firstSection = false;
+        }
+
         return lore;
     }
 
