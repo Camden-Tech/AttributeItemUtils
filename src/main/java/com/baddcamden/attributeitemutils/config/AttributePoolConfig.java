@@ -1,6 +1,7 @@
 package com.baddcamden.attributeitemutils.config;
 
 import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -58,7 +59,9 @@ public class AttributePoolConfig {
                 continue;
             }
             double bonusPercent = parseBonus(entry.get("bonus-percent"), logger);
-            bonuses.add(new AttributeBonus(attribute, bonusPercent));
+            AttributeModifier.Operation operation = parseOperation(entry.get("operation"), logger);
+            double baseline = parseBaseline(entry.get("baseline"), logger);
+            bonuses.add(new AttributeBonus(attribute, bonusPercent, operation, baseline));
         }
 
         return new AttributePoolConfig(Collections.unmodifiableList(bonuses));
@@ -91,6 +94,37 @@ public class AttributePoolConfig {
                 return Double.parseDouble(value);
             } catch (NumberFormatException ex) {
                 logger.warning("Invalid bonus-percent in AttributePool.yml: " + value);
+            }
+        }
+        return 0.0;
+    }
+
+    /**
+     * Parses the attribute modifier operation from configuration, defaulting to MULTIPLY_SCALAR_1 on failure.
+     */
+    private static AttributeModifier.Operation parseOperation(Object rawOperation, Logger logger) {
+        if (rawOperation instanceof String value) {
+            try {
+                return AttributeModifier.Operation.valueOf(value);
+            } catch (IllegalArgumentException ex) {
+                logger.warning("Invalid operation in AttributePool.yml: " + value);
+            }
+        }
+        return AttributeModifier.Operation.MULTIPLY_SCALAR_1;
+    }
+
+    /**
+     * Parses a baseline modifier amount, returning zero for invalid or missing values.
+     */
+    private static double parseBaseline(Object rawBaseline, Logger logger) {
+        if (rawBaseline instanceof Number number) {
+            return number.doubleValue();
+        }
+        if (rawBaseline instanceof String value) {
+            try {
+                return Double.parseDouble(value);
+            } catch (NumberFormatException ex) {
+                logger.warning("Invalid baseline in AttributePool.yml: " + value);
             }
         }
         return 0.0;
