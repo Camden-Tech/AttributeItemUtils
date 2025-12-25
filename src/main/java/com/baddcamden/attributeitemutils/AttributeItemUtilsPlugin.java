@@ -1,30 +1,17 @@
 package com.baddcamden.attributeitemutils;
 
-import com.baddcamden.attributeitemutils.config.AttributeBonus;
-import com.baddcamden.attributeitemutils.config.AttributeAffixConfig;
-import com.baddcamden.attributeitemutils.config.AttributeConfigSource;
-import com.baddcamden.attributeitemutils.config.AttributeLoreConfig;
-import com.baddcamden.attributeitemutils.config.AttributePoolConfig;
 import com.baddcamden.attributeitemutils.config.DropChanceConfigSource;
-import com.baddcamden.attributeitemutils.config.EnchantmentConfigSource;
-import com.baddcamden.attributeitemutils.config.EnchantmentPoolConfig;
 import com.baddcamden.attributeitemutils.gear.GearConfigLoader;
 import com.baddcamden.attributeitemutils.gear.KitConfig;
-import com.baddcamden.attributeitemutils.items.AttributeService;
-import com.baddcamden.attributeitemutils.items.EnchantmentService;
 import com.baddcamden.attributeitemutils.items.GearService;
 import com.baddcamden.attributeitemutils.hooks.EntityChanceHook;
 import com.baddcamden.attributeitemutils.hooks.EntityChanceHooks;
-import com.baddcamden.attributeitemutils.commands.ApplyAttributesCommand;
-import com.baddcamden.attributeitemutils.commands.ApplyEnchantsCommand;
 import com.baddcamden.attributeitemutils.commands.ApplyKitCommand;
 import com.baddcamden.attributeitemutils.commands.SpawnKitCommand;
-import com.baddcamden.attributeutils.AttributeBaseline;
-import com.baddcamden.attributeutils.AttributeDefinition;
-import com.baddcamden.attributeutils.AttributeFacade;
-import com.baddcamden.attributeutils.AttributeUtilitiesPlugin;
-import org.bukkit.attribute.Attribute;
-import org.bukkit.attribute.AttributeModifier;
+import me.baddcamden.attributeutils.AttributeUtilitiesPlugin;
+import me.baddcamden.attributeutils.api.AttributeFacade;
+import me.baddcamden.attributeutils.handler.entity.EntityAttributeHandler;
+import me.baddcamden.attributeutils.handler.item.ItemAttributeHandler;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -37,22 +24,10 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
     private GearService gearService;
     // Delegates attribute modifier math and baseline wiring to downstream services.
     private AttributeFacade attributeFacade;
+    private ItemAttributeHandler itemAttributeHandler;
+    private EntityAttributeHandler entityAttributeHandler;
     // Loads gear definitions and weighted item pools from disk.
     private GearConfigLoader gearConfigLoader;
-    // Configures which attributes may roll and how they scale.
-    private AttributePoolConfig attributePoolConfig;
-    // Configures which enchants may roll and how they scale.
-    private EnchantmentPoolConfig enchantmentPoolConfig;
-    // Applies attribute rolls and lore to generated items.
-    private AttributeService attributeService;
-    // Applies enchantment rolls to generated items.
-    private EnchantmentService enchantmentService;
-    // Builds lore text and separators for attribute descriptions.
-    private AttributeLoreConfig attributeLoreConfig;
-    // Supplies per-entity attribute configuration overrides.
-    private AttributeConfigSource attributeConfigSource;
-    // Supplies per-entity enchantment configuration overrides.
-    private EnchantmentConfigSource enchantmentConfigSource;
     // Supplies per-entity drop chance configuration overrides.
     private DropChanceConfigSource dropChanceConfigSource;
     private final EntityChanceHooks chanceHooks = new EntityChanceHooks();
@@ -61,24 +36,15 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
     public void onEnable() {
         saveDefaultConfig();
         saveDefaultGearConfig();
-        saveDefaultAttributePoolConfig();
-        saveDefaultEnchantmentPoolConfig();
 
-        attributeFacade = AttributeUtilitiesPlugin.getInstance().getAttributeFacade();
-        attributeFacade.setLogger(getLogger());
+        AttributeUtilitiesPlugin attributeUtils = JavaPlugin.getPlugin(AttributeUtilitiesPlugin.class);
+        attributeFacade = attributeUtils.getAttributeFacade();
+        itemAttributeHandler = attributeUtils.getItemAttributeHandler();
+        entityAttributeHandler = attributeUtils.getEntityAttributeHandler();
         gearConfigLoader = new GearConfigLoader(this);
-        reloadPluginConfigs();
+        reloadPluginConfigs(attributeUtils);
         registerCommands();
         getLogger().info("AttributeItemUtils enabled");
-    }
-
-    private void registerAttributeUtilities(AttributePoolConfig poolConfig) {
-        for (AttributeBonus attributeBonus : poolConfig.attributes()) {
-            Attribute attribute = attributeBonus.attribute();
-            AttributeDefinition definition = new AttributeDefinition(attribute, attributeBonus.operation(), 1.0);
-            attributeFacade.registerDefinition(definition);
-            attributeFacade.registerBaseline(new AttributeBaseline(attribute, attributeBonus.baseline()));
-        }
     }
 
     public boolean applyKit(LivingEntity entity, String kitName) {
@@ -91,26 +57,14 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
         return true;
     }
 
-    public void reloadPluginConfigs() {
+    public void reloadPluginConfigs(AttributeUtilitiesPlugin attributeUtils) {
         saveDefaultConfig();
         saveDefaultGearConfig();
-        saveDefaultAttributePoolConfig();
-        saveDefaultEnchantmentPoolConfig();
         reloadConfig();
         gearConfigLoader.reload();
 
-        attributePoolConfig = AttributePoolConfig.load(this, getLogger());
-        enchantmentPoolConfig = EnchantmentPoolConfig.load(this, getLogger());
-        attributeConfigSource = AttributeConfigSource.fromConfig(getConfig());
-        enchantmentConfigSource = EnchantmentConfigSource.fromConfig(getConfig());
         dropChanceConfigSource = DropChanceConfigSource.fromConfig(getConfig());
-        AttributeAffixConfig attributeAffixConfig = AttributeAffixConfig.load(this);
-        attributeLoreConfig = AttributeLoreConfig.load(this, getLogger());
-
-        registerAttributeUtilities(attributePoolConfig);
-        attributeService = new AttributeService(attributeFacade, attributeAffixConfig, attributePoolConfig, attributeLoreConfig, getLogger());
-        enchantmentService = new EnchantmentService(attributeFacade, enchantmentPoolConfig);
-        gearService = new GearService(gearConfigLoader, attributeService, enchantmentService, attributeConfigSource, enchantmentConfigSource, dropChanceConfigSource, chanceHooks, getLogger());
+        gearService = new GearService(gearConfigLoader, dropChanceConfigSource, chanceHooks, attributeUtils, attributeFacade, itemAttributeHandler, entityAttributeHandler, getLogger());
     }
 
     private void saveDefaultGearConfig() {
@@ -120,26 +74,6 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
                 getDataFolder().mkdirs();
             }
             saveResource("Gear.yml", false);
-        }
-    }
-
-    private void saveDefaultAttributePoolConfig() {
-        File poolFile = new File(getDataFolder(), "AttributePool.yml");
-        if (!poolFile.exists()) {
-            if (!getDataFolder().exists()) {
-                getDataFolder().mkdirs();
-            }
-            saveResource("AttributePool.yml", false);
-        }
-    }
-
-    private void saveDefaultEnchantmentPoolConfig() {
-        File poolFile = new File(getDataFolder(), "EnchantmentPool.yml");
-        if (!poolFile.exists()) {
-            if (!getDataFolder().exists()) {
-                getDataFolder().mkdirs();
-            }
-            saveResource("EnchantmentPool.yml", false);
         }
     }
 
@@ -159,41 +93,11 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
         return gearConfigLoader;
     }
 
-    public AttributeService getAttributeService() {
-        return attributeService;
-    }
-
-    public EnchantmentService getEnchantmentService() {
-        return enchantmentService;
-    }
-
-    public AttributeConfigSource getAttributeConfigSource() {
-        return attributeConfigSource;
-    }
-
-    public EnchantmentConfigSource getEnchantmentConfigSource() {
-        return enchantmentConfigSource;
-    }
-
-    public DropChanceConfigSource getDropChanceConfigSource() {
-        return dropChanceConfigSource;
-    }
-
     private void registerCommands() {
         if (getCommand("aiukit") != null) {
             ApplyKitCommand command = new ApplyKitCommand(this);
             getCommand("aiukit").setExecutor(command);
             getCommand("aiukit").setTabCompleter(command);
-        }
-        if (getCommand("aiuattributes") != null) {
-            ApplyAttributesCommand command = new ApplyAttributesCommand(this);
-            getCommand("aiuattributes").setExecutor(command);
-            getCommand("aiuattributes").setTabCompleter(command);
-        }
-        if (getCommand("aiuenchants") != null) {
-            ApplyEnchantsCommand command = new ApplyEnchantsCommand(this);
-            getCommand("aiuenchants").setExecutor(command);
-            getCommand("aiuenchants").setTabCompleter(command);
         }
         if (getCommand("aiutestspawn") != null) {
             SpawnKitCommand command = new SpawnKitCommand(this);
