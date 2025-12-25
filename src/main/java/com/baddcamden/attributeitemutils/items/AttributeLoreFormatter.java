@@ -148,8 +148,10 @@ public class AttributeLoreFormatter {
                     .map(cap -> Math.min(cap, clampedValue))
                     .orElse(clampedValue);
             boolean isPercent = isMultiplierStyle(attributeDefinition);
-            double displayValue = isPercent ? effectiveValue * 100d : effectiveValue;
             String normalizedId = normalizeAttributeId(attributeDefinition.id());
+            double displayValue = isPercent
+                    ? computeMultiplierPercent(normalizedId, effectiveValue)
+                    : effectiveValue;
             AttributeMeta attributeMeta = attributes.getOrDefault(
                     normalizedId,
                     new AttributeMeta(translateColors(attributeDefinition.displayName()), ""));
@@ -216,6 +218,17 @@ public class AttributeLoreFormatter {
 
     private String translateColors(String raw) {
         return raw == null ? "" : ChatColor.translateAlternateColorCodes('&', raw);
+    }
+
+    private double computeMultiplierPercent(String normalizedId, double effectiveValue) {
+        double adjustedValue = "SCALE".equals(normalizedId)
+                ? Math.cbrt(effectiveValue)
+                : effectiveValue;
+        double percentChange = (adjustedValue - 1d) * 100d;
+        if ("FALL_DAMAGE_MULTIPLIER".equals(normalizedId)) {
+            percentChange *= -1d;
+        }
+        return percentChange;
     }
 
     private String titleCase(String raw) {
