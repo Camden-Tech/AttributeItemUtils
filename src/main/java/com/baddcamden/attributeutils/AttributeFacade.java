@@ -7,6 +7,9 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.NamespacedKey;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 
 import com.google.common.collect.Multimap;
 
@@ -17,6 +20,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class AttributeFacade {
+    private static final String NAMESPACE = "attributeitemutils";
+    private static final NamespacedKey PERSISTED_MODIFIERS_KEY = new NamespacedKey(NAMESPACE, "stored-modifiers");
+    private static final NamespacedKey PERSISTED_ATTRIBUTE_KEY = new NamespacedKey(NAMESPACE, "attribute");
+    private static final NamespacedKey PERSISTED_AMOUNT_KEY = new NamespacedKey(NAMESPACE, "amount");
+    private static final NamespacedKey PERSISTED_SLOT_KEY = new NamespacedKey(NAMESPACE, "slot");
     private static final String GENERIC_SCALE_KEY = "generic.scale";
     private static final String GENERIC_FALL_DAMAGE_MULTIPLIER_KEY = "generic.fall_damage_multiplier";
 
@@ -110,6 +118,7 @@ public class AttributeFacade {
                 meta.addAttributeModifier(attribute, baseline.asModifier(definition, slot));
             }
         });
+        applyPersistedModifiers(stack, meta);
         if (defaults == null && (initialModifiers == null || initialModifiers.isEmpty())) {
             logger.warning("[ATTR] No vanilla defaults discovered for " + stack.getType() + " slot=" + slot
                     + "; refresh may strip attack stats. Current modifiers=" + summarize(meta.getAttributeModifiers()));
@@ -200,6 +209,8 @@ public class AttributeFacade {
             }
         }
 
+        persistModifier(meta, attribute, baseAmount, slot);
+
         AttributeModifier modifier = definition.newModifier(computeAmount(attribute, baseAmount), slot);
         meta.addAttributeModifier(attribute, modifier);
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
@@ -208,6 +219,105 @@ public class AttributeFacade {
                     + " resulting modifiers=" + summarize(meta.getAttributeModifiers()));
         }
         stack.setItemMeta(meta);
+    }
+
+    private void persistModifier(ItemMeta meta, Attribute attribute, double baseAmount, EquipmentSlot slot) {
+        PersistentDataContainer root = meta.getPersistentDataContainer();
+        PersistentDataContainer modifiers = root.get(PERSISTED_MODIFIERS_KEY, PersistentDataType.TAG_CONTAINER);
+        if (modifiers == null) {
+            modifiers = root.getAdapterContext().newPersistentDataContainer();
+        }
+
+        PersistentDataContainer entry = root.getAdapterContext().newPersistentDataContainer();
+        entry.set(PERSISTED_ATTRIBUTE_KEY, PersistentDataType.STRING, attribute.name());
+        entry.set(PERSISTED_AMOUNT_KEY, PersistentDataType.DOUBLE, baseAmount);
+        entry.set(PERSISTED_SLOT_KEY, PersistentDataType.STRING, slotKey(slot));
+
+        NamespacedKey entryKey = new NamespacedKey(NAMESPACE, attributeKey(attribute) + "." + slotKey(slot));
+        modifiers.set(entryKey, PersistentDataType.TAG_CONTAINER, entry);
+        root.set(PERSISTED_MODIFIERS_KEY, PersistentDataType.TAG_CONTAINER, modifiers);
+    }
+
+    private void applyPersistedModifiers(ItemStack stack, ItemMeta meta) {
+        PersistentDataContainer root = meta.getPersistentDataContainer();
+        PersistentDataContainer modifiers = root.get(PERSISTED_MODIFIERS_KEY, PersistentDataType.TAG_CONTAINER);
+        if (modifiers == null || modifiers.isEmpty()) {
+            return;
+        }
+
+        boolean added = false;
+        for (NamespacedKey entryKey : modifiers.getKeys()) {
+            PersistentDataContainer entry = modifiers.get(entryKey, PersistentDataType.TAG_CONTAINER);
+            if (entry == null) {
+                continue;
+            }
+
+            String attributeName = entry.get(PERSISTED_ATTRIBUTE_KEY, PersistentDataType.STRING);
+            Double baseAmount = entry.get(PERSISTED_AMOUNT_KEY, PersistentDataType.DOUBLE);
+            String slotName = entry.get(PERSISTED_SLOT_KEY, PersistentDataType.STRING);
+            Attribute attribute = parseAttribute(attributeName);
+            EquipmentSlot slot = parseSlot(slotName);
+
+            if (attribute == null || baseAmount == null || slotName == null) {
+                continue;
+            }
+
+            AttributeDefinition definition = definitions.get(attribute);
+            if (definition == null) {
+                continue;
+            }
+
+            Multimap<Attribute, AttributeModifier> existing = meta.getAttributeModifiers();
+            if (existing != null) {
+                for (AttributeModifier modifier : List.copyOf(existing.get(attribute))) {
+                    if (isPluginModifier(modifier) && (slot == null || modifier.getSlot() == null || modifier.getSlot() == slot)) {
+                        meta.removeAttributeModifier(attribute, modifier);
+                    }
+                }
+            }
+
+            AttributeModifier modifier = definition.newModifier(computeAmount(attribute, baseAmount), slot);
+            meta.addAttributeModifier(attribute, modifier);
+            added = true;
+        }
+
+        if (added) {
+            meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+            stack.setItemMeta(meta);
+        }
+    }
+
+    private Attribute parseAttribute(String attributeName) {
+        if (attributeName == null) {
+            return null;
+        }
+        try {
+            return Attribute.valueOf(attributeName);
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
+    }
+
+    private EquipmentSlot parseSlot(String slotName) {
+        if (slotName == null) {
+            return null;
+        }
+        if (slotName.equals("any")) {
+            return null;
+        }
+        try {
+            return EquipmentSlot.valueOf(slotName.toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
+    }
+
+    private String slotKey(EquipmentSlot slot) {
+        return slot == null ? "any" : slot.name().toLowerCase();
+    }
+
+    private String attributeKey(Attribute attribute) {
+        return attribute == null ? "unknown" : attribute.getKey().getKey().toLowerCase();
     }
 
     private boolean isPluginModifier(AttributeModifier modifier) {
