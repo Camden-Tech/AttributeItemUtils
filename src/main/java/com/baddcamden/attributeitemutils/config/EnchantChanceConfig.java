@@ -9,7 +9,7 @@ import org.bukkit.configuration.file.FileConfiguration;
  */
 public record EnchantChanceConfig(double baseChance,
                                   double nightlyIncrease,
-                                  double levelBonus,
+                                  int levelBonus,
                                   double maxChance) {
 
     /**
@@ -17,7 +17,7 @@ public record EnchantChanceConfig(double baseChance,
      */
     public static EnchantChanceConfig fromConfig(FileConfiguration configuration) {
         ConfigurationSection section = configuration.getConfigurationSection("enchants");
-        return fromSection(section, new EnchantChanceConfig(0.02d, 0.01d, 1d, 0.95d));
+        return fromSection(section, new EnchantChanceConfig(0.02d, 0.01d, 1, 0.95d));
     }
 
     /**
@@ -31,7 +31,7 @@ public record EnchantChanceConfig(double baseChance,
         return new EnchantChanceConfig(
                 section.getDouble("base-chance", defaults.baseChance),
                 section.getDouble("nightly-increase", defaults.nightlyIncrease),
-                section.getDouble("level-bonus", defaults.levelBonus),
+                section.getInt("level-bonus", defaults.levelBonus),
                 section.getDouble("max-chance", defaults.maxChance)
         );
     }
