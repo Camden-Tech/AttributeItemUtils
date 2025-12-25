@@ -147,6 +147,18 @@ public class AttributeUtilitiesPlugin extends JavaPlugin {
         registerListeners();
     }
 
+    public AttributeFacade getAttributeFacade() {
+        return attributeFacade;
+    }
+
+    public ItemAttributeHandler getItemAttributeHandler() {
+        return itemAttributeHandler;
+    }
+
+    public EntityAttributeHandler getEntityAttributeHandler() {
+        return entityAttributeHandler;
+    }
+
     /**
      * Registers vanilla attribute definitions and caps from the primary configuration file.
      */
@@ -604,10 +616,4 @@ public class AttributeUtilitiesPlugin extends JavaPlugin {
                 this);
     }
 
-    /**
-     * Exposes the initialized {@link AttributeFacade} for other components.
-     */
-    public AttributeFacade getAttributeFacade() {
-        return attributeFacade;
-    }
 }
