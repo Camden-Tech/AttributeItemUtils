@@ -5,6 +5,7 @@ import com.baddcamden.attributeitemutils.gear.GearConfigLoader;
 import com.baddcamden.attributeitemutils.gear.GearSlot;
 import com.baddcamden.attributeitemutils.gear.KitConfig;
 import com.baddcamden.attributeitemutils.gear.WeightedItem;
+import com.baddcamden.attributeitemutils.items.AttributeLoreFormatter;
 import com.baddcamden.attributeitemutils.util.BellCurveSelector;
 import com.baddcamden.attributeitemutils.util.NightCalculator;
 import com.baddcamden.attributeitemutils.hooks.EntityChanceHooks;
@@ -46,6 +47,7 @@ public class GearService {
     private final ItemAttributeHandler itemAttributeHandler;
     private final EntityAttributeHandler entityAttributeHandler;
     private final AttributeAffixConfig attributeAffixConfig;
+    private final AttributeLoreFormatter attributeLoreFormatter;
     private final Random random = new Random();
     private final BellCurveSelector selector = new BellCurveSelector();
     private final Logger logger;
@@ -59,8 +61,9 @@ public class GearService {
                        AttributeFacade attributeFacade,
                        ItemAttributeHandler itemAttributeHandler,
                        EntityAttributeHandler entityAttributeHandler,
-                       AttributeAffixConfig attributeAffixConfig) {
-        this(loader, dropChanceConfigSource, chanceHooks, attributeUtils, attributeFacade, itemAttributeHandler, entityAttributeHandler, attributeAffixConfig, Logger.getLogger(GearService.class.getName()));
+                       AttributeAffixConfig attributeAffixConfig,
+                       AttributeLoreFormatter attributeLoreFormatter) {
+        this(loader, dropChanceConfigSource, chanceHooks, attributeUtils, attributeFacade, itemAttributeHandler, entityAttributeHandler, attributeAffixConfig, attributeLoreFormatter, Logger.getLogger(GearService.class.getName()));
     }
 
     public GearService(GearConfigLoader loader,
@@ -71,6 +74,7 @@ public class GearService {
                        ItemAttributeHandler itemAttributeHandler,
                        EntityAttributeHandler entityAttributeHandler,
                        AttributeAffixConfig attributeAffixConfig,
+                       AttributeLoreFormatter attributeLoreFormatter,
                        Logger logger) {
         this.loader = loader;
         this.dropChanceConfigSource = dropChanceConfigSource;
@@ -80,6 +84,7 @@ public class GearService {
         this.itemAttributeHandler = itemAttributeHandler;
         this.entityAttributeHandler = entityAttributeHandler;
         this.attributeAffixConfig = attributeAffixConfig;
+        this.attributeLoreFormatter = attributeLoreFormatter;
         this.logger = logger;
     }
 
@@ -146,10 +151,12 @@ public class GearService {
         LinkedHashSet<String> rolledAttributeIds = rolls.stream()
                 .map(AttributeRoll::attributeDefinition)
                 .map(AttributeDefinition::id)
+                .map(attributeLoreFormatter::normalizeAttributeId)
                 .map(attributeAffixConfig::normalizeAttributeKey)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        return applyAffixes(result.itemStack(), rolledAttributeIds, material);
+        ItemStack withAffixes = applyAffixes(result.itemStack(), rolledAttributeIds, material);
+        return attributeLoreFormatter.rebuildLore(withAffixes, parsedDefinitions, attributeFacade, slot);
     }
 
     private List<AttributeRoll> randomRolls(List<AttributeDefinition> definitions, EquipmentSlot slot, long nights) {
