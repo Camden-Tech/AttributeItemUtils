@@ -13,6 +13,7 @@ import com.google.common.collect.Multimap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class AttributeFacade {
@@ -82,7 +83,9 @@ public class AttributeFacade {
 
         Multimap<Attribute, AttributeModifier> defaults = defaultModifiers(stack, slot);
         Multimap<Attribute, AttributeModifier> modifiers = meta.getAttributeModifiers();
-        logger.info("[ATTR] Refreshing modifiers for " + stack.getType() + " slot=" + slot + " existing=" + summarize(modifiers));
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("[ATTR] Refreshing modifiers for " + stack.getType() + " slot=" + slot + " existing=" + summarize(modifiers));
+        }
         if (modifiers == null || modifiers.isEmpty()) {
             if (defaults != null) {
                 defaults.forEach(meta::addAttributeModifier);
@@ -97,7 +100,9 @@ public class AttributeFacade {
             }
             for (AttributeModifier modifier : List.copyOf(initialModifiers.get(attribute))) {
                 if (isPluginModifier(modifier)) {
-                    logger.info("[ATTR] Removing plugin modifier " + modifier + " for attribute " + attribute);
+                    if (logger.isLoggable(Level.FINE)) {
+                        logger.fine("[ATTR] Removing plugin modifier " + modifier + " for attribute " + attribute);
+                    }
                     meta.removeAttributeModifier(attribute, modifier);
                 }
             }
@@ -118,7 +123,13 @@ public class AttributeFacade {
                 meta.addAttributeModifier(attribute, baseline.asModifier(definition, slot));
             }
         });
-        logger.info(() -> "[ATTR] Final modifiers after refresh for " + stack.getType() + " slot=" + slot + " -> " + summarize(meta.getAttributeModifiers()));
+        if (defaults == null && (initialModifiers == null || initialModifiers.isEmpty())) {
+            logger.warning("[ATTR] No vanilla defaults discovered for " + stack.getType() + " slot=" + slot
+                    + "; refresh may strip attack stats. Current modifiers=" + summarize(meta.getAttributeModifiers()));
+        } else if (logger.isLoggable(Level.FINE)) {
+            logger.fine(() -> "[ATTR] Final modifiers after refresh for " + stack.getType() + " slot=" + slot
+                    + " -> " + summarize(meta.getAttributeModifiers()));
+        }
         stack.setItemMeta(meta);
     }
 
@@ -127,11 +138,19 @@ public class AttributeFacade {
         if (vanillaMeta != null) {
             Multimap<Attribute, AttributeModifier> defaultForSlot = vanillaMeta.getAttributeModifiers(slot);
             if (defaultForSlot != null && !defaultForSlot.isEmpty()) {
+                if (logger.isLoggable(Level.FINE)) {
+                    logger.fine("[ATTR] Using vanilla default modifiers for " + stack.getType() + " slot=" + slot
+                            + " -> " + summarize(defaultForSlot));
+                }
                 return defaultForSlot;
             }
 
             Multimap<Attribute, AttributeModifier> allDefaults = vanillaMeta.getAttributeModifiers();
             if (allDefaults != null && !allDefaults.isEmpty()) {
+                if (logger.isLoggable(Level.FINE)) {
+                    logger.fine("[ATTR] Using vanilla default modifiers (any slot) for " + stack.getType()
+                            + " -> " + summarize(allDefaults));
+                }
                 return allDefaults;
             }
         }
@@ -145,10 +164,15 @@ public class AttributeFacade {
                     ? existingMeta.getAttributeModifiers()
                     : existingMeta.getAttributeModifiers(slot);
             if (existing != null && !existing.isEmpty()) {
+                if (logger.isLoggable(Level.FINE)) {
+                    logger.fine("[ATTR] Falling back to existing modifiers on stack for " + stack.getType()
+                            + " slot=" + slot + " -> " + summarize(existing));
+                }
                 return existing;
             }
         }
 
+        logger.fine("[ATTR] No default modifiers found for " + stack.getType() + " slot=" + slot);
         return null;
     }
 
@@ -192,8 +216,10 @@ public class AttributeFacade {
         AttributeModifier modifier = definition.newModifier(computeAmount(attribute, baseAmount), slot);
         meta.addAttributeModifier(attribute, modifier);
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-        logger.info("[ATTR] Applied modifier " + modifier + " to " + stack.getType() + " for attribute " + attribute +
-                " resulting modifiers=" + summarize(meta.getAttributeModifiers()));
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("[ATTR] Applied modifier " + modifier + " to " + stack.getType() + " for attribute " + attribute
+                    + " resulting modifiers=" + summarize(meta.getAttributeModifiers()));
+        }
         stack.setItemMeta(meta);
     }
 
