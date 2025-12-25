@@ -7,15 +7,16 @@ import com.baddcamden.attributeitemutils.config.AttributeBonus;
 import com.baddcamden.attributeitemutils.config.AttributeConfig;
 import com.baddcamden.attributeitemutils.config.AttributeLoreConfig;
 import com.baddcamden.attributeitemutils.config.AttributePoolConfig;
+import com.baddcamden.attributeitemutils.util.NightCalculator;
 import com.baddcamden.attributeutils.AttributeFacade;
 import com.google.common.collect.Multimap;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import com.baddcamden.attributeitemutils.util.NightCalculator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -83,6 +84,10 @@ public class AttributeService {
     public ItemStack applyAttributes(ItemStack stack, AttributeConfig config, EquipmentSlot slot, long nights) {
         if (stack == null) {
             return null;
+        }
+
+        if (!Bukkit.isPrimaryThread()) {
+            throw new IllegalStateException("Attribute mutations must run on the primary server thread");
         }
 
         ItemMeta meta = stack.getItemMeta();

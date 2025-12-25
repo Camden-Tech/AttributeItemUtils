@@ -101,6 +101,7 @@ public class ApplyAttributesCommand implements CommandExecutor, TabCompleter {
 
         ItemStack updated = attributeService.applyAttributes(item, config, slot, nights);
         setItem(equipment, slot, updated);
+        player.updateInventory();
         sender.sendMessage("Applied attributes to " + slot.name().toLowerCase(Locale.ROOT) + " using nights=" + nights);
         return true;
     }

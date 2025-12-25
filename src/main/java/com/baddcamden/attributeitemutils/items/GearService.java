@@ -14,6 +14,7 @@ import com.baddcamden.attributeitemutils.util.NightCalculator;
 import com.baddcamden.attributeitemutils.hooks.EntityChanceHooks;
 import org.bukkit.Material;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -115,6 +116,9 @@ public class GearService {
                 setDropChance(entityEquipment, slot, (float) dropChance);
             }
         });
+        if (entity instanceof Player player) {
+            player.updateInventory();
+        }
     }
 
     /**
