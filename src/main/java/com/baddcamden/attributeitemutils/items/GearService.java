@@ -21,12 +21,16 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -41,6 +45,7 @@ public class GearService {
     private final AttributeFacade attributeFacade;
     private final ItemAttributeHandler itemAttributeHandler;
     private final EntityAttributeHandler entityAttributeHandler;
+    private final AttributeAffixConfig attributeAffixConfig;
     private final Random random = new Random();
     private final BellCurveSelector selector = new BellCurveSelector();
     private final Logger logger;
@@ -53,8 +58,9 @@ public class GearService {
                        AttributeUtilitiesPlugin attributeUtils,
                        AttributeFacade attributeFacade,
                        ItemAttributeHandler itemAttributeHandler,
-                       EntityAttributeHandler entityAttributeHandler) {
-        this(loader, dropChanceConfigSource, chanceHooks, attributeUtils, attributeFacade, itemAttributeHandler, entityAttributeHandler, Logger.getLogger(GearService.class.getName()));
+                       EntityAttributeHandler entityAttributeHandler,
+                       AttributeAffixConfig attributeAffixConfig) {
+        this(loader, dropChanceConfigSource, chanceHooks, attributeUtils, attributeFacade, itemAttributeHandler, entityAttributeHandler, attributeAffixConfig, Logger.getLogger(GearService.class.getName()));
     }
 
     public GearService(GearConfigLoader loader,
@@ -64,6 +70,7 @@ public class GearService {
                        AttributeFacade attributeFacade,
                        ItemAttributeHandler itemAttributeHandler,
                        EntityAttributeHandler entityAttributeHandler,
+                       AttributeAffixConfig attributeAffixConfig,
                        Logger logger) {
         this.loader = loader;
         this.dropChanceConfigSource = dropChanceConfigSource;
@@ -72,6 +79,7 @@ public class GearService {
         this.attributeFacade = attributeFacade;
         this.itemAttributeHandler = itemAttributeHandler;
         this.entityAttributeHandler = entityAttributeHandler;
+        this.attributeAffixConfig = attributeAffixConfig;
         this.logger = logger;
     }
 
@@ -125,23 +133,92 @@ public class GearService {
             return new ItemStack(material);
         }
 
-        List<CommandParsingUtils.AttributeDefinition> rolls = randomRolls(definitions, slot, nights);
+        List<AttributeRoll> rolls = randomRolls(definitions, slot, nights);
         if (rolls.isEmpty()) {
             return new ItemStack(material);
         }
 
-        ItemAttributeHandler.ItemBuildResult result = itemAttributeHandler.buildAttributeItem(material, rolls);
-        return result.itemStack();
+        List<CommandParsingUtils.AttributeDefinition> parsedDefinitions = rolls.stream()
+                .map(AttributeRoll::parsedDefinition)
+                .toList();
+        ItemAttributeHandler.ItemBuildResult result = itemAttributeHandler.buildAttributeItem(material, parsedDefinitions);
+
+        LinkedHashSet<String> rolledAttributeIds = rolls.stream()
+                .map(AttributeRoll::attributeDefinition)
+                .map(AttributeDefinition::id)
+                .map(attributeAffixConfig::normalizeAttributeKey)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        return applyAffixes(result.itemStack(), rolledAttributeIds, material);
     }
 
-    private List<CommandParsingUtils.AttributeDefinition> randomRolls(List<AttributeDefinition> definitions, EquipmentSlot slot, long nights) {
+    private List<AttributeRoll> randomRolls(List<AttributeDefinition> definitions, EquipmentSlot slot, long nights) {
         int clampedNights = (int) Math.max(0, Math.min(nights, Integer.MAX_VALUE));
         int rollCount = Math.max(1, Math.min(3, 1 + clampedNights % 3));
         String criterion = criterionForSlot(slot);
         return random.ints(rollCount, 0, definitions.size())
                 .mapToObj(definitions::get)
-                .map(definition -> new CommandParsingUtils.AttributeDefinition(resolveKey(definition.id()), randomAmount(), null, criterion))
+                .map(definition -> new AttributeRoll(
+                        definition,
+                        new CommandParsingUtils.AttributeDefinition(resolveKey(definition.id()), randomAmount(), null, criterion)))
                 .collect(Collectors.toList());
+    }
+
+    private ItemStack applyAffixes(ItemStack itemStack, LinkedHashSet<String> attributeIds, Material material) {
+        ItemMeta meta = itemStack.getItemMeta();
+        if (meta == null) {
+            return itemStack;
+        }
+
+        String baseName = meta.hasDisplayName() && meta.getDisplayName() != null && !meta.getDisplayName().isBlank()
+                ? meta.getDisplayName()
+                : titleCase(material.name());
+
+        List<AttributeAffixConfig.AffixEntry> matchedPrefixes = attributeAffixConfig.matchingPrefixes(attributeIds);
+        List<AttributeAffixConfig.AffixEntry> prefixes = limitPrefixes(matchedPrefixes);
+        if (prefixes.isEmpty()) {
+            String defaultPrefix = attributeAffixConfig.defaultPrefix();
+            if (defaultPrefix != null && !defaultPrefix.isBlank()) {
+                prefixes = List.of(new AttributeAffixConfig.AffixEntry(Set.of(), defaultPrefix, Integer.MAX_VALUE));
+            }
+        }
+
+        AttributeAffixConfig.AffixEntry suffix = attributeAffixConfig.bestSuffix(attributeIds);
+
+        StringBuilder nameBuilder = new StringBuilder();
+        prefixes.forEach(entry -> nameBuilder.append(entry.value()));
+        nameBuilder.append(baseName);
+        if (suffix != null) {
+            nameBuilder.append(suffix.value());
+        }
+
+        meta.setDisplayName(nameBuilder.toString());
+        itemStack.setItemMeta(meta);
+        return itemStack;
+    }
+
+    private List<AttributeAffixConfig.AffixEntry> limitPrefixes(List<AttributeAffixConfig.AffixEntry> prefixes) {
+        if (prefixes.size() <= 5) {
+            return prefixes;
+        }
+        return prefixes.stream()
+                .sorted(Comparator
+                        .comparingInt((AttributeAffixConfig.AffixEntry entry) -> entry.attributes().size())
+                        .reversed()
+                        .thenComparingInt(AttributeAffixConfig.AffixEntry::order))
+                .limit(5)
+                .toList();
+    }
+
+    private String titleCase(String materialName) {
+        String[] segments = materialName.toLowerCase(java.util.Locale.ROOT).split("_");
+        return java.util.Arrays.stream(segments)
+                .filter(segment -> !segment.isBlank())
+                .map(segment -> Character.toUpperCase(segment.charAt(0)) + segment.substring(1))
+                .collect(Collectors.joining(" "));
+    }
+
+    private record AttributeRoll(AttributeDefinition attributeDefinition, CommandParsingUtils.AttributeDefinition parsedDefinition) {
     }
 
     private double randomAmount() {

@@ -3,6 +3,7 @@ package com.baddcamden.attributeitemutils;
 import com.baddcamden.attributeitemutils.config.DropChanceConfigSource;
 import com.baddcamden.attributeitemutils.gear.GearConfigLoader;
 import com.baddcamden.attributeitemutils.gear.KitConfig;
+import com.baddcamden.attributeitemutils.items.AttributeAffixConfig;
 import com.baddcamden.attributeitemutils.items.GearService;
 import com.baddcamden.attributeitemutils.hooks.EntityChanceHook;
 import com.baddcamden.attributeitemutils.hooks.EntityChanceHooks;
@@ -30,6 +31,7 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
     private GearConfigLoader gearConfigLoader;
     // Supplies per-entity drop chance configuration overrides.
     private DropChanceConfigSource dropChanceConfigSource;
+    private AttributeAffixConfig attributeAffixConfig;
     private final EntityChanceHooks chanceHooks = new EntityChanceHooks();
 
     @Override
@@ -47,6 +49,7 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
         itemAttributeHandler = attributeUtils.getItemAttributeHandler();
         entityAttributeHandler = attributeUtils.getEntityAttributeHandler();
         gearConfigLoader = new GearConfigLoader(this);
+        attributeAffixConfig = new AttributeAffixConfig(this, getLogger());
         reloadPluginConfigs(attributeUtils);
         registerCommands();
         getLogger().info("AttributeItemUtils enabled");
@@ -65,11 +68,13 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
     public void reloadPluginConfigs(AttributeUtilitiesPlugin attributeUtils) {
         saveDefaultConfig();
         saveDefaultGearConfig();
+        saveDefaultAffixConfig();
         reloadConfig();
         gearConfigLoader.reload();
+        attributeAffixConfig.reload();
 
         dropChanceConfigSource = DropChanceConfigSource.fromConfig(getConfig());
-        gearService = new GearService(gearConfigLoader, dropChanceConfigSource, chanceHooks, attributeUtils, attributeFacade, itemAttributeHandler, entityAttributeHandler, getLogger());
+        gearService = new GearService(gearConfigLoader, dropChanceConfigSource, chanceHooks, attributeUtils, attributeFacade, itemAttributeHandler, entityAttributeHandler, attributeAffixConfig, getLogger());
     }
 
     private void saveDefaultGearConfig() {
@@ -79,6 +84,16 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
                 getDataFolder().mkdirs();
             }
             saveResource("Gear.yml", false);
+        }
+    }
+
+    private void saveDefaultAffixConfig() {
+        File affixFile = new File(getDataFolder(), "AttributeUffixes.yml");
+        if (!affixFile.exists()) {
+            if (!getDataFolder().exists()) {
+                getDataFolder().mkdirs();
+            }
+            saveResource("AttributeUffixes.yml", false);
         }
     }
 
