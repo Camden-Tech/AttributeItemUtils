@@ -26,4 +26,24 @@ public class EntityChanceHooks {
                 .flatMap(Optional::stream)
                 .findFirst();
     }
+
+    /**
+     * Resolves the first attribute chance provided by registered hooks for the supplied entity type.
+     */
+    public Optional<Double> attributeChanceFor(EntityType type) {
+        return hooks.stream()
+                .map(h -> h.attributeChanceFor(type))
+                .flatMap(Optional::stream)
+                .findFirst();
+    }
+
+    /**
+     * Resolves the first enchantment chance provided by registered hooks for the supplied entity type.
+     */
+    public Optional<Double> enchantChanceFor(EntityType type) {
+        return hooks.stream()
+                .map(h -> h.enchantChanceFor(type))
+                .flatMap(Optional::stream)
+                .findFirst();
+    }
 }

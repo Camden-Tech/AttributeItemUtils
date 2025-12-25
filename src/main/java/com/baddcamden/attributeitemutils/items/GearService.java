@@ -1,11 +1,12 @@
 package com.baddcamden.attributeitemutils.items;
 
+import com.baddcamden.attributeitemutils.config.AttributeChanceConfig;
 import com.baddcamden.attributeitemutils.config.DropChanceConfigSource;
+import com.baddcamden.attributeitemutils.config.EnchantChanceConfig;
 import com.baddcamden.attributeitemutils.gear.GearConfigLoader;
 import com.baddcamden.attributeitemutils.gear.GearSlot;
 import com.baddcamden.attributeitemutils.gear.KitConfig;
 import com.baddcamden.attributeitemutils.gear.WeightedItem;
-import com.baddcamden.attributeitemutils.items.AttributeLoreFormatter;
 import com.baddcamden.attributeitemutils.util.BellCurveSelector;
 import com.baddcamden.attributeitemutils.util.NightCalculator;
 import com.baddcamden.attributeitemutils.hooks.EntityChanceHooks;
@@ -17,6 +18,7 @@ import me.baddcamden.attributeutils.handler.item.ItemAttributeHandler;
 import me.baddcamden.attributeutils.handler.item.TriggerCriterion;
 import me.baddcamden.attributeutils.model.AttributeDefinition;
 import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EntityEquipment;
@@ -24,6 +26,7 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
@@ -49,6 +52,9 @@ public class GearService {
     private final EntityAttributeHandler entityAttributeHandler;
     private final AttributeAffixConfig attributeAffixConfig;
     private final AttributeLoreFormatter attributeLoreFormatter;
+    private final AttributeChanceConfig attributeChanceConfig;
+    private final EnchantChanceConfig enchantChanceConfig;
+    private final EnchantmentPool enchantmentPool;
     private final Random random = new Random();
     private final BellCurveSelector selector = new BellCurveSelector();
     private final Logger logger;
@@ -63,8 +69,11 @@ public class GearService {
                        ItemAttributeHandler itemAttributeHandler,
                        EntityAttributeHandler entityAttributeHandler,
                        AttributeAffixConfig attributeAffixConfig,
-                       AttributeLoreFormatter attributeLoreFormatter) {
-        this(loader, dropChanceConfigSource, chanceHooks, attributeUtils, attributeFacade, itemAttributeHandler, entityAttributeHandler, attributeAffixConfig, attributeLoreFormatter, Logger.getLogger(GearService.class.getName()));
+                       AttributeLoreFormatter attributeLoreFormatter,
+                       AttributeChanceConfig attributeChanceConfig,
+                       EnchantChanceConfig enchantChanceConfig,
+                       EnchantmentPool enchantmentPool) {
+        this(loader, dropChanceConfigSource, chanceHooks, attributeUtils, attributeFacade, itemAttributeHandler, entityAttributeHandler, attributeAffixConfig, attributeLoreFormatter, attributeChanceConfig, enchantChanceConfig, enchantmentPool, Logger.getLogger(GearService.class.getName()));
     }
 
     public GearService(GearConfigLoader loader,
@@ -76,6 +85,9 @@ public class GearService {
                        EntityAttributeHandler entityAttributeHandler,
                        AttributeAffixConfig attributeAffixConfig,
                        AttributeLoreFormatter attributeLoreFormatter,
+                       AttributeChanceConfig attributeChanceConfig,
+                       EnchantChanceConfig enchantChanceConfig,
+                       EnchantmentPool enchantmentPool,
                        Logger logger) {
         this.loader = loader;
         this.dropChanceConfigSource = dropChanceConfigSource;
@@ -86,6 +98,9 @@ public class GearService {
         this.entityAttributeHandler = entityAttributeHandler;
         this.attributeAffixConfig = attributeAffixConfig;
         this.attributeLoreFormatter = attributeLoreFormatter;
+        this.attributeChanceConfig = attributeChanceConfig;
+        this.enchantChanceConfig = enchantChanceConfig;
+        this.enchantmentPool = enchantmentPool;
         this.logger = logger;
     }
 
@@ -112,7 +127,7 @@ public class GearService {
             logger.info("[GEAR] Built base item for " + equipmentSlot + " -> " + (stack == null ? "none" : stack.getType().name()));
             if (stack != null) {
                 logger.info("[GEAR] Pre-AttributeUtils build for " + equipmentSlot + ": " + summarize(stack));
-                stack = buildAttributedItem(stack.getType(), equipmentSlot, nights);
+                stack = buildAttributedItem(entity, stack.getType(), equipmentSlot, nights);
                 logger.info("[GEAR] After AttributeUtils build " + equipmentSlot + ": " + summarize(stack));
             }
             equipment.put(equipmentSlot, stack);
@@ -133,48 +148,91 @@ public class GearService {
         }
     }
 
-    private ItemStack buildAttributedItem(Material material, EquipmentSlot slot, long nights) {
+    private ItemStack buildAttributedItem(LivingEntity entity, Material material, EquipmentSlot slot, long nights) {
         List<AttributeDefinition> definitions = attributeFacade.getDefinitions().stream().toList();
-        if (definitions.isEmpty()) {
-            return new ItemStack(material);
+        double attributeChance = chanceHooks.attributeChanceFor(entity.getType())
+                .orElse(attributeChanceConfig.chanceForNights(nights));
+        double enchantChance = chanceHooks.enchantChanceFor(entity.getType())
+                .orElse(enchantChanceConfig.chanceForNights(nights));
+
+        List<AttributeRoll> rolls = randomRolls(definitions, slot, attributeChance);
+        ItemStack baseItem = new ItemStack(material);
+
+        if (!rolls.isEmpty()) {
+            List<CommandParsingUtils.AttributeDefinition> parsedDefinitions = rolls.stream()
+                    .map(AttributeRoll::parsedDefinition)
+                    .toList();
+            ItemAttributeHandler.ItemBuildResult result = itemAttributeHandler.buildAttributeItem(material, parsedDefinitions);
+
+            LinkedHashSet<String> rolledAttributeIds = rolls.stream()
+                    .map(AttributeRoll::attributeDefinition)
+                    .map(AttributeDefinition::id)
+                    .map(attributeLoreFormatter::normalizeAttributeId)
+                    .map(attributeAffixConfig::normalizeAttributeKey)
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+
+            ItemStack withAffixes = applyAffixes(result.itemStack(), rolledAttributeIds, material);
+            baseItem = attributeLoreFormatter.rebuildLore(withAffixes, parsedDefinitions, attributeFacade, slot);
         }
 
-        List<AttributeRoll> rolls = randomRolls(definitions, slot, nights);
-        if (rolls.isEmpty()) {
-            return new ItemStack(material);
-        }
-
-        List<CommandParsingUtils.AttributeDefinition> parsedDefinitions = rolls.stream()
-                .map(AttributeRoll::parsedDefinition)
-                .toList();
-        ItemAttributeHandler.ItemBuildResult result = itemAttributeHandler.buildAttributeItem(material, parsedDefinitions);
-
-        LinkedHashSet<String> rolledAttributeIds = rolls.stream()
-                .map(AttributeRoll::attributeDefinition)
-                .map(AttributeDefinition::id)
-                .map(attributeLoreFormatter::normalizeAttributeId)
-                .map(attributeAffixConfig::normalizeAttributeKey)
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-
-        ItemStack withAffixes = applyAffixes(result.itemStack(), rolledAttributeIds, material);
-        return attributeLoreFormatter.rebuildLore(withAffixes, parsedDefinitions, attributeFacade, slot);
+        return applyEnchants(baseItem, enchantChance);
     }
 
-    private List<AttributeRoll> randomRolls(List<AttributeDefinition> definitions, EquipmentSlot slot, long nights) {
-        int clampedNights = (int) Math.max(0, Math.min(nights, Integer.MAX_VALUE));
-        int rollCount = Math.max(1, Math.min(3, 1 + clampedNights % 3));
-        String criterion = criterionForSlot(slot);
+    private List<AttributeRoll> randomRolls(List<AttributeDefinition> definitions, EquipmentSlot slot, double chance) {
+        if (definitions.isEmpty() || chance <= 0d) {
+            return List.of();
+        }
 
+        String criterion = criterionForSlot(slot);
         Map<String, AggregatedRoll> aggregatedRolls = new LinkedHashMap<>();
-        random.ints(rollCount, 0, definitions.size())
-                .mapToObj(definitions::get)
-                .forEach(definition -> aggregatedRolls
-                        .computeIfAbsent(definition.id(), ignored -> new AggregatedRoll(definition))
-                        .addAmount(randomAmount()));
+
+        while (rollChance(chance)) {
+            AttributeDefinition definition = definitions.get(random.nextInt(definitions.size()));
+            aggregatedRolls
+                    .computeIfAbsent(definition.id(), ignored -> new AggregatedRoll(definition))
+                    .addAmount(randomAmount());
+        }
 
         return aggregatedRolls.values().stream()
                 .map(roll -> roll.toAttributeRoll(resolveKey(roll.definition().id()), criterion))
-                .collect(Collectors.toList());
+                .toList();
+    }
+
+    private ItemStack applyEnchants(ItemStack itemStack, double enchantChance) {
+        if (itemStack == null || enchantChance <= 0d) {
+            return itemStack;
+        }
+
+        List<Enchantment> pool = enchantmentPool.enchantments();
+        if (pool.isEmpty()) {
+            return itemStack;
+        }
+
+        ItemMeta meta = itemStack.getItemMeta();
+        if (meta == null) {
+            return itemStack;
+        }
+
+        boolean modified = false;
+        while (rollChance(enchantChance)) {
+            Enchantment enchantment = pool.get(random.nextInt(pool.size()));
+            int level = rollEnchantmentLevel(enchantment);
+            int existingLevel = meta.getEnchantLevel(enchantment);
+            int appliedLevel = existingLevel > 0 ? Math.max(existingLevel, level) : level;
+            meta.addEnchant(enchantment, appliedLevel, true);
+            modified = true;
+        }
+
+        if (modified) {
+            itemStack.setItemMeta(meta);
+        }
+        return itemStack;
+    }
+
+    private int rollEnchantmentLevel(Enchantment enchantment) {
+        int maxLevel = enchantment.getMaxLevel();
+        int maxRolledLevel = Math.min(maxLevel, Math.max(1, 1 + enchantChanceConfig.levelBonus()));
+        return 1 + random.nextInt(maxRolledLevel);
     }
 
     private ItemStack applyAffixes(ItemStack itemStack, LinkedHashSet<String> attributeIds, Material material) {
@@ -257,6 +315,14 @@ public class GearService {
 
     private double randomAmount() {
         return 0.25d + (1.25d * random.nextDouble());
+    }
+
+    private boolean rollChance(double chance) {
+        double clampedChance = Math.max(0d, Math.min(chance, 0.999999d));
+        if (clampedChance <= 0d) {
+            return false;
+        }
+        return random.nextDouble() < clampedChance;
     }
 
     private CommandParsingUtils.NamespacedAttributeKey resolveKey(String attributeId) {
