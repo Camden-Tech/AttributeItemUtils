@@ -14,4 +14,24 @@ public interface EntityChanceHook {
     default Optional<Double> dropChanceFor(EntityType type) {
         return Optional.empty();
     }
+
+    /**
+     * Provides an attribute roll chance override for the specified entity type.
+     *
+     * @param type entity requesting attribute chance
+     * @return configured attribute chance if present
+     */
+    default Optional<Double> attributeChanceFor(EntityType type) {
+        return Optional.empty();
+    }
+
+    /**
+     * Provides an enchantment roll chance override for the specified entity type.
+     *
+     * @param type entity requesting enchant chance
+     * @return configured enchant chance if present
+     */
+    default Optional<Double> enchantChanceFor(EntityType type) {
+        return Optional.empty();
+    }
 }

@@ -1,10 +1,13 @@
 package com.baddcamden.attributeitemutils;
 
+import com.baddcamden.attributeitemutils.config.AttributeChanceConfig;
 import com.baddcamden.attributeitemutils.config.DropChanceConfigSource;
+import com.baddcamden.attributeitemutils.config.EnchantChanceConfig;
 import com.baddcamden.attributeitemutils.gear.GearConfigLoader;
 import com.baddcamden.attributeitemutils.gear.KitConfig;
 import com.baddcamden.attributeitemutils.items.AttributeAffixConfig;
 import com.baddcamden.attributeitemutils.items.AttributeLoreFormatter;
+import com.baddcamden.attributeitemutils.items.EnchantmentPool;
 import com.baddcamden.attributeitemutils.items.GearService;
 import com.baddcamden.attributeitemutils.hooks.EntityChanceHook;
 import com.baddcamden.attributeitemutils.hooks.EntityChanceHooks;
@@ -32,14 +35,18 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
     private GearConfigLoader gearConfigLoader;
     // Supplies per-entity drop chance configuration overrides.
     private DropChanceConfigSource dropChanceConfigSource;
+    private AttributeChanceConfig attributeChanceConfig;
+    private EnchantChanceConfig enchantChanceConfig;
     private AttributeAffixConfig attributeAffixConfig;
     private AttributeLoreFormatter attributeLoreFormatter;
+    private EnchantmentPool enchantmentPool;
     private final EntityChanceHooks chanceHooks = new EntityChanceHooks();
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
         saveDefaultGearConfig();
+        saveDefaultEnchantPool();
 
         AttributeUtilitiesPlugin attributeUtils = resolveAttributeUtils();
         if (attributeUtils == null) {
@@ -53,6 +60,7 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
         gearConfigLoader = new GearConfigLoader(this);
         attributeAffixConfig = new AttributeAffixConfig(this, getLogger());
         attributeLoreFormatter = new AttributeLoreFormatter(this, getLogger());
+        enchantmentPool = new EnchantmentPool(this, getLogger());
         reloadPluginConfigs(attributeUtils);
         registerCommands();
         getLogger().info("AttributeItemUtils enabled");
@@ -73,13 +81,20 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
         saveDefaultGearConfig();
         saveDefaultAffixConfig();
         saveDefaultLoreConfig();
+        saveDefaultEnchantPool();
         reloadConfig();
         gearConfigLoader.reload();
         attributeAffixConfig.reload();
         attributeLoreFormatter.reload();
+        if (enchantmentPool == null) {
+            enchantmentPool = new EnchantmentPool(this, getLogger());
+        }
+        enchantmentPool.reload();
 
         dropChanceConfigSource = DropChanceConfigSource.fromConfig(getConfig());
-        gearService = new GearService(gearConfigLoader, dropChanceConfigSource, chanceHooks, attributeUtils, attributeFacade, itemAttributeHandler, entityAttributeHandler, attributeAffixConfig, attributeLoreFormatter, getLogger());
+        attributeChanceConfig = AttributeChanceConfig.fromConfig(getConfig());
+        enchantChanceConfig = EnchantChanceConfig.fromConfig(getConfig());
+        gearService = new GearService(gearConfigLoader, dropChanceConfigSource, chanceHooks, attributeUtils, attributeFacade, itemAttributeHandler, entityAttributeHandler, attributeAffixConfig, attributeLoreFormatter, attributeChanceConfig, enchantChanceConfig, enchantmentPool, getLogger());
     }
 
     private void saveDefaultGearConfig() {
@@ -109,6 +124,16 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
                 getDataFolder().mkdirs();
             }
             saveResource("AttributeLore.yml", false);
+        }
+    }
+
+    private void saveDefaultEnchantPool() {
+        File enchantFile = new File(getDataFolder(), "EnchantmentPool.yml");
+        if (!enchantFile.exists()) {
+            if (!getDataFolder().exists()) {
+                getDataFolder().mkdirs();
+            }
+            saveResource("EnchantmentPool.yml", false);
         }
     }
 
