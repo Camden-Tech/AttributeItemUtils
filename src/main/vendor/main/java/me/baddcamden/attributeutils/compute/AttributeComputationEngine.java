@@ -7,9 +7,9 @@ import me.baddcamden.attributeutils.model.AttributeValueStages;
 import me.baddcamden.attributeutils.model.ModifierEntry;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -82,10 +82,14 @@ public class AttributeComputationEngine {
         synchronizeCurrentBaseline(definition, globalInstance, playerInstance, defaultFinal);
 
         double rawCurrent = buildCurrentBaseline(definition, vanillaSupplier, player, globalInstance, playerInstance, rawDefault, defaultFinal);
-        Collection<ModifierEntry> currentPermanentAdditives = collectModifiers(globalInstance, playerInstance, AttributeInstance::getCurrentPermanentAdditives);
-        Collection<ModifierEntry> currentTemporaryAdditives = collectModifiers(globalInstance, playerInstance, AttributeInstance::getCurrentTemporaryAdditives);
-        Collection<ModifierEntry> currentPermanentMultipliers = collectModifiers(globalInstance, playerInstance, AttributeInstance::getCurrentPermanentMultipliers);
-        Collection<ModifierEntry> currentTemporaryMultipliers = collectModifiers(globalInstance, playerInstance, AttributeInstance::getCurrentTemporaryMultipliers);
+        Collection<ModifierEntry> currentPermanentAdditives = filterCurrentModifiers(definition,
+                collectModifiers(globalInstance, playerInstance, AttributeInstance::getCurrentPermanentAdditives));
+        Collection<ModifierEntry> currentTemporaryAdditives = filterCurrentModifiers(definition,
+                collectModifiers(globalInstance, playerInstance, AttributeInstance::getCurrentTemporaryAdditives));
+        Collection<ModifierEntry> currentPermanentMultipliers = filterCurrentModifiers(definition,
+                collectModifiers(globalInstance, playerInstance, AttributeInstance::getCurrentPermanentMultipliers));
+        Collection<ModifierEntry> currentTemporaryMultipliers = filterCurrentModifiers(definition,
+                collectModifiers(globalInstance, playerInstance, AttributeInstance::getCurrentTemporaryMultipliers));
         double currentPermanent = apply(rawCurrent,
                 currentPermanentAdditives,
                 Collections.emptyList(),
@@ -132,18 +136,13 @@ public class AttributeComputationEngine {
                                         double rawDefault,
                                         double defaultFinal) {
         if (definition.dynamic()) {
-            double vanilla = vanillaSupplier == null || player == null ? definition.defaultCurrentValue() : vanillaSupplier.getVanillaValue(player);
-            //VAGUE/IMPROVEMENT NEEDED Clarify whether falling back to the default current value is the intended behavior when no vanilla supplier is registered.
-            double adjusted = vanilla;
-            if (playerInstance != null) {
-                //VAGUE/IMPROVEMENT NEEDED assumes the stored base delta should be transferred onto the live
-                //VAGUE/IMPROVEMENT NEEDED vanilla reading instead of the definition's default, which may not
-                //VAGUE/IMPROVEMENT NEEDED reflect how the original base was computed.
-                adjusted += playerInstance.getCurrentBaseValue() - definition.defaultCurrentValue();
-            } else if (globalInstance != null) {
-                adjusted += globalInstance.getCurrentBaseValue() - definition.defaultCurrentValue();
-            }
-            return definition.capConfig().clamp(adjusted, resolveCapKey(globalInstance, playerInstance));
+            double vanilla = vanillaSupplier == null || player == null
+                    ? definition.defaultCurrentValue()
+                    : vanillaSupplier.getVanillaValue(player);
+            // Dynamic attributes should recompute from the fresh vanilla value on every pass so additive modifiers
+            // are only applied once. Persisted current base deltas are ignored here to avoid carrying forward
+            // previously applied modifiers when refreshes occur.
+            return definition.capConfig().clamp(vanilla, resolveCapKey(globalInstance, playerInstance));
         }
 
         double base = playerInstance != null
@@ -224,16 +223,25 @@ public class AttributeComputationEngine {
             return Collections.emptyList();
         }
 
-        if (globalInstance == null) {
-            return extractor.apply(playerInstance).values();
+        Map<String, ModifierEntry> combined = new LinkedHashMap<>();
+        if (globalInstance != null) {
+            extractor.apply(globalInstance).forEach(combined::putIfAbsent);
         }
-        if (playerInstance == null) {
-            return extractor.apply(globalInstance).values();
+        if (playerInstance != null) {
+            extractor.apply(playerInstance).forEach(combined::put);
+        }
+        return combined.values();
+    }
+
+    private Collection<ModifierEntry> filterCurrentModifiers(AttributeDefinition definition,
+                                                             Collection<ModifierEntry> modifiers) {
+        if (modifiers == null || modifiers.isEmpty()) {
+            return modifiers;
         }
 
-        List<ModifierEntry> combined = new ArrayList<>(extractor.apply(globalInstance).values());
-        combined.addAll(extractor.apply(playerInstance).values());
-        return combined;
+        return modifiers.stream()
+                .filter(ModifierEntry::appliesToCurrent)
+                .toList();
     }
 
     private void synchronizeCurrentBaseline(AttributeDefinition definition,

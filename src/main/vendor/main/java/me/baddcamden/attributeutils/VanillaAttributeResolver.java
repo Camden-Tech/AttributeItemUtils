@@ -19,7 +19,12 @@ public final class VanillaAttributeResolver {
      * Prefix used by AttributeUtils-authored modifiers so they can be ignored when reproducing
      * vanilla calculations.
      */
-    private static final String ATTRIBUTEUTILS_PREFIX = "attributeutils:";
+    public static final String ATTRIBUTEUTILS_PREFIX = "attributeutils:";
+    /**
+     * Legacy prefix used by earlier integrations that failed to use the colon separator. Modifiers using this prefix
+     * are removed during refresh so that only properly namespaced entries remain.
+     */
+    private static final String LEGACY_ATTRIBUTEUTILS_PREFIX = "attributeutils.";
 
     private VanillaAttributeResolver() {
     }
@@ -42,6 +47,8 @@ public final class VanillaAttributeResolver {
         if (instance == null) {
             return fallback;
         }
+
+        scrubLegacyPluginModifiers(instance);
 
         double baseValue = instance.getBaseValue();
         double additive = 0.0d;
@@ -91,13 +98,42 @@ public final class VanillaAttributeResolver {
     }
 
     /**
+     * Removes legacy AttributeUtils modifiers that do not use the colon prefix so that subsequent refreshes can
+     * reapply correctly namespaced entries. This cleanup prevents double-counting during vanilla reconstruction and
+     * keeps stored state aligned with {@link #ATTRIBUTEUTILS_PREFIX}.
+     *
+     * @param instance attribute instance to purge legacy AttributeUtils modifiers from
+     */
+    public static void scrubLegacyPluginModifiers(AttributeInstance instance) {
+        if (instance == null) {
+            return;
+        }
+
+        for (AttributeModifier modifier : new java.util.ArrayList<>(instance.getModifiers())) {
+            String name = modifier.getName();
+            if (name == null) {
+                continue;
+            }
+
+            String normalized = name.toLowerCase(Locale.ROOT);
+            if (normalized.startsWith(ATTRIBUTEUTILS_PREFIX)) {
+                continue;
+            }
+
+            if (normalized.startsWith(LEGACY_ATTRIBUTEUTILS_PREFIX) || normalized.startsWith("attributeutils")) {
+                instance.removeModifier(modifier);
+            }
+        }
+    }
+
+    /**
      * Detects whether the provided modifier originated from AttributeUtils by checking the name prefix.
      * This is used to prevent plugin-added modifiers from being included when recreating vanilla-only values.
      *
      * @param modifier modifier to inspect; null yields {@code false}.
      * @return {@code true} when the modifier name starts with the AttributeUtils prefix (case-insensitive).
      */
-    static boolean isPluginModifier(AttributeModifier modifier) {
+    public static boolean isPluginModifier(AttributeModifier modifier) {
         if (modifier == null) {
             return false;
         }

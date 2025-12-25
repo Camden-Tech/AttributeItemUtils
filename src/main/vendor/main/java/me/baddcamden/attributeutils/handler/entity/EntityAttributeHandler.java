@@ -27,7 +27,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * Integrates entity interactions with the attribute computation pipeline. Responsibilities include applying computed
@@ -48,10 +51,6 @@ public class EntityAttributeHandler {
      */
     private static final double MINIMUM_MAX_HEALTH = 0.0001d;
     /**
-     * Prefix used when constructing modifier ids and names.
-     */
-    private static final String ATTRIBUTE_MODIFIER_PREFIX = "attributeutils:";
-    /**
      * Persistent data key prefix/suffix used for attribute storage.
      */
     private static final String ATTRIBUTE_KEY_PREFIX = "attr_";
@@ -60,7 +59,7 @@ public class EntityAttributeHandler {
      * Deterministic modifier id for swim speed adjustments.
      */
     private static final java.util.UUID SWIM_SPEED_MODIFIER_ID = java.util.UUID.nameUUIDFromBytes(
-            (ATTRIBUTE_MODIFIER_PREFIX + "swim_speed").getBytes(StandardCharsets.UTF_8));
+            (VanillaAttributeResolver.ATTRIBUTEUTILS_PREFIX + "swim_speed").getBytes(StandardCharsets.UTF_8));
     /**
      * Entry point into the attribute computation pipeline.
      */
@@ -82,9 +81,19 @@ public class EntityAttributeHandler {
      */
     private boolean transientMethodResolved;
     /**
+     * Tracks modifier ids applied via the transient API so replacements can remove them even when getModifiers()
+     * does not expose transient entries.
+     */
+    private final Set<UUID> transientModifierIds = ConcurrentHashMap.newKeySet();
+    /**
      * Periodic task that re-applies movement-related attributes to online players.
      */
     private BukkitTask ticker;
+
+    /**
+     * When enabled, emit detailed modifier application logs to help diagnose drift/stacking issues.
+     */
+    private final boolean debugModifierLogging;
 
     /**
      * Creates a handler that synchronizes computed attribute values with Bukkit entities and begins the periodic
@@ -92,10 +101,12 @@ public class EntityAttributeHandler {
      */
     public EntityAttributeHandler(AttributeFacade attributeFacade,
                                   Plugin plugin,
-                                  Map<String, Attribute> vanillaAttributeTargets) {
+                                  Map<String, Attribute> vanillaAttributeTargets,
+                                  boolean debugModifierLogging) {
         this.attributeFacade = attributeFacade;
         this.plugin = plugin;
         this.vanillaAttributeTargets = vanillaAttributeTargets;
+        this.debugModifierLogging = debugModifierLogging;
         resolveTransientModifierMethod();
         startTicker();
     }
@@ -213,11 +224,12 @@ public class EntityAttributeHandler {
      * @param value       baseline value to store on the attribute instance
      */
     private void applyVanillaAttribute(Entity entity, String attributeId, double value) {
-        if (!(entity instanceof Attributable attributable) || isBlank(attributeId)) {
+        String normalizedId = normalizeAttributeId(attributeId);
+        if (!(entity instanceof Attributable attributable) || isBlank(normalizedId)) {
             return;
         }
 
-        Attribute target = resolveVanillaTarget(attributeId);
+        Attribute target = resolveVanillaTarget(normalizedId);
         if (target == null) {
             return;
         }
@@ -272,6 +284,10 @@ public class EntityAttributeHandler {
      */
     private boolean isBlank(String attributeId) {
         return attributeId == null || attributeId.isBlank();
+    }
+
+    private String normalizeAttributeId(String attributeId) {
+        return attributeId == null ? null : attributeId.toLowerCase(Locale.ROOT);
     }
 
     /**
@@ -359,22 +375,30 @@ public class EntityAttributeHandler {
      * @param attributeId identifier of the attribute to compute
      */
     public void applyVanillaAttribute(LivingEntity entity, String attributeId) {
-        if (entity == null || isBlank(attributeId)) {
+        String normalizedId = normalizeAttributeId(attributeId);
+        if (entity == null || isBlank(normalizedId)) {
             return;
         }
 
         if (entity instanceof Player player) {
-            applyVanillaAttribute(player, attributeId);
+            applyVanillaAttribute(player, normalizedId);
             return;
         }
 
-        Attribute target = resolveVanillaTarget(attributeId);
+        Attribute target = resolveVanillaTarget(normalizedId);
         if (target == null) {
             return;
         }
 
-        AttributeValueStages computed = attributeFacade.compute(attributeId, entity.getUniqueId(), null);
-        applyComputedModifier(entity, target, attributeId, computed);
+        org.bukkit.attribute.AttributeInstance instance = entity.getAttribute(target);
+        if (instance == null) {
+            return;
+        }
+
+        purgeAttributeUtilsModifiers(instance, attributeModifierId(normalizedId), normalizedId);
+
+        AttributeValueStages computed = attributeFacade.compute(normalizedId, entity.getUniqueId(), null);
+        applyComputedModifier(entity, target, normalizedId, computed);
     }
 
     /**
@@ -385,16 +409,24 @@ public class EntityAttributeHandler {
      * @param attributeId identifier of the attribute to compute
      */
     public void applyVanillaAttribute(Player player, String attributeId) {
-        if (player == null || isBlank(attributeId)) {
+        String normalizedId = normalizeAttributeId(attributeId);
+        if (player == null || isBlank(normalizedId)) {
             return;
         }
-        Attribute target = resolveVanillaTarget(attributeId);
+        Attribute target = resolveVanillaTarget(normalizedId);
         if (target == null) {
             return;
         }
 
-        AttributeValueStages computed = attributeFacade.compute(attributeId, player);
-        applyComputedModifier(player, target, attributeId, computed);
+        org.bukkit.attribute.AttributeInstance instance = player.getAttribute(target);
+        if (instance == null) {
+            return;
+        }
+
+        purgeAttributeUtilsModifiers(instance, attributeModifierId(normalizedId), normalizedId);
+
+        AttributeValueStages computed = attributeFacade.compute(normalizedId, player);
+        applyComputedModifier(player, target, normalizedId, computed);
     }
 
     /**
@@ -430,39 +462,83 @@ public class EntityAttributeHandler {
             return;
         }
 
-        UUID modifierId = attributeModifierId(attributeId);
-        boolean hadModifier = hasModifierById(instance, modifierId);
-        removeModifierById(instance, modifierId);
-        if (hasModifierById(instance, modifierId)) {
-            // Avoid stacking if removal failed for any reason.
-            return;
-        }
+        VanillaAttributeResolver.scrubLegacyPluginModifiers(instance);
 
-        // "vanillaValue" represents the live attribute before AttributeUtils touches it (base + equipment modifiers).
-        // The computed pipeline already incorporates the player/entity's staged value (including caps), so the
-        // transient modifier should only add the difference between what vanilla currently has and the staged value.
+        UUID modifierId = attributeModifierId(attributeId);
+        List<AttributeModifier> prePurgeModifiers = debugModifierLogging
+                ? collectPluginModifiers(instance, attributeId)
+                : List.of();
+
+        purgeAttributeUtilsModifiers(instance, modifierId, attributeId);
+
+        List<AttributeModifier> postPurgeModifiers = debugModifierLogging
+                ? collectPluginModifiers(instance, attributeId)
+                : List.of();
+
         double vanillaValue = VanillaAttributeResolver.resolveVanillaValue(instance, instance.getBaseValue());
 
-        double stagedValue = computed.currentFinal();
-        double delta = stagedValue - vanillaValue;
+        double staged = computed.currentFinal();
+        double delta = staged - vanillaValue;
+        if (debugModifierLogging) {
+            logModifierDebug(attributable, instance, target, attributeId, computed, vanillaValue, delta,
+                    prePurgeModifiers, postPurgeModifiers);
+        }
         if (Math.abs(delta) < ATTRIBUTE_DELTA_EPSILON) {
             return;
         }
 
         AttributeModifier modifier = new AttributeModifier(
                 modifierId,
-                ATTRIBUTE_MODIFIER_PREFIX + attributeId,
+                VanillaAttributeResolver.ATTRIBUTEUTILS_PREFIX + attributeId,
                 delta,
                 AttributeModifier.Operation.ADD_NUMBER
         );
-        if (hadModifier || !hasModifierById(instance, modifierId)) {
-            addModifier(instance, modifier);
+        if (hasModifierById(instance, modifierId)) {
+            return;
         }
+
+        addModifier(instance, modifier);
     }
 
     private boolean hasModifierById(AttributeInstance instance, UUID modifierId) {
-        return instance.getModifiers().stream()
+        return transientModifierIds.contains(modifierId) || instance.getModifiers().stream()
                 .anyMatch(modifier -> modifier.getUniqueId().equals(modifierId));
+    }
+
+    private void purgeAttributeUtilsModifiers(AttributeInstance instance, UUID modifierId, String attributeId) {
+        transientModifierIds.remove(modifierId);
+
+        for (AttributeModifier modifier : new ArrayList<>(instance.getModifiers())) {
+            if (modifier.getUniqueId().equals(modifierId) || isAttributeUtilsModifier(modifier, attributeId)) {
+                instance.removeModifier(modifier);
+                transientModifierIds.remove(modifier.getUniqueId());
+            }
+        }
+
+        AttributeModifier cleanup = new AttributeModifier(
+                modifierId,
+                VanillaAttributeResolver.ATTRIBUTEUTILS_PREFIX + "cleanup",
+                0.0d,
+                AttributeModifier.Operation.ADD_NUMBER
+        );
+        instance.removeModifier(cleanup);
+    }
+
+    private boolean isAttributeUtilsModifier(AttributeModifier modifier, String attributeId) {
+        if (modifier == null || modifier.getName() == null || !VanillaAttributeResolver.isPluginModifier(modifier)) {
+            return false;
+        }
+
+        String normalizedName = modifier.getName().toLowerCase(Locale.ROOT);
+        String expectedName = (VanillaAttributeResolver.ATTRIBUTEUTILS_PREFIX + attributeId).toLowerCase(Locale.ROOT);
+        return normalizedName.equals(expectedName);
+    }
+
+    private double resolveMultiplier(double valueBefore, double valueAfter) {
+        if (Math.abs(valueBefore) < ATTRIBUTE_DELTA_EPSILON) {
+            return 1.0d;
+        }
+        return valueAfter / valueBefore;
     }
 
     /**
@@ -472,7 +548,7 @@ public class EntityAttributeHandler {
      * @return deterministic UUID scoped to the attribute id
      */
     private UUID attributeModifierId(String attributeId) {
-        return java.util.UUID.nameUUIDFromBytes((ATTRIBUTE_MODIFIER_PREFIX + attributeId).getBytes(StandardCharsets.UTF_8));
+        return java.util.UUID.nameUUIDFromBytes((VanillaAttributeResolver.ATTRIBUTEUTILS_PREFIX + attributeId).getBytes(StandardCharsets.UTF_8));
     }
 
     /**
@@ -482,10 +558,18 @@ public class EntityAttributeHandler {
      * @param modifierId deterministic identifier generated for the modifier
      */
     private void removeModifierById(AttributeInstance instance, UUID modifierId) {
+        transientModifierIds.remove(modifierId);
         instance.getModifiers().stream()
                 .filter(modifier -> modifier.getUniqueId().equals(modifierId))
                 .findFirst()
                 .ifPresent(instance::removeModifier);
+        AttributeModifier cleanup = new AttributeModifier(
+                modifierId,
+                VanillaAttributeResolver.ATTRIBUTEUTILS_PREFIX + "cleanup",
+                0.0d,
+                AttributeModifier.Operation.ADD_NUMBER
+        );
+        instance.removeModifier(cleanup);
     }
 
     /**
@@ -517,13 +601,70 @@ public class EntityAttributeHandler {
         if (transientModifierMethod != null) {
             try {
                 transientModifierMethod.invoke(instance, modifier);
+                transientModifierIds.add(modifier.getUniqueId());
                 return;
             } catch (ReflectiveOperationException ignored) {
                 transientModifierMethod = null;
+                transientModifierIds.remove(modifier.getUniqueId());
             }
         }
 
         instance.addModifier(modifier);
+    }
+
+    private void logModifierDebug(Attributable attributable,
+                                   AttributeInstance instance,
+                                   Attribute target,
+                                   String attributeId,
+                                   AttributeValueStages computed,
+                                   double vanillaValue,
+                                   double delta,
+                                   List<AttributeModifier> prePurgeModifiers,
+                                   List<AttributeModifier> postPurgeModifiers) {
+        String owner = describeAttributable(attributable);
+        String message = String.format(
+                "[modifier-debug] %s attr=%s target=%s base=%.4f vanilla=%.4f rawCurrent=%.4f currentFinal=%.4f delta=%.4f pre=%s post=%s",
+                owner,
+                attributeId,
+                target,
+                instance.getBaseValue(),
+                vanillaValue,
+                computed.rawCurrent(),
+                computed.currentFinal(),
+                delta,
+                formatModifiers(prePurgeModifiers),
+                formatModifiers(postPurgeModifiers)
+        );
+        plugin.getLogger().info(message);
+
+        if (!postPurgeModifiers.isEmpty()) {
+            plugin.getLogger().warning("[modifier-debug] residual AttributeUtils modifiers remained after purge for "
+                    + attributeId + " on " + owner);
+        }
+    }
+
+    private List<AttributeModifier> collectPluginModifiers(AttributeInstance instance, String attributeId) {
+        return instance.getModifiers().stream()
+                .filter(modifier -> isAttributeUtilsModifier(modifier, attributeId))
+                .collect(Collectors.toList());
+    }
+
+    private String describeAttributable(Attributable attributable) {
+        if (attributable instanceof Entity entity) {
+            String label = (entity instanceof Player player) ? player.getName() : entity.getType().name();
+            return label + "(" + entity.getUniqueId() + ")";
+        }
+        return attributable.getClass().getSimpleName();
+    }
+
+    private String formatModifiers(List<AttributeModifier> modifiers) {
+        if (modifiers == null || modifiers.isEmpty()) {
+            return "[]";
+        }
+        return modifiers.stream()
+                .map(modifier -> modifier.getUniqueId() + "|" + modifier.getName() + "|" + modifier.getOperation()
+                        + "|" + modifier.getAmount())
+                .collect(Collectors.joining(", ", "[", "]"));
     }
 
     /**
@@ -570,6 +711,8 @@ public class EntityAttributeHandler {
             return;
         }
 
+        VanillaAttributeResolver.scrubLegacyPluginModifiers(instance);
+
         instance.getModifiers().stream()
                 .filter(modifier -> modifier.getUniqueId().equals(SWIM_SPEED_MODIFIER_ID))
                 .findFirst()
@@ -592,7 +735,7 @@ public class EntityAttributeHandler {
 
         AttributeModifier modifier = new AttributeModifier(
                 SWIM_SPEED_MODIFIER_ID,
-                ATTRIBUTE_MODIFIER_PREFIX + "swim_speed",
+                VanillaAttributeResolver.ATTRIBUTEUTILS_PREFIX + "swim_speed",
                 multiplier,
                 AttributeModifier.Operation.MULTIPLY_SCALAR_1
         );
