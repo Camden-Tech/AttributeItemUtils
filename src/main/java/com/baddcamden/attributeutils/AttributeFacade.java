@@ -115,16 +115,32 @@ public class AttributeFacade {
 
     private Multimap<Attribute, AttributeModifier> defaultModifiers(ItemStack stack, EquipmentSlot slot) {
         ItemMeta vanillaMeta = new ItemStack(stack.getType()).getItemMeta();
-        if (vanillaMeta == null) {
-            return null;
+        if (vanillaMeta != null) {
+            Multimap<Attribute, AttributeModifier> defaultForSlot = vanillaMeta.getAttributeModifiers(slot);
+            if (defaultForSlot != null && !defaultForSlot.isEmpty()) {
+                return defaultForSlot;
+            }
+
+            Multimap<Attribute, AttributeModifier> allDefaults = vanillaMeta.getAttributeModifiers();
+            if (allDefaults != null && !allDefaults.isEmpty()) {
+                return allDefaults;
+            }
         }
 
-        Multimap<Attribute, AttributeModifier> defaultForSlot = vanillaMeta.getAttributeModifiers(slot);
-        if (defaultForSlot != null && !defaultForSlot.isEmpty()) {
-            return defaultForSlot;
+        // Fall back to any modifiers currently on the stack so we never strip out vanilla values when the
+        // Bukkit item factory fails to expose built-in defaults for the material. This mirrors the vendor
+        // behavior that always reattaches vanilla baselines before layering plugin modifiers.
+        ItemMeta existingMeta = stack.getItemMeta();
+        if (existingMeta != null) {
+            Multimap<Attribute, AttributeModifier> existing = slot == null
+                    ? existingMeta.getAttributeModifiers()
+                    : existingMeta.getAttributeModifiers(slot);
+            if (existing != null && !existing.isEmpty()) {
+                return existing;
+            }
         }
 
-        return vanillaMeta.getAttributeModifiers();
+        return null;
     }
 
     public void mutate(ItemStack stack, Attribute attribute, double baseAmount, EquipmentSlot slot) {
