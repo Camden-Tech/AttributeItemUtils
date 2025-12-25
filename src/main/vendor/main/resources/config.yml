@@ -16,118 +16,114 @@ debug:
 # armor, armor-toughness, and knockback-resistance; the rest sync their
 # current baseline from the static default baseline.
 vanilla-attribute-defaults:
-  max-health:
+  generic.max-health:
     bukkit-attributes: [MAX_HEALTH, GENERIC_MAX_HEALTH]
     default-base: 20
-  follow-range:
+  generic.follow-range:
     bukkit-attributes: [FOLLOW_RANGE, GENERIC_FOLLOW_RANGE]
     default-base: 32
-  attack-damage:
+  generic.attack-damage:
     bukkit-attributes: [ATTACK_DAMAGE, GENERIC_ATTACK_DAMAGE]
     default-base: 1
-  attack-knockback:
+  generic.attack-knockback:
     bukkit-attributes: [ATTACK_KNOCKBACK, GENERIC_ATTACK_KNOCKBACK]
     default-base: 0
-  attack-speed:
+  generic.attack-speed:
     bukkit-attributes: [ATTACK_SPEED, GENERIC_ATTACK_SPEED]
     default-base: 4
-  movement-speed:
+  generic.movement-speed:
     bukkit-attributes: [MOVEMENT_SPEED, GENERIC_MOVEMENT_SPEED]
     default-base: 0.1
     dynamic: true
-  flying-speed:
+  generic.flying-speed:
     bukkit-attributes: [FLYING_SPEED, GENERIC_FLYING_SPEED]
     default-base: 0.4
-  armor:
+  generic.armor:
     bukkit-attributes: [ARMOR, GENERIC_ARMOR]
     default-base: 0
-  armor-toughness:
+  generic.armor-toughness:
     bukkit-attributes: [ARMOR_TOUGHNESS, GENERIC_ARMOR_TOUGHNESS]
     default-base: 0
-  luck:
+  generic.luck:
     bukkit-attributes: [LUCK, GENERIC_LUCK]
     default-base: 0
-  knockback-resistance:
+  generic.knockback-resistance:
     bukkit-attributes: [KNOCKBACK_RESISTANCE, GENERIC_KNOCKBACK_RESISTANCE]
     default-base: 0
-  block-range:
-    bukkit-attributes: [BLOCK_INTERACTION_RANGE, PLAYER_BLOCK_INTERACTION_RANGE]
+  generic.block-interaction-range:
+    bukkit-attributes: [BLOCK_INTERACTION_RANGE]
     default-base: 5
-  interaction-range:
-    bukkit-attributes: [ENTITY_INTERACTION_RANGE, PLAYER_ENTITY_INTERACTION_RANGE]
+  generic.entity-interaction-range:
+    bukkit-attributes: [ENTITY_INTERACTION_RANGE]
     default-base: 3
-  block-break-speed:
-    bukkit-attributes: [BLOCK_BREAK_SPEED, PLAYER_BLOCK_BREAK_SPEED]
+  generic.block-break-speed:
+    bukkit-attributes: [BLOCK_BREAK_SPEED]
     default-base: 1
-  mining-efficiency:
-    bukkit-attributes: [MINING_EFFICIENCY, PLAYER_MINING_EFFICIENCY]
+  generic.mining-efficiency:
+    bukkit-attributes: [MINING_EFFICIENCY]
     default-base: 1
-  gravity:
+  generic.gravity:
     bukkit-attributes: [GRAVITY, GENERIC_GRAVITY]
     default-base: 1
     dynamic: true
-  scale:
+  generic.scale:
     bukkit-attributes: [SCALE, GENERIC_SCALE]
     default-base: 1
-  step-height:
+  generic.step-height:
     bukkit-attributes: [STEP_HEIGHT, GENERIC_STEP_HEIGHT]
     default-base: 0.6
-  safe-fall-distance:
+  generic.safe-fall-distance:
     bukkit-attributes: [SAFE_FALL_DISTANCE, GENERIC_SAFE_FALL_DISTANCE]
     default-base: 3
-  fall-damage-multiplier:
+  generic.fall-damage-multiplier:
     bukkit-attributes: [FALL_DAMAGE_MULTIPLIER, GENERIC_FALL_DAMAGE_MULTIPLIER]
     default-base: 1
-  jump-strength:
+  generic.jump-strength:
     bukkit-attributes: [JUMP_STRENGTH, GENERIC_JUMP_STRENGTH]
     default-base: 0.42
     dynamic: true
-  sneaking-speed:
+  generic.sneaking-speed:
     bukkit-attributes: [SNEAKING_SPEED, PLAYER_SNEAKING_SPEED]
     default-base: 1
-  sprint-speed:
-    # Bukkit 1.21.10 exposes no sprint-specific attribute; use a static baseline to avoid
-    # warning spam while retaining configurable defaults.
-    provider: static
+  generic.movement-efficiency:
+    bukkit-attributes: [MOVEMENT_EFFICIENCY]
     default-base: 1
-  swim-speed:
-    # Bukkit 1.21.10 exposes no swim-specific attribute; use a static baseline to avoid
-    # warning spam while retaining configurable defaults.
-    provider: static
+  generic.water-movement-efficiency:
+    bukkit-attributes: [WATER_MOVEMENT_EFFICIENCY]
     default-base: 1
-  damage-reduction:
-    provider: static
+  generic.explosion-knockback-resistance:
+    bukkit-attributes: [EXPLOSION_KNOCKBACK_RESISTANCE]
     default-base: 0
 
 # Global caps for core attributes
 # Caps can be supplied as a scalar (max only) or a section with `min`,
 # `max`, and optional `overrides:` map entries for keyed caps.
 global-attribute-caps:
-  max-health: 100
-  follow-range: 256
-  attack-damage: 100
-  attack-knockback: 10
-  attack-speed: 40
-  movement-speed: 1
-  flying-speed: 1
-  armor: 40
-  armor-toughness: 20
-  luck: 1024
-  knockback-resistance: 1
-  block-range: 128
-  interaction-range: 64
-  block-break-speed: 1024
-  mining-efficiency: 1024
-  gravity: 10
-  scale: 10
-  step-height: 5
-  safe-fall-distance: 256
-  fall-damage-multiplier: 10
-  jump-strength: 5
-  sneaking-speed: 4
-  sprint-speed: 4
-  swim-speed: 4
-  damage-reduction: 1
+  generic.max-health: 100
+  generic.follow-range: 256
+  generic.attack-damage: 100
+  generic.attack-knockback: 10
+  generic.attack-speed: 40
+  generic.movement-speed: 1
+  generic.flying-speed: 1
+  generic.armor: 40
+  generic.armor-toughness: 20
+  generic.luck: 1024
+  generic.knockback-resistance: 1
+  generic.block-interaction-range: 128
+  generic.entity-interaction-range: 64
+  generic.block-break-speed: 1024
+  generic.mining-efficiency: 1024
+  generic.gravity: 10
+  generic.scale: 10
+  generic.step-height: 5
+  generic.safe-fall-distance: 256
+  generic.fall-damage-multiplier: 10
+  generic.jump-strength: 5
+  generic.sneaking-speed: 4
+  generic.movement-efficiency: 4
+  generic.water-movement-efficiency: 4
+  generic.explosion-knockback-resistance: 1
 
 # Sample custom attributes
 custom-attribute-defaults:
