@@ -4,6 +4,7 @@ import com.baddcamden.attributeitemutils.config.DropChanceConfigSource;
 import com.baddcamden.attributeitemutils.gear.GearConfigLoader;
 import com.baddcamden.attributeitemutils.gear.KitConfig;
 import com.baddcamden.attributeitemutils.items.AttributeAffixConfig;
+import com.baddcamden.attributeitemutils.items.AttributeLoreFormatter;
 import com.baddcamden.attributeitemutils.items.GearService;
 import com.baddcamden.attributeitemutils.hooks.EntityChanceHook;
 import com.baddcamden.attributeitemutils.hooks.EntityChanceHooks;
@@ -32,6 +33,7 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
     // Supplies per-entity drop chance configuration overrides.
     private DropChanceConfigSource dropChanceConfigSource;
     private AttributeAffixConfig attributeAffixConfig;
+    private AttributeLoreFormatter attributeLoreFormatter;
     private final EntityChanceHooks chanceHooks = new EntityChanceHooks();
 
     @Override
@@ -50,6 +52,7 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
         entityAttributeHandler = attributeUtils.getEntityAttributeHandler();
         gearConfigLoader = new GearConfigLoader(this);
         attributeAffixConfig = new AttributeAffixConfig(this, getLogger());
+        attributeLoreFormatter = new AttributeLoreFormatter(this, getLogger());
         reloadPluginConfigs(attributeUtils);
         registerCommands();
         getLogger().info("AttributeItemUtils enabled");
@@ -69,12 +72,14 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
         saveDefaultConfig();
         saveDefaultGearConfig();
         saveDefaultAffixConfig();
+        saveDefaultLoreConfig();
         reloadConfig();
         gearConfigLoader.reload();
         attributeAffixConfig.reload();
+        attributeLoreFormatter.reload();
 
         dropChanceConfigSource = DropChanceConfigSource.fromConfig(getConfig());
-        gearService = new GearService(gearConfigLoader, dropChanceConfigSource, chanceHooks, attributeUtils, attributeFacade, itemAttributeHandler, entityAttributeHandler, attributeAffixConfig, getLogger());
+        gearService = new GearService(gearConfigLoader, dropChanceConfigSource, chanceHooks, attributeUtils, attributeFacade, itemAttributeHandler, entityAttributeHandler, attributeAffixConfig, attributeLoreFormatter, getLogger());
     }
 
     private void saveDefaultGearConfig() {
@@ -94,6 +99,16 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
                 getDataFolder().mkdirs();
             }
             saveResource("AttributeUffixes.yml", false);
+        }
+    }
+
+    private void saveDefaultLoreConfig() {
+        File loreFile = new File(getDataFolder(), "AttributeLore.yml");
+        if (!loreFile.exists()) {
+            if (!getDataFolder().exists()) {
+                getDataFolder().mkdirs();
+            }
+            saveResource("AttributeLore.yml", false);
         }
     }
 
