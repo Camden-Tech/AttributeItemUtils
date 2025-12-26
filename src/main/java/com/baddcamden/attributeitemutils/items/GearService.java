@@ -1,6 +1,7 @@
 package com.baddcamden.attributeitemutils.items;
 
 import com.baddcamden.attributeitemutils.config.AttributeChanceConfig;
+import com.baddcamden.attributeitemutils.config.AttributeOperationConfig;
 import com.baddcamden.attributeitemutils.config.DropChanceConfigSource;
 import com.baddcamden.attributeitemutils.config.EnchantChanceConfig;
 import com.baddcamden.attributeitemutils.gear.GearConfigLoader;
@@ -16,6 +17,7 @@ import me.baddcamden.attributeutils.handler.entity.EntityAttributeHandler;
 import me.baddcamden.attributeutils.handler.item.ItemAttributeHandler;
 import me.baddcamden.attributeutils.handler.item.TriggerCriterion;
 import me.baddcamden.attributeutils.model.AttributeDefinition;
+import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.LivingEntity;
@@ -51,6 +53,7 @@ public class GearService {
     private final EntityAttributeHandler entityAttributeHandler;
     private final AttributeAffixConfig attributeAffixConfig;
     private final AttributeLoreFormatter attributeLoreFormatter;
+    private final AttributeOperationConfig attributeOperationConfig;
     private final AttributeChanceConfig attributeChanceConfig;
     private final EnchantChanceConfig enchantChanceConfig;
     private final EnchantmentPool enchantmentPool;
@@ -69,10 +72,11 @@ public class GearService {
                        EntityAttributeHandler entityAttributeHandler,
                        AttributeAffixConfig attributeAffixConfig,
                        AttributeLoreFormatter attributeLoreFormatter,
+                       AttributeOperationConfig attributeOperationConfig,
                        AttributeChanceConfig attributeChanceConfig,
                        EnchantChanceConfig enchantChanceConfig,
                        EnchantmentPool enchantmentPool) {
-        this(loader, dropChanceConfigSource, chanceHooks, attributeUtils, attributeFacade, itemAttributeHandler, entityAttributeHandler, attributeAffixConfig, attributeLoreFormatter, attributeChanceConfig, enchantChanceConfig, enchantmentPool, Logger.getLogger(GearService.class.getName()));
+        this(loader, dropChanceConfigSource, chanceHooks, attributeUtils, attributeFacade, itemAttributeHandler, entityAttributeHandler, attributeAffixConfig, attributeLoreFormatter, attributeOperationConfig, attributeChanceConfig, enchantChanceConfig, enchantmentPool, Logger.getLogger(GearService.class.getName()));
     }
 
     public GearService(GearConfigLoader loader,
@@ -84,6 +88,7 @@ public class GearService {
                        EntityAttributeHandler entityAttributeHandler,
                        AttributeAffixConfig attributeAffixConfig,
                        AttributeLoreFormatter attributeLoreFormatter,
+                       AttributeOperationConfig attributeOperationConfig,
                        AttributeChanceConfig attributeChanceConfig,
                        EnchantChanceConfig enchantChanceConfig,
                        EnchantmentPool enchantmentPool,
@@ -97,6 +102,9 @@ public class GearService {
         this.entityAttributeHandler = entityAttributeHandler;
         this.attributeAffixConfig = attributeAffixConfig;
         this.attributeLoreFormatter = attributeLoreFormatter;
+        this.attributeOperationConfig = attributeOperationConfig == null
+                ? new AttributeOperationConfig(Map.of(), logger)
+                : attributeOperationConfig;
         this.attributeChanceConfig = attributeChanceConfig;
         this.enchantChanceConfig = enchantChanceConfig;
         this.enchantmentPool = enchantmentPool;
@@ -125,7 +133,7 @@ public class GearService {
             logger.info("[GEAR] Built base item for " + equipmentSlot + " -> " + (stack == null ? "none" : stack.getType().name()));
             if (stack != null) {
                 logger.info("[GEAR] Pre-AttributeUtils build for " + equipmentSlot + ": " + summarize(stack));
-                stack = buildAttributedItem(entity, stack.getType(), equipmentSlot);
+                stack = buildAttributedItem(entity, stack.getType(), equipmentSlot, kit);
                 logger.info("[GEAR] After AttributeUtils build " + equipmentSlot + ": " + summarize(stack));
             }
             equipment.put(equipmentSlot, stack);
@@ -146,14 +154,17 @@ public class GearService {
         }
     }
 
-    private ItemStack buildAttributedItem(LivingEntity entity, Material material, EquipmentSlot slot) {
+    private ItemStack buildAttributedItem(LivingEntity entity, Material material, EquipmentSlot slot, KitConfig kit) {
         List<AttributeDefinition> definitions = attributeFacade.getDefinitions().stream().toList();
         double attributeChance = chanceHooks.attributeChanceFor(entity.getType())
                 .orElse(attributeChanceConfig.chance());
         double enchantChance = chanceHooks.enchantChanceFor(entity.getType())
                 .orElse(enchantChanceConfig.chance());
 
-        List<AttributeRoll> rolls = randomRolls(definitions, slot, attributeChance);
+        Map<String, AttributeModifier.Operation> kitOperations = kit == null
+                ? Map.of()
+                : kit.attributeOperations();
+        List<AttributeRoll> rolls = randomRolls(definitions, slot, attributeChance, kitOperations);
         ItemStack baseItem = new ItemStack(material);
 
         if (!rolls.isEmpty()) {
@@ -176,7 +187,10 @@ public class GearService {
         return applyEnchants(baseItem, enchantChance);
     }
 
-    private List<AttributeRoll> randomRolls(List<AttributeDefinition> definitions, EquipmentSlot slot, double chance) {
+    private List<AttributeRoll> randomRolls(List<AttributeDefinition> definitions,
+                                            EquipmentSlot slot,
+                                            double chance,
+                                            Map<String, AttributeModifier.Operation> kitOperations) {
         if (definitions.isEmpty() || chance <= 0d) {
             return List.of();
         }
@@ -192,7 +206,8 @@ public class GearService {
         }
 
         return aggregatedRolls.values().stream()
-                .map(roll -> roll.toAttributeRoll(resolveKey(roll.definition().id()), criterion))
+                .map(roll -> roll.toAttributeRoll(resolveKey(roll.definition().id()), criterion,
+                        operationFor(roll.definition(), kitOperations)))
                 .toList();
     }
     private ItemStack applyEnchants(ItemStack itemStack, double enchantChance) {
@@ -286,6 +301,16 @@ public class GearService {
                 .collect(Collectors.joining(" "));
     }
 
+    private AttributeModifier.Operation operationFor(AttributeDefinition definition,
+                                                     Map<String, AttributeModifier.Operation> kitOperations) {
+        String normalized = attributeAffixConfig.normalizeAttributeKey(definition.id());
+        AttributeModifier.Operation operation = kitOperations.get(normalized);
+        if (operation != null) {
+            return operation;
+        }
+        return attributeOperationConfig.operationFor(normalized);
+    }
+
     private static class AggregatedRoll {
         private final AttributeDefinition definition;
         private double amount = 0d;
@@ -302,12 +327,15 @@ public class GearService {
             return definition;
         }
 
-        private AttributeRoll toAttributeRoll(CommandParsingUtils.NamespacedAttributeKey key, String criterion) {
-            return new AttributeRoll(definition, new CommandParsingUtils.AttributeDefinition(key, amount, null, criterion));
+        private AttributeRoll toAttributeRoll(CommandParsingUtils.NamespacedAttributeKey key,
+                                             String criterion,
+                                             AttributeModifier.Operation operation) {
+            return new AttributeRoll(definition, new CommandParsingUtils.AttributeDefinition(key, amount, null, criterion, operation));
         }
     }
 
-    private record AttributeRoll(AttributeDefinition attributeDefinition, CommandParsingUtils.AttributeDefinition parsedDefinition) {
+    private record AttributeRoll(AttributeDefinition attributeDefinition,
+                                 CommandParsingUtils.AttributeDefinition parsedDefinition) {
     }
 
     private double randomAmount() {

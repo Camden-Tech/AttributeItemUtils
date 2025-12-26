@@ -1,6 +1,7 @@
 package com.baddcamden.attributeitemutils;
 
 import com.baddcamden.attributeitemutils.config.AttributeChanceConfig;
+import com.baddcamden.attributeitemutils.config.AttributeOperationConfig;
 import com.baddcamden.attributeitemutils.config.DropChanceConfigSource;
 import com.baddcamden.attributeitemutils.config.EnchantChanceConfig;
 import com.baddcamden.attributeitemutils.gear.GearConfigLoader;
@@ -36,6 +37,7 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
     // Supplies per-entity drop chance configuration overrides.
     private DropChanceConfigSource dropChanceConfigSource;
     private AttributeChanceConfig attributeChanceConfig;
+    private AttributeOperationConfig attributeOperationConfig;
     private EnchantChanceConfig enchantChanceConfig;
     private AttributeAffixConfig attributeAffixConfig;
     private AttributeLoreFormatter attributeLoreFormatter;
@@ -93,8 +95,9 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
 
         dropChanceConfigSource = DropChanceConfigSource.fromConfig(getConfig());
         attributeChanceConfig = AttributeChanceConfig.fromConfig(getConfig());
+        attributeOperationConfig = AttributeOperationConfig.fromConfig(getConfig(), getLogger());
         enchantChanceConfig = EnchantChanceConfig.fromConfig(getConfig());
-        gearService = new GearService(gearConfigLoader, dropChanceConfigSource, chanceHooks, attributeUtils, attributeFacade, itemAttributeHandler, entityAttributeHandler, attributeAffixConfig, attributeLoreFormatter, attributeChanceConfig, enchantChanceConfig, enchantmentPool, getLogger());
+        gearService = new GearService(gearConfigLoader, dropChanceConfigSource, chanceHooks, attributeUtils, attributeFacade, itemAttributeHandler, entityAttributeHandler, attributeAffixConfig, attributeLoreFormatter, attributeOperationConfig, attributeChanceConfig, enchantChanceConfig, enchantmentPool, getLogger());
     }
 
     private void saveDefaultGearConfig() {

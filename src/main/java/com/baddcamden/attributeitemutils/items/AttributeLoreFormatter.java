@@ -5,6 +5,7 @@ import me.baddcamden.attributeutils.command.CommandParsingUtils;
 import me.baddcamden.attributeutils.handler.item.TriggerCriterion;
 import me.baddcamden.attributeutils.model.AttributeDefinition;
 import org.bukkit.ChatColor;
+import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.EquipmentSlot;
@@ -147,7 +148,8 @@ public class AttributeLoreFormatter {
                     .map(attributeDefinition.capConfig()::clamp)
                     .map(cap -> Math.min(cap, clampedValue))
                     .orElse(clampedValue);
-            boolean isPercent = isMultiplierStyle(attributeDefinition);
+            AttributeModifier.Operation operation = definition.getOperation().orElse(null);
+            boolean isPercent = isPercentOperation(operation, attributeDefinition);
             String normalizedId = normalizeAttributeId(attributeDefinition.id());
             double displayValue = isPercent
                     ? computeMultiplierPercent(normalizedId, effectiveValue)
@@ -289,6 +291,14 @@ public class AttributeLoreFormatter {
             logger.warning("Unknown equipment slot in AttributeLore.yml: " + key);
             return null;
         }
+    }
+
+    private boolean isPercentOperation(AttributeModifier.Operation operation, AttributeDefinition attributeDefinition) {
+        if (operation != null) {
+            return operation == AttributeModifier.Operation.MULTIPLY_SCALAR_1
+                    || operation == AttributeModifier.Operation.ADD_SCALAR;
+        }
+        return isMultiplierStyle(attributeDefinition);
     }
 
     private boolean isMultiplierStyle(AttributeDefinition attributeDefinition) {
