@@ -42,11 +42,11 @@
             <version>1.21-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>AttributeUtils</groupId>
-            <artifactId>AttributeUtils</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
-        </dependency>
+        <!--
+            AttributeUtils source is vendored in src/vendor to avoid relying on an
+            external snapshot artifact during builds. The vendored sources are
+            added as an additional compile root below.
+        -->
     </dependencies>
 
     <build>
@@ -73,6 +73,20 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
                 <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>add-vendor-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>src/vendor/src/main/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
