@@ -248,15 +248,13 @@ public class AttributeLoreFormatter {
     }
 
     private double adjustMultiplierValue(String normalizedId, double effectiveValue) {
-        double adjustedValue = "SCALE".equals(normalizedId)
-                ? Math.cbrt(effectiveValue)
-                : effectiveValue;
 
-        if (adjustedValue < 0) {
-            adjustedValue = Math.max(0d, 1d + adjustedValue);
+
+        if (effectiveValue < 0) {
+            effectiveValue = Math.max(0d, 1d + effectiveValue);
         }
 
-        return adjustedValue;
+        return effectiveValue;
     }
 
     private String titleCase(String raw) {
