@@ -240,7 +240,7 @@ public class EntityAttributeHandler {
         }
 
         instance.setBaseValue(value);
-        if (entity instanceof LivingEntity living && target == Attribute.MAX_HEALTH) {
+        if (entity instanceof LivingEntity living && target == Attribute.GENERIC_MAX_HEALTH) {
             double safeHealth = Math.max(MINIMUM_MAX_HEALTH, value);
             living.setHealth(safeHealth);
         }
@@ -706,7 +706,7 @@ public class EntityAttributeHandler {
      * @param player player whose swim speed attribute should be refreshed
      */
     private void applySwimSpeed(Player player) {
-        org.bukkit.attribute.AttributeInstance instance = player.getAttribute(Attribute.MOVEMENT_SPEED);
+        org.bukkit.attribute.AttributeInstance instance = player.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED);
         if (instance == null) {
             return;
         }
