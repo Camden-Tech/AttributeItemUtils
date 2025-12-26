@@ -237,10 +237,16 @@ public class AttributeLoreFormatter {
         double adjustedValue = "SCALE".equals(normalizedId)
                 ? Math.cbrt(effectiveValue)
                 : effectiveValue;
-        double percentChange = (adjustedValue - 1d) * 100d;
-        if ("FALL_DAMAGE_MULTIPLIER".equals(normalizedId)) {
-            percentChange *= -1d;
+
+        if (adjustedValue < 0) {
+            adjustedValue = Math.max(0d, 1d + adjustedValue);
         }
+
+        double percentChange = (adjustedValue - 1d) * 100d;
+        if (!"FALL_DAMAGE_MULTIPLIER".equals(normalizedId)) {
+            return Math.max(0d, percentChange);
+        }
+
         return percentChange;
     }
 
