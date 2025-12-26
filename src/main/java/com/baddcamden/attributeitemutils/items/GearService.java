@@ -306,9 +306,18 @@ public class GearService {
         String normalized = attributeAffixConfig.normalizeAttributeKey(definition.id());
         ModifierOperation operation = kitOperations.get(normalized);
         if (operation != null) {
-            return operation;
+            return toBukkitOperation(operation);
         }
-        return attributeOperationConfig.operationFor(normalized);
+        return toBukkitOperation(attributeOperationConfig.operationFor(normalized));
+    }
+
+    private AttributeModifier.Operation toBukkitOperation(ModifierOperation operation) {
+        if (operation == null) {
+            return AttributeModifier.Operation.ADD_NUMBER;
+        }
+        return operation == ModifierOperation.MULTIPLY
+                ? AttributeModifier.Operation.MULTIPLY_SCALAR_1
+                : AttributeModifier.Operation.ADD_NUMBER;
     }
 
     private static class AggregatedRoll {
