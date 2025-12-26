@@ -1,6 +1,5 @@
 package com.baddcamden.attributeitemutils.config;
 
-import com.baddcamden.attributeitemutils.util.NightCalculator;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
@@ -8,7 +7,6 @@ import org.bukkit.configuration.file.FileConfiguration;
  * Configuration describing how enchant rolls scale over time.
  */
 public record EnchantChanceConfig(double baseChance,
-                                  double nightlyIncrease,
                                   int levelBonus,
                                   double maxChance) {
 
@@ -17,7 +15,7 @@ public record EnchantChanceConfig(double baseChance,
      */
     public static EnchantChanceConfig fromConfig(FileConfiguration configuration) {
         ConfigurationSection section = configuration.getConfigurationSection("enchants");
-        return fromSection(section, new EnchantChanceConfig(0.02d, 0.01d, 1, 0.95d));
+        return fromSection(section, new EnchantChanceConfig(0.02d, 1, 0.95d));
     }
 
     /**
@@ -30,19 +28,16 @@ public record EnchantChanceConfig(double baseChance,
 
         return new EnchantChanceConfig(
                 section.getDouble("base-chance", defaults.baseChance),
-                section.getDouble("nightly-increase", defaults.nightlyIncrease),
                 section.getInt("level-bonus", defaults.levelBonus),
                 section.getDouble("max-chance", defaults.maxChance)
         );
     }
 
     /**
-     * Computes the enchant chance for the supplied number of nights, clamping to sensible bounds.
+     * Computes the enchant chance using the configured base value.
      */
-    public double chanceForNights(long nights) {
-        long clampedNights = NightCalculator.clampNights(nights);
-        double chance = baseChance + (nightlyIncrease * clampedNights);
-        return clampChance(chance);
+    public double chance() {
+        return clampChance(baseChance);
     }
 
     /**

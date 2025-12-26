@@ -8,7 +8,6 @@ import com.baddcamden.attributeitemutils.gear.GearSlot;
 import com.baddcamden.attributeitemutils.gear.KitConfig;
 import com.baddcamden.attributeitemutils.gear.WeightedItem;
 import com.baddcamden.attributeitemutils.util.BellCurveSelector;
-import com.baddcamden.attributeitemutils.util.NightCalculator;
 import com.baddcamden.attributeitemutils.hooks.EntityChanceHooks;
 import me.baddcamden.attributeutils.AttributeUtilitiesPlugin;
 import me.baddcamden.attributeutils.api.AttributeFacade;
@@ -115,7 +114,6 @@ public class GearService {
      * Populates the given entity's equipment using the provided kit and applies attributes, enchants, and drop chances.
      */
     public void applyKit(LivingEntity entity, KitConfig kit) {
-        long nights = NightCalculator.nightsFromWorldTime(entity.getWorld().getFullTime());
         double dropChance = chanceHooks.dropChanceFor(entity.getType())
                 .orElse(dropChanceConfigSource.defaultChance());
         Map<EquipmentSlot, ItemStack> equipment = new EnumMap<EquipmentSlot, ItemStack>(EquipmentSlot.class);
@@ -127,7 +125,7 @@ public class GearService {
             logger.info("[GEAR] Built base item for " + equipmentSlot + " -> " + (stack == null ? "none" : stack.getType().name()));
             if (stack != null) {
                 logger.info("[GEAR] Pre-AttributeUtils build for " + equipmentSlot + ": " + summarize(stack));
-                stack = buildAttributedItem(entity, stack.getType(), equipmentSlot, nights);
+                stack = buildAttributedItem(entity, stack.getType(), equipmentSlot);
                 logger.info("[GEAR] After AttributeUtils build " + equipmentSlot + ": " + summarize(stack));
             }
             equipment.put(equipmentSlot, stack);
@@ -148,12 +146,12 @@ public class GearService {
         }
     }
 
-    private ItemStack buildAttributedItem(LivingEntity entity, Material material, EquipmentSlot slot, long nights) {
+    private ItemStack buildAttributedItem(LivingEntity entity, Material material, EquipmentSlot slot) {
         List<AttributeDefinition> definitions = attributeFacade.getDefinitions().stream().toList();
         double attributeChance = chanceHooks.attributeChanceFor(entity.getType())
-                .orElse(attributeChanceConfig.chanceForNights(nights));
+                .orElse(attributeChanceConfig.chance());
         double enchantChance = chanceHooks.enchantChanceFor(entity.getType())
-                .orElse(enchantChanceConfig.chanceForNights(nights));
+                .orElse(enchantChanceConfig.chance());
 
         List<AttributeRoll> rolls = randomRolls(definitions, slot, attributeChance);
         ItemStack baseItem = new ItemStack(material);
