@@ -23,6 +23,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Command executor and tab completer that spawns configured entities and equips them with kits.
+ */
 public class SpawnKitCommand implements CommandExecutor, TabCompleter {
 
     private final GearService gearService;

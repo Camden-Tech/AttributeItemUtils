@@ -20,6 +20,10 @@ public class AttributeOperationConfig {
     private final Map<String, ModifierOperation> attributeOperations;
     private final Logger logger;
 
+    /**
+     * Wraps configured attribute operations, defaulting to an empty map when no configuration is
+     * provided.
+     */
     public AttributeOperationConfig(Map<String, ModifierOperation> attributeOperations, Logger logger) {
         this.attributeOperations = attributeOperations == null
                 ? Collections.emptyMap()
@@ -36,6 +40,9 @@ public class AttributeOperationConfig {
         return new AttributeOperationConfig(parsed, logger);
     }
 
+    /**
+     * Parses configured attribute operations from a YAML section while logging unknown values.
+     */
     private static Map<String, ModifierOperation> parseOperations(ConfigurationSection section, Logger logger) {
         if (section == null) {
             return Map.of();
@@ -55,6 +62,10 @@ public class AttributeOperationConfig {
         return operations;
     }
 
+    /**
+     * Converts a raw string to a {@link ModifierOperation}, accepting common aliases and ignoring
+     * invalid entries.
+     */
     private static ModifierOperation parseOperation(String raw) {
         if (raw == null) {
             return null;
@@ -75,6 +86,9 @@ public class AttributeOperationConfig {
         }
     }
 
+    /**
+     * Normalizes attribute identifiers to lower-case and consistent separators for lookups.
+     */
     private static String normalizeKey(String raw) {
         if (raw == null) {
             return "";
@@ -98,6 +112,9 @@ public class AttributeOperationConfig {
         return Objects.requireNonNullElse(attributeOperations.get(normalized), ModifierOperation.ADD);
     }
 
+    /**
+     * Exposes the configured default operations map for external reference.
+     */
     public Map<String, ModifierOperation> defaults() {
         return attributeOperations;
     }

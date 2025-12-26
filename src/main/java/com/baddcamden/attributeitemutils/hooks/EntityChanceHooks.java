@@ -6,6 +6,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Registry of {@link EntityChanceHook} instances used to resolve entity-specific chance overrides
+ * at runtime.
+ */
 public class EntityChanceHooks {
 
     private final List<EntityChanceHook> hooks = new ArrayList<>();

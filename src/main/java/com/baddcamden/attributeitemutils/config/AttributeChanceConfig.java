@@ -41,6 +41,10 @@ public record AttributeChanceConfig(double baseChance,
         return clampChance(chance);
     }
 
+    /**
+     * Restricts a computed chance within {@code 0} and the configured maximum to avoid invalid
+     * probability values.
+     */
     private double clampChance(double chance) {
         if (chance < 0d) {
             return 0d;

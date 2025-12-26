@@ -5,20 +5,33 @@ import com.baddcamden.attributeitemutils.gear.WeightedItem;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * Selects weighted items using a bell-curve distribution biased toward a target weight.
+ */
 public class BellCurveSelector {
 
     private static final double MIN_WIDTH = 1.0e-6;
 
     private final Random random;
 
+    /**
+     * Creates a selector using a new {@link Random} instance.
+     */
     public BellCurveSelector() {
         this(new Random());
     }
 
+    /**
+     * Creates a selector using the provided random source for repeatable tests.
+     */
     public BellCurveSelector(Random random) {
         this.random = random;
     }
 
+    /**
+     * Picks a {@link WeightedItem} from the provided list based on distance from a target weight and
+     * supplied steepness/range controls.
+     */
     public WeightedItem select(List<WeightedItem> options, double targetWeight, double steepness, double range) {
         if (options.isEmpty()) {
             return null;
@@ -50,10 +63,16 @@ public class BellCurveSelector {
         return options.get(options.size() - 1);
     }
 
+    /**
+     * Falls back to a uniform random selection when the computed bell curve lacks usable weights.
+     */
     private WeightedItem fallback(List<WeightedItem> options) {
         return options.get(random.nextInt(options.size()));
     }
 
+    /**
+     * Ensures steepness and range values remain positive and non-zero to avoid divide-by-zero issues.
+     */
     private double normalizePositive(double value) {
         if (!Double.isFinite(value) || value <= MIN_WIDTH) {
             return MIN_WIDTH;

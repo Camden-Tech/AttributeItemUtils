@@ -106,6 +106,10 @@ public class GearConfigLoader {
         }
     }
 
+    /**
+     * Parses attribute operation overrides from the provided configuration section, normalizing keys
+     * and skipping unknown entries.
+     */
     private Map<String, ModifierOperation> parseOperations(ConfigurationSection section) {
         if (section == null) {
             return Map.of();
@@ -121,6 +125,10 @@ public class GearConfigLoader {
         return operations;
     }
 
+    /**
+     * Attempts to interpret a textual operation value into a {@link ModifierOperation}, accepting
+     * legacy aliases like ADD/MULTIPLY when possible.
+     */
     private ModifierOperation parseOperation(String raw) {
         if (raw == null) {
             return null;
@@ -142,6 +150,9 @@ public class GearConfigLoader {
         }
     }
 
+    /**
+     * Normalizes attribute ids into the lowercased, dot-delimited format used for lookups.
+     */
     private String normalizeAttributeKey(String raw) {
         if (raw == null) {
             return "";
