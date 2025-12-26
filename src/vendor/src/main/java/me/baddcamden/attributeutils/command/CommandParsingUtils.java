@@ -15,7 +15,6 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import me.baddcamden.attributeutils.model.ModifierOperation;
-import org.bukkit.attribute.AttributeModifier;
 
 /**
  * Utility functions for turning user input into normalized attribute keys and numeric values.
@@ -475,9 +474,9 @@ public final class CommandParsingUtils {
          */
         private final String criterion;
         /**
-         * Optional Bukkit attribute modifier operation used when converting item metadata back into runtime modifiers.
+         * Optional modifier operation used when converting item metadata back into runtime modifiers.
          */
-        private final AttributeModifier.Operation operation;
+        private final ModifierOperation operation;
 
         /**
          * Represents a parsed attribute definition from command input, including the target key, value, and optional
@@ -506,7 +505,7 @@ public final class CommandParsingUtils {
                                    double value,
                                    Double capOverride,
                                    String criterion,
-                                   AttributeModifier.Operation operation) {
+                                   ModifierOperation operation) {
             this.key = key;
             this.value = value;
             this.capOverride = capOverride;
@@ -545,7 +544,7 @@ public final class CommandParsingUtils {
         /**
          * @return optional modifier operation to apply when this definition is realized on an item.
          */
-        public Optional<AttributeModifier.Operation> getOperation() {
+        public Optional<ModifierOperation> getOperation() {
             return Optional.ofNullable(operation);
         }
     }

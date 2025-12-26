@@ -1,6 +1,6 @@
 package com.baddcamden.attributeitemutils.gear;
 
-import org.bukkit.attribute.AttributeModifier;
+import me.baddcamden.attributeutils.model.ModifierOperation;
 
 import java.util.List;
 import java.util.Map;
@@ -13,5 +13,5 @@ public record KitConfig(String name,
                         double steepness,
                         double range,
                         Map<GearSlot, List<WeightedItem>> items,
-                        Map<String, AttributeModifier.Operation> attributeOperations) {
+                        Map<String, ModifierOperation> attributeOperations) {
 }

@@ -1,7 +1,7 @@
 package com.baddcamden.attributeitemutils.gear;
 
+import me.baddcamden.attributeutils.model.ModifierOperation;
 import org.bukkit.Material;
-import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -67,7 +67,7 @@ public class GearConfigLoader {
                         .toList();
                 map.put(slot, entries);
             }
-            Map<String, AttributeModifier.Operation> operations = parseOperations(
+            Map<String, ModifierOperation> operations = parseOperations(
                     kitSection.getConfigurationSection("attribute-operations"));
             kits.put(key, new KitConfig(key, target, steepness, range, map, operations));
         }
@@ -106,14 +106,14 @@ public class GearConfigLoader {
         }
     }
 
-    private Map<String, AttributeModifier.Operation> parseOperations(ConfigurationSection section) {
+    private Map<String, ModifierOperation> parseOperations(ConfigurationSection section) {
         if (section == null) {
             return Map.of();
         }
 
-        Map<String, AttributeModifier.Operation> operations = new LinkedHashMap<>();
+        Map<String, ModifierOperation> operations = new LinkedHashMap<>();
         for (String key : section.getKeys(false)) {
-            AttributeModifier.Operation operation = parseOperation(section.getString(key));
+            ModifierOperation operation = parseOperation(section.getString(key));
             if (operation != null) {
                 operations.put(normalizeAttributeKey(key), operation);
             }
@@ -121,12 +121,21 @@ public class GearConfigLoader {
         return operations;
     }
 
-    private AttributeModifier.Operation parseOperation(String raw) {
+    private ModifierOperation parseOperation(String raw) {
         if (raw == null) {
             return null;
         }
+        String normalized = raw.toUpperCase(Locale.ROOT);
         try {
-            return AttributeModifier.Operation.valueOf(raw.toUpperCase(Locale.ROOT));
+            if (normalized.equals("ADD") || normalized.equals("ADD_NUMBER")) {
+                return ModifierOperation.ADD;
+            }
+            if (normalized.equals("MULTIPLY")
+                    || normalized.equals("ADD_SCALAR")
+                    || normalized.equals("MULTIPLY_SCALAR_1")) {
+                return ModifierOperation.MULTIPLY;
+            }
+            return ModifierOperation.valueOf(normalized);
         } catch (IllegalArgumentException ex) {
             plugin.getLogger().warning("Unknown attribute operation '" + raw + "' in Gear.yml");
             return null;
