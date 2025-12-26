@@ -100,14 +100,13 @@ public class ItemAttributeHandler {
             TriggerCriterion criterion = definition.getCriterion()
                     .flatMap(TriggerCriterion::fromRaw)
                     .orElse(TriggerCriterion.defaultCriterion());
-
             ModifierOperation operation = definition.getOperation()
-                    .orElse(ModifierOperation.ADD);
-            AttributeModifier.Operation bukkitOperation = toBukkitOperation(operation);
+                    .orElse(attributeDefinition.defaultOperation());
+
             container.set(valueKey(attributeDefinition.id()), PersistentDataType.DOUBLE, clampedValue);
             capOverride.ifPresent(cap -> container.set(capKey(attributeDefinition.id()), PersistentDataType.DOUBLE, cap));
             container.set(criterionKey(attributeDefinition.id()), PersistentDataType.STRING, criterion.key());
-            container.set(operationKey(attributeDefinition.id()), PersistentDataType.STRING, bukkitOperation.name());
+            container.set(operationKey(attributeDefinition.id()), PersistentDataType.STRING, operation.name());
 
             String loreLine = ChatColor.GRAY + attributeDefinition.displayName() + ChatColor.WHITE + ": " + clampedValue;
             if (capOverride.isPresent()) {
@@ -122,7 +121,7 @@ public class ItemAttributeHandler {
                 double cap = capOverride.get();
                 summaryLine += " (cap " + cap + ")";
             }
-            summaryLine += " [" + criterion.key() + "]";
+            summaryLine += " [" + criterion.key() + "|" + operation.name().toLowerCase(Locale.ROOT) + "]";
             summary.add(summaryLine);
         }
 
@@ -235,7 +234,7 @@ public class ItemAttributeHandler {
                 if (!key.getNamespace().equals(plugin.getName().toLowerCase(Locale.ROOT))) {
                     continue;
                 }
-                if (!keyName.startsWith("attr_") || keyName.endsWith("_cap") || keyName.endsWith("_criteria") || keyName.endsWith("_operation")) {
+                if (!keyName.startsWith("attr_") || keyName.endsWith("_cap") || keyName.endsWith("_criteria")) {
                     continue;
                 }
 
@@ -254,13 +253,13 @@ public class ItemAttributeHandler {
                 Double capOverride = container.get(capKey, PersistentDataType.DOUBLE);
                 double effective = capOverride == null ? value : Math.min(value, capOverride);
                 TriggerCriterion criterion = resolveCriterion(container, resolvedId);
-                AttributeModifier.Operation operation = resolveOperation(container, resolvedId);
 
                 TriggerCriterion.ItemSlotContext context = new TriggerCriterion.ItemSlotContext(bucket, slot, heldSlot);
                 if (!criterion.isSatisfied(context, entity)) {
                     continue;
                 }
 
+                ModifierOperation operation = resolveOperation(container, resolvedId);
                 applyModifier(entity, resolvedId, effective, criterion, operation, context, activeKeys, currentKeyAttributes, touchedAttributes);
             }
         }
@@ -274,7 +273,7 @@ public class ItemAttributeHandler {
                                String attributeId,
                                double value,
                                TriggerCriterion criterion,
-                               AttributeModifier.Operation operation,
+                               ModifierOperation operation,
                                TriggerCriterion.ItemSlotContext context,
                                Set<String> activeKeys,
                                Map<String, String> currentKeyAttributes,
@@ -288,7 +287,7 @@ public class ItemAttributeHandler {
         String source = buildModifierKey(context, criterion, attributeId);
         double clamped = definition.get().capConfig().clamp(value, entity.getUniqueId().toString());
         ModifierEntry entry = new ModifierEntry(source,
-                mapOperation(operation),
+                operation,
                 clamped,
                 true,
                 false,
@@ -309,16 +308,6 @@ public class ItemAttributeHandler {
         return "attributeutils." + bucketLabel + "." + context.slot() + "." + criterion.key() + "." + attributeId;
     }
 
-    private ModifierOperation mapOperation(AttributeModifier.Operation operation) {
-        if (operation == AttributeModifier.Operation.MULTIPLY_SCALAR_1) {
-            return ModifierOperation.MULTIPLY;
-        }
-        if (operation == AttributeModifier.Operation.ADD_SCALAR) {
-            return ModifierOperation.MULTIPLY;
-        }
-        return ModifierOperation.ADD;
-    }
-
     /**
      * Resolves the stored trigger criterion for an attribute on an item, falling back to the default when missing or
      * invalid.
@@ -329,17 +318,20 @@ public class ItemAttributeHandler {
         return TriggerCriterion.fromRaw(stored).orElse(TriggerCriterion.defaultCriterion());
     }
 
-    private AttributeModifier.Operation resolveOperation(PersistentDataContainer container, String attributeId) {
-        NamespacedKey opKey = operationKey(attributeId);
-        String stored = container.get(opKey, PersistentDataType.STRING);
-        if (stored == null) {
-            return AttributeModifier.Operation.ADD_NUMBER;
+    private ModifierOperation resolveOperation(PersistentDataContainer container, String attributeId) {
+        NamespacedKey key = operationKey(attributeId);
+        String stored = container.get(key, PersistentDataType.STRING);
+        if (stored != null && !stored.isBlank()) {
+            try {
+                return ModifierOperation.valueOf(stored.toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException ignored) {
+                // fall through to definition default
+            }
         }
-        try {
-            return AttributeModifier.Operation.valueOf(stored);
-        } catch (IllegalArgumentException ex) {
-            return AttributeModifier.Operation.ADD_NUMBER;
-        }
+
+        return attributeFacade.getDefinition(attributeId)
+                .map(AttributeDefinition::defaultOperation)
+                .orElse(ModifierOperation.ADD);
     }
 
     /**
@@ -358,15 +350,6 @@ public class ItemAttributeHandler {
 
         String dotted = normalized.replace('_', '.');
         return attributeFacade.getDefinition(dotted).map(AttributeDefinition::id).orElse(null);
-    }
-
-    private AttributeModifier.Operation toBukkitOperation(ModifierOperation operation) {
-        if (operation == null) {
-            return AttributeModifier.Operation.ADD_NUMBER;
-        }
-        return operation == ModifierOperation.MULTIPLY
-                ? AttributeModifier.Operation.MULTIPLY_SCALAR_1
-                : AttributeModifier.Operation.ADD_NUMBER;
     }
 
     /**
@@ -391,7 +374,7 @@ public class ItemAttributeHandler {
     }
 
     /**
-     * Builds the persistent data key used to store the modifier operation for an attribute on an item.
+     * Builds the persistent data key used to store modifier operations for an attribute on an item.
      */
     private NamespacedKey operationKey(String attributeId) {
         return new NamespacedKey(plugin, "attr_" + sanitize(attributeId) + "_operation");

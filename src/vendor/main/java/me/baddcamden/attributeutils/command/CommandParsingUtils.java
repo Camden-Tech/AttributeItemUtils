@@ -238,7 +238,8 @@ public final class CommandParsingUtils {
 
     /**
      * Parses attribute definitions with optional validation for allowed criteria values. Each definition consumes a
-     * plugin segment, key segment, and numeric value, followed by optional {@code cap=} and {@code criteria=} tokens.
+     * plugin segment, key segment, and numeric value, followed by optional {@code cap=}, {@code criteria=}, and
+     * {@code operation=} tokens.
      * Validation errors are sent to the sender and result in an empty list.
      *
      * @param sender             command sender to notify.
@@ -302,9 +303,10 @@ public final class CommandParsingUtils {
 
             Double capOverride = null;
             String criterion = null;
+            ModifierOperation operation = null;
             index += 3;
 
-            while (index < args.length && (args[index].startsWith("cap=") || args[index].startsWith("criteria="))) {
+            while (index < args.length) {
                 String token = args[index];
                 if (token.startsWith("cap=")) {
                     Optional<Double> cap = parseCapOverride(sender, token, messages);
@@ -330,12 +332,21 @@ public final class CommandParsingUtils {
                         return Collections.emptyList();
                     }
                     criterion = rawCriterion;
+                } else if (token.startsWith("operation=")) {
+                    String rawOperation = token.substring("operation=".length());
+                    Optional<ModifierOperation> parsedOperation = parseOperation(sender, rawOperation, messages);
+                    if (parsedOperation.isEmpty()) {
+                        return Collections.emptyList();
+                    }
+                    operation = parsedOperation.get();
+                } else {
+                    break;
                 }
 
                 index++;
             }
 
-            definitions.add(new AttributeDefinition(key.get(), value.get(), capOverride, criterion));
+            definitions.add(new AttributeDefinition(key.get(), value.get(), capOverride, criterion, operation));
         }
 
         return definitions;
@@ -474,7 +485,7 @@ public final class CommandParsingUtils {
          */
         private final String criterion;
         /**
-         * Optional modifier operation used when converting item metadata back into runtime modifiers.
+         * Optional operation controlling how the modifier is applied.
          */
         private final ModifierOperation operation;
 
@@ -486,20 +497,7 @@ public final class CommandParsingUtils {
          * @param value       numeric value to apply.
          * @param capOverride optional cap override value.
          * @param criterion   optional trigger criterion name.
-         */
-        public AttributeDefinition(NamespacedAttributeKey key, double value, Double capOverride, String criterion) {
-            this(key, value, capOverride, criterion, null);
-        }
-
-        /**
-         * Represents a parsed attribute definition from command input, including the target key, value, operation, and
-         * optional cap override and trigger criterion.
-         *
-         * @param key         namespaced key for the attribute.
-         * @param value       numeric value to apply.
-         * @param capOverride optional cap override value.
-         * @param criterion   optional trigger criterion name.
-         * @param operation   optional Bukkit attribute modifier operation.
+         * @param operation   optional modifier operation overriding the attribute default.
          */
         public AttributeDefinition(NamespacedAttributeKey key,
                                    double value,
@@ -542,7 +540,7 @@ public final class CommandParsingUtils {
         }
 
         /**
-         * @return optional modifier operation to apply when this definition is realized on an item.
+         * @return optional modifier operation provided by the caller.
          */
         public Optional<ModifierOperation> getOperation() {
             return Optional.ofNullable(operation);
