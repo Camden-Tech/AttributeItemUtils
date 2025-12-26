@@ -236,6 +236,10 @@ public class AttributeLoreFormatter {
     private double computeMultiplierPercent(String normalizedId, double effectiveValue) {
         double adjusted = adjustMultiplierValue(normalizedId, effectiveValue);
 
+        if (isFallDamageMultiplier(normalizedId)) {
+            return (adjusted - 1d) * 100d;
+        }
+
         if (effectiveValue < 0d) {
             return (adjusted - 1d) * 100d;
         }
@@ -248,13 +252,19 @@ public class AttributeLoreFormatter {
     }
 
     private double adjustMultiplierValue(String normalizedId, double effectiveValue) {
-
+        if (isFallDamageMultiplier(normalizedId)) {
+            return Math.max(0d, 1d - effectiveValue);
+        }
 
         if (effectiveValue < 0) {
             effectiveValue = Math.max(0d, 1d + effectiveValue);
         }
 
         return effectiveValue;
+    }
+
+    private boolean isFallDamageMultiplier(String normalizedId) {
+        return "FALL_DAMAGE_MULTIPLIER".equals(normalizedId);
     }
 
     private String titleCase(String raw) {
