@@ -4,6 +4,7 @@ import me.baddcamden.attributeutils.api.AttributeFacade;
 import me.baddcamden.attributeutils.command.CommandParsingUtils;
 import me.baddcamden.attributeutils.handler.item.TriggerCriterion;
 import me.baddcamden.attributeutils.model.AttributeDefinition;
+import me.baddcamden.attributeutils.model.ModifierOperation;
 import org.bukkit.ChatColor;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.configuration.ConfigurationSection;
@@ -148,8 +149,9 @@ public class AttributeLoreFormatter {
                     .map(attributeDefinition.capConfig()::clamp)
                     .map(cap -> Math.min(cap, clampedValue))
                     .orElse(clampedValue);
-            AttributeModifier.Operation operation = definition.getOperation().orElse(null);
-            boolean isPercent = isPercentOperation(operation, attributeDefinition);
+            ModifierOperation operation = definition.getOperation().orElse(null);
+            AttributeModifier.Operation bukkitOperation = toBukkitOperation(operation);
+            boolean isPercent = isPercentOperation(bukkitOperation, attributeDefinition);
             String normalizedId = normalizeAttributeId(attributeDefinition.id());
             double displayValue = isPercent
                     ? computeMultiplierPercent(normalizedId, effectiveValue)
@@ -299,6 +301,15 @@ public class AttributeLoreFormatter {
                     || operation == AttributeModifier.Operation.ADD_SCALAR;
         }
         return isMultiplierStyle(attributeDefinition);
+    }
+
+    private AttributeModifier.Operation toBukkitOperation(ModifierOperation operation) {
+        if (operation == null) {
+            return null;
+        }
+        return operation == ModifierOperation.MULTIPLY
+                ? AttributeModifier.Operation.MULTIPLY_SCALAR_1
+                : AttributeModifier.Operation.ADD_NUMBER;
     }
 
     private boolean isMultiplierStyle(AttributeDefinition attributeDefinition) {

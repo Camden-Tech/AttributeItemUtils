@@ -101,12 +101,13 @@ public class ItemAttributeHandler {
                     .flatMap(TriggerCriterion::fromRaw)
                     .orElse(TriggerCriterion.defaultCriterion());
 
-            AttributeModifier.Operation operation = definition.getOperation()
-                    .orElse(AttributeModifier.Operation.ADD_NUMBER);
+            ModifierOperation operation = definition.getOperation()
+                    .orElse(ModifierOperation.ADD);
+            AttributeModifier.Operation bukkitOperation = toBukkitOperation(operation);
             container.set(valueKey(attributeDefinition.id()), PersistentDataType.DOUBLE, clampedValue);
             capOverride.ifPresent(cap -> container.set(capKey(attributeDefinition.id()), PersistentDataType.DOUBLE, cap));
             container.set(criterionKey(attributeDefinition.id()), PersistentDataType.STRING, criterion.key());
-            container.set(operationKey(attributeDefinition.id()), PersistentDataType.STRING, operation.name());
+            container.set(operationKey(attributeDefinition.id()), PersistentDataType.STRING, bukkitOperation.name());
 
             String loreLine = ChatColor.GRAY + attributeDefinition.displayName() + ChatColor.WHITE + ": " + clampedValue;
             if (capOverride.isPresent()) {
@@ -357,6 +358,15 @@ public class ItemAttributeHandler {
 
         String dotted = normalized.replace('_', '.');
         return attributeFacade.getDefinition(dotted).map(AttributeDefinition::id).orElse(null);
+    }
+
+    private AttributeModifier.Operation toBukkitOperation(ModifierOperation operation) {
+        if (operation == null) {
+            return AttributeModifier.Operation.ADD_NUMBER;
+        }
+        return operation == ModifierOperation.MULTIPLY
+                ? AttributeModifier.Operation.MULTIPLY_SCALAR_1
+                : AttributeModifier.Operation.ADD_NUMBER;
     }
 
     /**

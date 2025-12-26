@@ -18,7 +18,6 @@ import me.baddcamden.attributeutils.handler.item.ItemAttributeHandler;
 import me.baddcamden.attributeutils.handler.item.TriggerCriterion;
 import me.baddcamden.attributeutils.model.AttributeDefinition;
 import me.baddcamden.attributeutils.model.ModifierOperation;
-import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.LivingEntity;
@@ -302,8 +301,8 @@ public class GearService {
                 .collect(Collectors.joining(" "));
     }
 
-    private AttributeModifier.Operation operationFor(AttributeDefinition definition,
-                                                     Map<String, ModifierOperation> kitOperations) {
+    private ModifierOperation operationFor(AttributeDefinition definition,
+                                           Map<String, ModifierOperation> kitOperations) {
         String normalized = attributeAffixConfig.normalizeAttributeKey(definition.id());
         ModifierOperation operation = kitOperations.get(normalized);
         if (operation != null) {
@@ -339,7 +338,7 @@ public class GearService {
 
         private AttributeRoll toAttributeRoll(CommandParsingUtils.NamespacedAttributeKey key,
                                              String criterion,
-                                             AttributeModifier.Operation operation) {
+                                             ModifierOperation operation) {
             return new AttributeRoll(definition, new CommandParsingUtils.AttributeDefinition(key, amount, null, criterion, operation));
         }
     }
