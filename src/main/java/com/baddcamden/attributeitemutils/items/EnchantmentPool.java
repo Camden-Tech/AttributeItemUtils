@@ -28,6 +28,9 @@ public class EnchantmentPool {
 
     private List<Enchantment> enchantments = new ArrayList<>();
 
+    /**
+     * Creates a new enchantment pool tied to the plugin's data folder.
+     */
     public EnchantmentPool(Plugin plugin, Logger logger) {
         this.plugin = plugin;
         this.logger = logger;
@@ -61,6 +64,9 @@ public class EnchantmentPool {
         return enchantments;
     }
 
+    /**
+     * Attempts to parse an enchantment declaration from a raw config entry.
+     */
     private Optional<Enchantment> parseEnchantment(Object raw) {
         if (raw instanceof String rawString) {
             return resolveEnchantment(rawString);
@@ -75,6 +81,9 @@ public class EnchantmentPool {
         return Optional.empty();
     }
 
+    /**
+     * Resolves a namespaced enchantment key into a Bukkit {@link Enchantment}.
+     */
     private Optional<Enchantment> resolveEnchantment(String rawKey) {
         NamespacedKey key = NamespacedKey.fromString(rawKey.toLowerCase(Locale.ROOT));
         if (key == null) {
@@ -91,6 +100,9 @@ public class EnchantmentPool {
         return Optional.of(enchantment);
     }
 
+    /**
+     * Applies bundled defaults to the given configuration to ensure optional sections exist.
+     */
     private void loadDefaults(YamlConfiguration configuration) {
         try (InputStream stream = plugin.getResource("EnchantmentPool.yml")) {
             if (stream == null) {

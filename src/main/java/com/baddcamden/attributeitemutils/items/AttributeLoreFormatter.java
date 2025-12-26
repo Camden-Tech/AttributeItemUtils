@@ -48,6 +48,9 @@ public class AttributeLoreFormatter {
     private final Map<EquipmentSlot, String> slotNames = new EnumMap<>(EquipmentSlot.class);
     private final Map<String, AttributeMeta> attributes = new LinkedHashMap<>();
 
+    /**
+     * Creates a lore formatter backed by the owning plugin and its data folder.
+     */
     public AttributeLoreFormatter(Plugin plugin, Logger logger) {
         this.plugin = plugin;
         this.logger = logger;
@@ -99,6 +102,9 @@ public class AttributeLoreFormatter {
         }
     }
 
+    /**
+     * Applies bundled defaults into the provided configuration to ensure optional values resolve.
+     */
     private void loadDefaults(YamlConfiguration configuration) {
         try (InputStream stream = plugin.getResource("AttributeLore.yml")) {
             if (stream == null) {
@@ -134,6 +140,9 @@ public class AttributeLoreFormatter {
         return itemStack;
     }
 
+    /**
+     * Builds formatted lore lines grouped by trigger criteria for the supplied definitions.
+     */
     private List<String> formatLore(List<CommandParsingUtils.AttributeDefinition> definitions,
                                     AttributeFacade attributeFacade,
                                     EquipmentSlot slot) {
@@ -192,6 +201,9 @@ public class AttributeLoreFormatter {
         return lore;
     }
 
+    /**
+     * Formats a single attribute line using configured templates and provided values.
+     */
     private String formatValueLine(AttributeMeta attributeMeta, double value, boolean percent) {
         String sign = value >= 0 ? "+" : "-";
         double magnitude = Math.abs(value);
@@ -211,6 +223,9 @@ public class AttributeLoreFormatter {
         return translateColors(applyPlaceholders(valueFormat, placeholders));
     }
 
+    /**
+     * Generates the fulfillment text describing where an attribute is active for a given slot.
+     */
     private String fulfillmentMessage(TriggerCriterion criterion, EquipmentSlot slot) {
         String template = switch (criterion) {
             case HELD -> mainHandMessage;
@@ -222,6 +237,9 @@ public class AttributeLoreFormatter {
         return translateColors(applyPlaceholders(template, Map.of("slot", slotName)));
     }
 
+    /**
+     * Replaces {placeholder} tokens within the provided template using the supplied values.
+     */
     private String applyPlaceholders(String template, Map<String, String> values) {
         String result = template == null ? "" : template;
         if (values == null) {
@@ -233,10 +251,16 @@ public class AttributeLoreFormatter {
         return result;
     }
 
+    /**
+     * Translates ampersand color codes to Bukkit color sequences for display.
+     */
     private String translateColors(String raw) {
         return raw == null ? "" : ChatColor.translateAlternateColorCodes('&', raw);
     }
 
+    /**
+     * Converts multiplier-style attribute values to human-readable percentage displays.
+     */
     private double computeMultiplierPercent(String normalizedId, double effectiveValue) {
         double adjusted = adjustMultiplierValue(normalizedId, effectiveValue);
 
@@ -255,6 +279,10 @@ public class AttributeLoreFormatter {
         return (adjusted - 1d) * 100d;
     }
 
+    /**
+     * Adjusts multiplier values to ensure negative/positive values are interpreted correctly for
+     * display purposes.
+     */
     private double adjustMultiplierValue(String normalizedId, double effectiveValue) {
         if (isFallDamageMultiplier(normalizedId)) {
             return Math.max(0d, 1d - effectiveValue);
@@ -267,10 +295,16 @@ public class AttributeLoreFormatter {
         return effectiveValue;
     }
 
+    /**
+     * Identifies the special-case fall damage multiplier attribute which inverts meaning.
+     */
     private boolean isFallDamageMultiplier(String normalizedId) {
         return "FALL_DAMAGE_MULTIPLIER".equals(normalizedId);
     }
 
+    /**
+     * Converts underscore-delimited text into spaced title case.
+     */
     private String titleCase(String raw) {
         String[] segments = raw.toLowerCase(Locale.ROOT).split("_");
         StringBuilder builder = new StringBuilder();
@@ -286,6 +320,9 @@ public class AttributeLoreFormatter {
         return builder.toString();
     }
 
+    /**
+     * Attempts to convert a configuration string into an {@link EquipmentSlot}, logging failures.
+     */
     private EquipmentSlot parseSlot(String key) {
         try {
             return EquipmentSlot.valueOf(key.toUpperCase(Locale.ROOT));
@@ -295,6 +332,10 @@ public class AttributeLoreFormatter {
         }
     }
 
+    /**
+     * Determines whether a modifier should be displayed as a percentage based on operation type and
+     * attribute characteristics.
+     */
     private boolean isPercentOperation(AttributeModifier.Operation operation, AttributeDefinition attributeDefinition) {
         if (operation != null) {
             return operation == AttributeModifier.Operation.MULTIPLY_SCALAR_1
@@ -303,6 +344,9 @@ public class AttributeLoreFormatter {
         return isMultiplierStyle(attributeDefinition);
     }
 
+    /**
+     * Translates the library {@link ModifierOperation} into Bukkit's {@link AttributeModifier.Operation}.
+     */
     private AttributeModifier.Operation toBukkitOperation(ModifierOperation operation) {
         if (operation == null) {
             return null;
@@ -312,6 +356,9 @@ public class AttributeLoreFormatter {
                 : AttributeModifier.Operation.ADD_NUMBER;
     }
 
+    /**
+     * Detects attributes that are naturally multiplicative in presentation for formatting.
+     */
     private boolean isMultiplierStyle(AttributeDefinition attributeDefinition) {
         if (attributeDefinition == null) {
             return false;

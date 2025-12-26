@@ -21,6 +21,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * Command executor and tab completer that applies configured kits to players or other entities.
+ */
 public class ApplyKitCommand implements CommandExecutor, TabCompleter {
 
     private final GearService gearService;

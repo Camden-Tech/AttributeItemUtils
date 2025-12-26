@@ -47,6 +47,9 @@ public record EnchantChanceConfig(double baseChance,
         return (int) Math.max(0, Math.round(levelBonus));
     }
 
+    /**
+     * Restricts an enchantment probability to the configured bounds to prevent invalid rolls.
+     */
     private double clampChance(double chance) {
         if (chance < 0d) {
             return 0d;

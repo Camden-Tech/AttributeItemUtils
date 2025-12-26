@@ -3,6 +3,9 @@ package com.baddcamden.attributeitemutils.config;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
+/**
+ * Provides drop chance defaults sourced from configuration for use when applying kits.
+ */
 public class DropChanceConfigSource {
     private final double defaultChance;
 

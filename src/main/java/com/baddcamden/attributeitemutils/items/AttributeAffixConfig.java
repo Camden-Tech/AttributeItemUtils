@@ -36,6 +36,9 @@ public class AttributeAffixConfig {
     private final List<AffixEntry> prefixes = new ArrayList<>();
     private final List<AffixEntry> suffixes = new ArrayList<>();
 
+    /**
+     * Creates a new affix configuration manager for the owning plugin.
+     */
     public AttributeAffixConfig(JavaPlugin plugin, Logger logger) {
         this.plugin = plugin;
         this.logger = logger;
@@ -57,6 +60,9 @@ public class AttributeAffixConfig {
         suffixes.addAll(loadEntries(configuration, "suffixes"));
     }
 
+    /**
+     * Loads bundled defaults into the provided configuration to ensure optional values are present.
+     */
     private void loadDefaults(YamlConfiguration configuration) {
         try (InputStream stream = plugin.getResource("AttributeUffixes.yml")) {
             if (stream == null) {
@@ -70,6 +76,9 @@ public class AttributeAffixConfig {
         }
     }
 
+    /**
+     * Parses affix entries from a list at the given path, logging and skipping invalid data.
+     */
     private List<AffixEntry> loadEntries(YamlConfiguration configuration, String path) {
         List<Map<?, ?>> rawEntries = configuration.getMapList(path);
         List<AffixEntry> entries = new ArrayList<>();
@@ -86,6 +95,9 @@ public class AttributeAffixConfig {
         return entries;
     }
 
+    /**
+     * Normalizes a raw attribute collection into a trimmed, lower-case, dot-delimited set.
+     */
     private Set<String> normalizeAttributes(Object raw) {
         if (!(raw instanceof Collection<?> collection)) {
             return Set.of();
@@ -151,6 +163,9 @@ public class AttributeAffixConfig {
                 .orElse(null);
     }
 
+    /**
+     * Normalizes incoming attribute keys for prefix/suffix resolution.
+     */
     private Set<String> normalizeInput(Collection<String> keys) {
         Set<String> normalized = new LinkedHashSet<>();
         for (String key : keys) {

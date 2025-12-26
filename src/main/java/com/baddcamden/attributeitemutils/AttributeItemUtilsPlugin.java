@@ -24,6 +24,10 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 import java.util.Optional;
 
+/**
+ * Primary plugin entry point responsible for bootstrapping configuration, wiring dependencies, and
+ * exposing public services/commands for AttributeItemUtils.
+ */
 public class AttributeItemUtilsPlugin extends JavaPlugin {
 
     // Coordinates kit application and item generation across the plugin.
@@ -44,6 +48,10 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
     private EnchantmentPool enchantmentPool;
     private final EntityChanceHooks chanceHooks = new EntityChanceHooks();
 
+    /**
+     * Initializes the plugin, ensuring default resources exist, resolving dependencies, wiring
+     * services, and registering commands.
+     */
     @Override
     public void onEnable() {
         saveDefaultConfig();
@@ -68,6 +76,13 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
         getLogger().info("AttributeItemUtils enabled");
     }
 
+    /**
+     * Attempts to apply the named kit to the provided entity.
+     *
+     * @param entity  target entity to equip
+     * @param kitName configured kit name to look up
+     * @return {@code true} when the kit exists and is applied; {@code false} otherwise
+     */
     public boolean applyKit(LivingEntity entity, String kitName) {
         Optional<KitConfig> kit = gearService.getKit(kitName);
         if (kit.isEmpty()) {
@@ -78,6 +93,12 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
         return true;
     }
 
+    /**
+     * Reloads all plugin configuration files, refreshing gear definitions, lore, affixes, attribute
+     * operations, and enchantment pools before rebuilding the {@link GearService}.
+     *
+     * @param attributeUtils resolved AttributeUtils dependency used when constructing services
+     */
     public void reloadPluginConfigs(AttributeUtilitiesPlugin attributeUtils) {
         saveDefaultConfig();
         saveDefaultGearConfig();
@@ -100,6 +121,9 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
         gearService = new GearService(gearConfigLoader, dropChanceConfigSource, chanceHooks, attributeUtils, attributeFacade, itemAttributeHandler, entityAttributeHandler, attributeAffixConfig, attributeLoreFormatter, attributeOperationConfig, attributeChanceConfig, enchantChanceConfig, enchantmentPool, getLogger());
     }
 
+    /**
+     * Ensures Gear.yml exists on disk by copying the bundled default when missing.
+     */
     private void saveDefaultGearConfig() {
         File gearFile = new File(getDataFolder(), "Gear.yml");
         if (!gearFile.exists()) {
@@ -110,6 +134,9 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
         }
     }
 
+    /**
+     * Ensures AttributeUffixes.yml exists on disk by copying the bundled default when missing.
+     */
     private void saveDefaultAffixConfig() {
         File affixFile = new File(getDataFolder(), "AttributeUffixes.yml");
         if (!affixFile.exists()) {
@@ -120,6 +147,9 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
         }
     }
 
+    /**
+     * Ensures AttributeLore.yml exists on disk by copying the bundled default when missing.
+     */
     private void saveDefaultLoreConfig() {
         File loreFile = new File(getDataFolder(), "AttributeLore.yml");
         if (!loreFile.exists()) {
@@ -130,6 +160,9 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
         }
     }
 
+    /**
+     * Ensures EnchantmentPool.yml exists on disk by copying the bundled default when missing.
+     */
     private void saveDefaultEnchantPool() {
         File enchantFile = new File(getDataFolder(), "EnchantmentPool.yml");
         if (!enchantFile.exists()) {
@@ -140,22 +173,39 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
         }
     }
 
+    /**
+     * Exposes the active chance hook registry for third-party integrations.
+     */
     public EntityChanceHooks getChanceHooks() {
         return chanceHooks;
     }
 
+    /**
+     * Registers a new {@link EntityChanceHook} for runtime drop/attribute/enchant overrides.
+     */
     public void registerChanceHook(EntityChanceHook hook) {
         chanceHooks.register(hook);
     }
 
+    /**
+     * Returns the current {@link GearService} instance used by commands and integrations.
+     */
     public GearService getGearService() {
         return gearService;
     }
 
+    /**
+     * Returns the loader responsible for reading kit definitions from configuration.
+     */
     public GearConfigLoader getGearConfigLoader() {
         return gearConfigLoader;
     }
 
+    /**
+     * Attempts to resolve the AttributeUtils dependency via plugin name or class-based lookup.
+     *
+     * @return an enabled AttributeUtilitiesPlugin instance when available; otherwise {@code null}
+     */
     private AttributeUtilitiesPlugin resolveAttributeUtils() {
         var pluginManager = getServer().getPluginManager();
 
@@ -184,6 +234,9 @@ public class AttributeItemUtilsPlugin extends JavaPlugin {
         return null;
     }
 
+    /**
+     * Registers the test commands provided by AttributeItemUtils when they are declared.
+     */
     private void registerCommands() {
         if (getCommand("aiukit") != null) {
             ApplyKitCommand command = new ApplyKitCommand(this);

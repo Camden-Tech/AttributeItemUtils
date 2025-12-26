@@ -40,6 +40,10 @@ import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+/**
+ * Core service responsible for building configured gear, rolling attributes/enchants, and applying
+ * them to entities.
+ */
 public class GearService {
     // Loads configured kits and weighted item selections from disk.
     private final GearConfigLoader loader;
@@ -79,6 +83,9 @@ public class GearService {
         this(loader, dropChanceConfigSource, chanceHooks, attributeUtils, attributeFacade, itemAttributeHandler, entityAttributeHandler, attributeAffixConfig, attributeLoreFormatter, attributeOperationConfig, attributeChanceConfig, enchantChanceConfig, enchantmentPool, Logger.getLogger(GearService.class.getName()));
     }
 
+    /**
+     * Constructs the gear service using explicit logging configuration.
+     */
     public GearService(GearConfigLoader loader,
                        DropChanceConfigSource dropChanceConfigSource,
                        EntityChanceHooks chanceHooks,
@@ -154,6 +161,9 @@ public class GearService {
         }
     }
 
+    /**
+     * Builds an item for the given slot by rolling attributes/enchants and applying affixes and lore.
+     */
     private ItemStack buildAttributedItem(LivingEntity entity, Material material, EquipmentSlot slot, KitConfig kit) {
         List<AttributeDefinition> definitions = attributeFacade.getDefinitions().stream().toList();
         double attributeChance = chanceHooks.attributeChanceFor(entity.getType())
@@ -187,6 +197,9 @@ public class GearService {
         return applyEnchants(baseItem, enchantChance);
     }
 
+    /**
+     * Generates random attribute rolls for the supplied slot using configured chance and operations.
+     */
     private List<AttributeRoll> randomRolls(List<AttributeDefinition> definitions,
                                             EquipmentSlot slot,
                                             double chance,
@@ -210,6 +223,9 @@ public class GearService {
                         operationFor(roll.definition(), kitOperations)))
                 .toList();
     }
+    /**
+     * Rolls and applies enchantments from the configured pool using the provided chance.
+     */
     private ItemStack applyEnchants(ItemStack itemStack, double enchantChance) {
         if (itemStack == null || enchantChance <= 0d) {
             return itemStack;
@@ -241,12 +257,18 @@ public class GearService {
         return itemStack;
     }
 
+    /**
+     * Rolls an enchantment level respecting configured level bonuses and the enchantment maximum.
+     */
     private int rollEnchantmentLevel(Enchantment enchantment) {
         int maxLevel = enchantment.getMaxLevel();
         int maxRolledLevel = Math.min(maxLevel, Math.max(1, 1 + enchantChanceConfig.levelBonus()));
         return 1 + random.nextInt(maxRolledLevel);
     }
 
+    /**
+     * Applies configured prefixes and suffixes to the item's display name based on rolled attributes.
+     */
     private ItemStack applyAffixes(ItemStack itemStack, LinkedHashSet<String> attributeIds, Material material) {
         ItemMeta meta = itemStack.getItemMeta();
         if (meta == null) {
@@ -280,6 +302,9 @@ public class GearService {
         return itemStack;
     }
 
+    /**
+     * Limits the number of prefixes applied to an item to avoid unwieldy names.
+     */
     private List<AttributeAffixConfig.AffixEntry> limitPrefixes(List<AttributeAffixConfig.AffixEntry> prefixes) {
         if (prefixes.size() <= 5) {
             return prefixes;
@@ -293,6 +318,9 @@ public class GearService {
                 .toList();
     }
 
+    /**
+     * Formats a material enum name into a human-readable string.
+     */
     private String titleCase(String materialName) {
         String[] segments = materialName.toLowerCase(java.util.Locale.ROOT).split("_");
         return java.util.Arrays.stream(segments)
@@ -301,6 +329,9 @@ public class GearService {
                 .collect(Collectors.joining(" "));
     }
 
+    /**
+     * Resolves which modifier operation should be used for a given attribute definition.
+     */
     private ModifierOperation operationFor(AttributeDefinition definition,
                                            Map<String, ModifierOperation> kitOperations) {
         String normalized = attributeAffixConfig.normalizeAttributeKey(definition.id());
@@ -311,6 +342,10 @@ public class GearService {
         return operation;
     }
 
+    /**
+     * Internal helper for combining multiple rolls for the same attribute before building a final
+     * modifier entry.
+     */
     private static class AggregatedRoll {
         private final AttributeDefinition definition;
         private double amount = 0d;
@@ -319,14 +354,23 @@ public class GearService {
             this.definition = definition;
         }
 
+        /**
+         * Adds an additional rolled amount to this aggregated definition.
+         */
         private void addAmount(double additionalAmount) {
             amount += additionalAmount;
         }
 
+        /**
+         * Returns the wrapped attribute definition being aggregated.
+         */
         private AttributeDefinition definition() {
             return definition;
         }
 
+        /**
+         * Builds the final {@link AttributeRoll} using the aggregated amount and resolved operation.
+         */
         private AttributeRoll toAttributeRoll(CommandParsingUtils.NamespacedAttributeKey key,
                                              String criterion,
                                              ModifierOperation operation) {
@@ -334,14 +378,23 @@ public class GearService {
         }
     }
 
+    /**
+     * Bundles an attribute definition with the parsed roll used when creating items.
+     */
     private record AttributeRoll(AttributeDefinition attributeDefinition,
                                  CommandParsingUtils.AttributeDefinition parsedDefinition) {
     }
 
+    /**
+     * Provides the base bonus percent used for each attribute roll.
+     */
     private double randomAmount() {
         return attributeChanceConfig.bonusPercent();
     }
 
+    /**
+     * Rolls a boolean outcome against the provided probability.
+     */
     private boolean rollChance(double chance) {
         double clampedChance = Math.max(0d, Math.min(chance, 0.999999d));
         if (clampedChance <= 0d) {
@@ -350,6 +403,9 @@ public class GearService {
         return random.nextDouble() < clampedChance;
     }
 
+    /**
+     * Resolves an attribute id into a namespaced key, defaulting to the AttributeUtils namespace.
+     */
     private CommandParsingUtils.NamespacedAttributeKey resolveKey(String attributeId) {
         String normalized = attributeId.toLowerCase(java.util.Locale.ROOT);
         if (normalized.contains(".")) {
@@ -359,6 +415,9 @@ public class GearService {
         return new CommandParsingUtils.NamespacedAttributeKey(attributeUtils.getName().toLowerCase(java.util.Locale.ROOT), normalized);
     }
 
+    /**
+     * Maps an equipment slot to the trigger criterion key used by AttributeUtils.
+     */
     private String criterionForSlot(EquipmentSlot slot) {
         return switch (slot) {
             case HEAD, CHEST, LEGS, FEET -> TriggerCriterion.EQUIPPED.key();
@@ -396,6 +455,9 @@ public class GearService {
         };
     }
 
+    /**
+     * Produces a concise string summary of an item stack for debugging.
+     */
     private String summarize(ItemStack stack) {
         if (stack == null) {
             return "null";
