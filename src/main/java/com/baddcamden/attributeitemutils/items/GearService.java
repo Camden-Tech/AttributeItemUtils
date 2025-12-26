@@ -197,7 +197,6 @@ public class GearService {
                 .map(roll -> roll.toAttributeRoll(resolveKey(roll.definition().id()), criterion))
                 .toList();
     }
-
     private ItemStack applyEnchants(ItemStack itemStack, double enchantChance) {
         if (itemStack == null || enchantChance <= 0d) {
             return itemStack;
