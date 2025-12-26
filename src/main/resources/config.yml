@@ -2,6 +2,8 @@ attributes:
   base-chance: 0.02
   bonus-percent: 0.05
   max-chance: 0.95
+attribute-operations:
+  # example.multiplier_attribute: MULTIPLY_SCALAR_1
 enchants:
   base-chance: 0.02
   level-bonus: 1

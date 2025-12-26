@@ -1,6 +1,7 @@
 package com.baddcamden.attributeitemutils.gear;
 
 import org.bukkit.Material;
+import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -12,7 +13,9 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -64,7 +67,9 @@ public class GearConfigLoader {
                         .toList();
                 map.put(slot, entries);
             }
-            kits.put(key, new KitConfig(key, target, steepness, range, map));
+            Map<String, AttributeModifier.Operation> operations = parseOperations(
+                    kitSection.getConfigurationSection("attribute-operations"));
+            kits.put(key, new KitConfig(key, target, steepness, range, map, operations));
         }
     }
 
@@ -99,6 +104,44 @@ public class GearConfigLoader {
             plugin.getLogger().warning("Unable to parse weight entry: " + raw);
             return Optional.empty();
         }
+    }
+
+    private Map<String, AttributeModifier.Operation> parseOperations(ConfigurationSection section) {
+        if (section == null) {
+            return Map.of();
+        }
+
+        Map<String, AttributeModifier.Operation> operations = new LinkedHashMap<>();
+        for (String key : section.getKeys(false)) {
+            AttributeModifier.Operation operation = parseOperation(section.getString(key));
+            if (operation != null) {
+                operations.put(normalizeAttributeKey(key), operation);
+            }
+        }
+        return operations;
+    }
+
+    private AttributeModifier.Operation parseOperation(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        try {
+            return AttributeModifier.Operation.valueOf(raw.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            plugin.getLogger().warning("Unknown attribute operation '" + raw + "' in Gear.yml");
+            return null;
+        }
+    }
+
+    private String normalizeAttributeKey(String raw) {
+        if (raw == null) {
+            return "";
+        }
+        return raw.trim()
+                .toLowerCase(Locale.ROOT)
+                .replace(':', '.')
+                .replace('-', '_')
+                .replace(' ', '_');
     }
 
     /**

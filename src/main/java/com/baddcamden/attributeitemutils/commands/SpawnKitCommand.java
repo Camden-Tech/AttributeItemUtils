@@ -98,7 +98,7 @@ public class SpawnKitCommand implements CommandExecutor, TabCompleter {
 
         Map<GearSlot, List<WeightedItem>> itemsCopy = new EnumMap<>(GearSlot.class);
         kit.items().forEach((slot, list) -> itemsCopy.put(slot, new ArrayList<>(list)));
-        KitConfig configuredKit = new KitConfig(kit.name(), targetWeight, steepness, range, itemsCopy);
+        KitConfig configuredKit = new KitConfig(kit.name(), targetWeight, steepness, range, itemsCopy, new java.util.LinkedHashMap<>(kit.attributeOperations()));
 
         Location spawnLocation = player.getLocation();
         if (spawnLocation.getWorld() == null) {

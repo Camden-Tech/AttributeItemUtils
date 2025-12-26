@@ -15,6 +15,7 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import me.baddcamden.attributeutils.model.ModifierOperation;
+import org.bukkit.attribute.AttributeModifier;
 
 /**
  * Utility functions for turning user input into normalized attribute keys and numeric values.
@@ -473,6 +474,10 @@ public final class CommandParsingUtils {
          * Optional trigger that determines when the attribute applies.
          */
         private final String criterion;
+        /**
+         * Optional Bukkit attribute modifier operation used when converting item metadata back into runtime modifiers.
+         */
+        private final AttributeModifier.Operation operation;
 
         /**
          * Represents a parsed attribute definition from command input, including the target key, value, and optional
@@ -484,10 +489,29 @@ public final class CommandParsingUtils {
          * @param criterion   optional trigger criterion name.
          */
         public AttributeDefinition(NamespacedAttributeKey key, double value, Double capOverride, String criterion) {
+            this(key, value, capOverride, criterion, null);
+        }
+
+        /**
+         * Represents a parsed attribute definition from command input, including the target key, value, operation, and
+         * optional cap override and trigger criterion.
+         *
+         * @param key         namespaced key for the attribute.
+         * @param value       numeric value to apply.
+         * @param capOverride optional cap override value.
+         * @param criterion   optional trigger criterion name.
+         * @param operation   optional Bukkit attribute modifier operation.
+         */
+        public AttributeDefinition(NamespacedAttributeKey key,
+                                   double value,
+                                   Double capOverride,
+                                   String criterion,
+                                   AttributeModifier.Operation operation) {
             this.key = key;
             this.value = value;
             this.capOverride = capOverride;
             this.criterion = criterion;
+            this.operation = operation;
         }
 
         /**
@@ -516,6 +540,13 @@ public final class CommandParsingUtils {
          */
         public Optional<String> getCriterion() {
             return Optional.ofNullable(criterion);
+        }
+
+        /**
+         * @return optional modifier operation to apply when this definition is realized on an item.
+         */
+        public Optional<AttributeModifier.Operation> getOperation() {
+            return Optional.ofNullable(operation);
         }
     }
 }
