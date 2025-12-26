@@ -17,6 +17,7 @@ import me.baddcamden.attributeutils.handler.entity.EntityAttributeHandler;
 import me.baddcamden.attributeutils.handler.item.ItemAttributeHandler;
 import me.baddcamden.attributeutils.handler.item.TriggerCriterion;
 import me.baddcamden.attributeutils.model.AttributeDefinition;
+import me.baddcamden.attributeutils.model.ModifierOperation;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
@@ -161,7 +162,7 @@ public class GearService {
         double enchantChance = chanceHooks.enchantChanceFor(entity.getType())
                 .orElse(enchantChanceConfig.chance());
 
-        Map<String, AttributeModifier.Operation> kitOperations = kit == null
+        Map<String, ModifierOperation> kitOperations = kit == null
                 ? Map.of()
                 : kit.attributeOperations();
         List<AttributeRoll> rolls = randomRolls(definitions, slot, attributeChance, kitOperations);
@@ -190,7 +191,7 @@ public class GearService {
     private List<AttributeRoll> randomRolls(List<AttributeDefinition> definitions,
                                             EquipmentSlot slot,
                                             double chance,
-                                            Map<String, AttributeModifier.Operation> kitOperations) {
+                                            Map<String, ModifierOperation> kitOperations) {
         if (definitions.isEmpty() || chance <= 0d) {
             return List.of();
         }
@@ -302,13 +303,22 @@ public class GearService {
     }
 
     private AttributeModifier.Operation operationFor(AttributeDefinition definition,
-                                                     Map<String, AttributeModifier.Operation> kitOperations) {
+                                                     Map<String, ModifierOperation> kitOperations) {
         String normalized = attributeAffixConfig.normalizeAttributeKey(definition.id());
-        AttributeModifier.Operation operation = kitOperations.get(normalized);
+        ModifierOperation operation = kitOperations.get(normalized);
         if (operation != null) {
-            return operation;
+            return toBukkitOperation(operation);
         }
-        return attributeOperationConfig.operationFor(normalized);
+        return toBukkitOperation(attributeOperationConfig.operationFor(normalized));
+    }
+
+    private AttributeModifier.Operation toBukkitOperation(ModifierOperation operation) {
+        if (operation == null) {
+            return AttributeModifier.Operation.ADD_NUMBER;
+        }
+        return operation == ModifierOperation.MULTIPLY
+                ? AttributeModifier.Operation.MULTIPLY_SCALAR_1
+                : AttributeModifier.Operation.ADD_NUMBER;
     }
 
     private static class AggregatedRoll {
