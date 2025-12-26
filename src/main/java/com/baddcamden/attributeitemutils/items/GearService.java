@@ -314,7 +314,7 @@ public class GearService {
     }
 
     private double randomAmount() {
-        return 0.25d + (1.25d * random.nextDouble());
+        return attributeChanceConfig.bonusPercent();
     }
 
     private boolean rollChance(double chance) {
