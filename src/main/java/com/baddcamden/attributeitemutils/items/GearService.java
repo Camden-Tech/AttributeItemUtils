@@ -19,7 +19,6 @@ import me.baddcamden.attributeutils.handler.item.TriggerCriterion;
 import me.baddcamden.attributeutils.model.AttributeDefinition;
 import me.baddcamden.attributeutils.model.ModifierOperation;
 import org.bukkit.Material;
-import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -302,23 +301,14 @@ public class GearService {
                 .collect(Collectors.joining(" "));
     }
 
-    private AttributeModifier.Operation operationFor(AttributeDefinition definition,
-                                                     Map<String, ModifierOperation> kitOperations) {
+    private ModifierOperation operationFor(AttributeDefinition definition,
+                                           Map<String, ModifierOperation> kitOperations) {
         String normalized = attributeAffixConfig.normalizeAttributeKey(definition.id());
         ModifierOperation operation = kitOperations.get(normalized);
-        if (operation != null) {
-            return toBukkitOperation(operation);
-        }
-        return toBukkitOperation(attributeOperationConfig.operationFor(normalized));
-    }
-
-    private AttributeModifier.Operation toBukkitOperation(ModifierOperation operation) {
         if (operation == null) {
-            return AttributeModifier.Operation.ADD_NUMBER;
+            return attributeOperationConfig.operationFor(normalized);
         }
-        return operation == ModifierOperation.MULTIPLY
-                ? AttributeModifier.Operation.MULTIPLY_SCALAR_1
-                : AttributeModifier.Operation.ADD_NUMBER;
+        return operation;
     }
 
     private static class AggregatedRoll {
@@ -339,7 +329,7 @@ public class GearService {
 
         private AttributeRoll toAttributeRoll(CommandParsingUtils.NamespacedAttributeKey key,
                                              String criterion,
-                                             AttributeModifier.Operation operation) {
+                                             ModifierOperation operation) {
             return new AttributeRoll(definition, new CommandParsingUtils.AttributeDefinition(key, amount, null, criterion, operation));
         }
     }
