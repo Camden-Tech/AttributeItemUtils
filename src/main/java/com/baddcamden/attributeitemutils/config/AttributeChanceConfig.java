@@ -1,6 +1,5 @@
 package com.baddcamden.attributeitemutils.config;
 
-import com.baddcamden.attributeitemutils.util.NightCalculator;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
@@ -8,7 +7,6 @@ import org.bukkit.configuration.file.FileConfiguration;
  * Configuration describing how attribute roll chances scale over time.
  */
 public record AttributeChanceConfig(double baseChance,
-                                    double nightlyIncrease,
                                     double bonusPercent,
                                     double maxChance) {
 
@@ -17,7 +15,7 @@ public record AttributeChanceConfig(double baseChance,
      */
     public static AttributeChanceConfig fromConfig(FileConfiguration configuration) {
         ConfigurationSection section = configuration.getConfigurationSection("attributes");
-        return fromSection(section, new AttributeChanceConfig(0.02d, 0.01d, 0.05d, 0.95d));
+        return fromSection(section, new AttributeChanceConfig(0.02d, 0.05d, 0.95d));
     }
 
     /**
@@ -30,18 +28,16 @@ public record AttributeChanceConfig(double baseChance,
 
         return new AttributeChanceConfig(
                 section.getDouble("base-chance", defaults.baseChance),
-                section.getDouble("nightly-increase", defaults.nightlyIncrease),
                 section.getDouble("bonus-percent", defaults.bonusPercent),
                 section.getDouble("max-chance", defaults.maxChance)
         );
     }
 
     /**
-     * Computes the attribute chance for the supplied number of nights, clamping to sensible bounds.
+     * Computes the attribute chance using the configured base and bonus values.
      */
-    public double chanceForNights(long nights) {
-        long clampedNights = NightCalculator.clampNights(nights);
-        double chance = baseChance + (nightlyIncrease * clampedNights) + bonusPercent;
+    public double chance() {
+        double chance = baseChance + bonusPercent;
         return clampChance(chance);
     }
 
