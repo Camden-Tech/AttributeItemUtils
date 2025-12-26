@@ -1,0 +1,54 @@
+name: AttributeUtils
+version: 1.0.0-SNAPSHOT
+description: Attribute utilities plugin base for Spigot/Bukkit 1.21.
+main: me.baddcamden.attributeutils.AttributeUtilitiesPlugin
+api-version: 1.21
+commands:
+  attributes:
+    description: List or reload custom attributes.
+    usage: /<command> [reload]
+    permission: attributeutils.command.attributes
+  attributeglobals:
+    description: |-
+      Edit global attribute defaults and caps.
+      default: Move the reference default value that seeds new instances (e.g., /attributeglobals default myplugin speed 0.2 to raise the baseline players drift toward).
+    usage: /<command> <default|cap|modifier> ...
+    permission: attributeutils.command.globals
+  attributemodifiers:
+    description: Add or remove player attribute modifiers.
+    usage: /<command> <player> <add|remove> ...
+    permission: attributeutils.command.modifiers
+  attributeitems:
+    description: Generate items with attribute data.
+    usage: /<command> <player> <material> <plugin> <name> <value> [cap=<cap> ...]
+    permission: attributeutils.command.items
+  attributeentities:
+    description: Spawn entities with inline attribute definitions.
+    usage: /<command> <entityType> <plugin> <name> <value> [cap=<cap> ...]
+    permission: attributeutils.command.entities
+  testhorde:
+    description: Spawn a randomized zombie horde with attribute-rich gear.
+    usage: /<command> [dryrun]
+    permission: attributeutils.command.testhorde
+permissions:
+  attributeutils.command.attributes:
+    description: Allows use of the /attributes command.
+    default: true
+  attributeutils.reload:
+    description: Allows reloading attribute configuration.
+    default: op
+  attributeutils.command.globals:
+    description: Allows editing global attribute defaults and caps.
+    default: op
+  attributeutils.command.modifiers:
+    description: Allows adding or removing player attribute modifiers.
+    default: op
+  attributeutils.command.items:
+    description: Allows generating attribute-rich items.
+    default: op
+  attributeutils.command.entities:
+    description: Allows spawning entities with inline attribute definitions.
+    default: op
+  attributeutils.command.testhorde:
+    description: Allows spawning a randomized zombie horde for testing.
+    default: op

@@ -1,0 +1,621 @@
+package me.baddcamden.attributeutils;
+
+import me.baddcamden.attributeutils.api.AttributeFacade;
+import me.baddcamden.attributeutils.api.VanillaAttributeSupplier;
+import me.baddcamden.attributeutils.command.AttributeCommand;
+import me.baddcamden.attributeutils.command.EntityAttributeCommand;
+import me.baddcamden.attributeutils.command.GlobalAttributeCommand;
+import me.baddcamden.attributeutils.command.ItemAttributeCommand;
+import me.baddcamden.attributeutils.command.PlayerModifierCommand;
+import me.baddcamden.attributeutils.command.TestHordeCommand;
+import me.baddcamden.attributeutils.compute.AttributeComputationEngine;
+import me.baddcamden.attributeutils.handler.AttributeRefreshDispatcher;
+import me.baddcamden.attributeutils.handler.entity.EntityAttributeHandler;
+import me.baddcamden.attributeutils.handler.item.ItemAttributeHandler;
+import me.baddcamden.attributeutils.listener.AttributeListener;
+import me.baddcamden.attributeutils.model.AttributeDefinition;
+import me.baddcamden.attributeutils.model.AttributeDefinitionFactory;
+import me.baddcamden.attributeutils.model.CapConfig;
+import me.baddcamden.attributeutils.model.MultiplierApplicability;
+import me.baddcamden.attributeutils.persistence.AttributePersistence;
+import me.baddcamden.attributeutils.command.CommandMessages;
+import me.baddcamden.attributeutils.VanillaAttributeResolver;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeModifier;
+import org.bukkit.command.PluginCommand;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
+import org.bukkit.event.HandlerList;
+import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.plugin.java.JavaPlugin;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.Locale;
+
+/**
+ * Core plugin entry point that wires attribute definitions, handlers, and persistence.
+ * <p>
+ * The lifecycle mirrors Bukkit's {@link JavaPlugin} flow while coordinating configuration-driven
+ * vanilla baselines, custom attribute definitions, and runtime command/listener registration.
+ */
+public class AttributeUtilitiesPlugin extends JavaPlugin {
+
+    /** Facade that exposes attribute registration and lookup utilities to commands and handlers. */
+    private AttributeFacade attributeFacade;
+    /** Persistence layer responsible for loading and saving player/global attribute data. */
+    private AttributePersistence persistence;
+    /** Applies and recalculates item-based attributes for players. */
+    private ItemAttributeHandler itemAttributeHandler;
+    /** Manages entity attribute adjustments and caps for players and other entities. */
+    private EntityAttributeHandler entityAttributeHandler;
+    /**
+     * Tracks Bukkit attribute targets keyed by attribute ids when vanilla baselines resolve directly
+     * to a Bukkit {@link Attribute}. This is reused when applying item modifiers.
+     */
+    private Map<String, Attribute> vanillaAttributeTargets;
+
+    /**
+     * Persists all online player attribute data and global settings on the main thread.
+     * <p>
+     * This guard clauses when core collaborators have not been initialized yet (e.g., during early
+     * enable failures).
+     */
+    private void saveAllPlayersSync() {
+        if (persistence == null || attributeFacade == null || entityAttributeHandler == null) {
+            return;
+        }
+
+        getServer().getOnlinePlayers()
+                .forEach(player -> persistence.savePlayer(attributeFacade, player.getUniqueId()));
+        persistence.saveGlobals(attributeFacade);
+    }
+
+    /**
+     * Standard Bukkit enable hook. Ensures the default config exists before building plugin
+     * collaborators.
+     */
+    @Override
+    public void onEnable() {
+        saveDefaultConfig();
+        initializePlugin();
+    }
+
+    /**
+     * Standard Bukkit disable hook that persists any outstanding player/global attribute changes.
+     */
+    @Override
+    public void onDisable() {
+        saveAllPlayersSync();
+    }
+
+    /**
+     * Reloads configuration, definitions, and persistent player/global data while keeping runtime
+     * state consistent.
+     */
+    public void reloadAttributes() {
+        saveAllPlayersSync();
+
+        reloadConfig();
+        initializePlugin();
+    }
+
+    /**
+     * Reinitializes all plugin components and reconnects commands/listeners after configuration
+     * reloads or server start. Existing scheduled tasks and listeners are cleared before rebuilding
+     * dependencies.
+     */
+    private void initializePlugin() {
+        getServer().getScheduler().cancelTasks(this);
+        HandlerList.unregisterAll(this);
+
+        AttributeComputationEngine computationEngine = new AttributeComputationEngine();
+        AttributeFacade newAttributeFacade = new AttributeFacade(this, computationEngine);
+        AttributePersistence newPersistence = new AttributePersistence(getDataFolder().toPath(), this);
+        vanillaAttributeTargets = new HashMap<>();
+        boolean debugModifierLogging = getConfig().getBoolean("debug.log-computed-modifiers", false);
+        boolean debugRefreshLogging = getConfig().getBoolean("debug.log-refresh-flushes", false);
+        EntityAttributeHandler newEntityAttributeHandler = new EntityAttributeHandler(newAttributeFacade, this, vanillaAttributeTargets, debugModifierLogging);
+        ItemAttributeHandler newItemAttributeHandler = new ItemAttributeHandler(newAttributeFacade, this, newEntityAttributeHandler);
+        newAttributeFacade.setAttributeRefreshListener(new AttributeRefreshDispatcher(this, newEntityAttributeHandler, debugRefreshLogging));
+
+        this.attributeFacade = newAttributeFacade;
+        this.persistence = newPersistence;
+        this.itemAttributeHandler = newItemAttributeHandler;
+        this.entityAttributeHandler = newEntityAttributeHandler;
+
+        loadDefinitions();
+        registerVanillaBaselines();
+        newPersistence.loadGlobalsAsync(newAttributeFacade);
+        Executor syncExecutor = command -> getServer().getScheduler().runTask(this, command);
+        getServer().getOnlinePlayers().forEach(player -> newPersistence.loadPlayerAsync(newAttributeFacade, player.getUniqueId())
+                .thenRunAsync(() -> {
+                    newItemAttributeHandler.applyPersistentAttributes(player);
+                    newEntityAttributeHandler.applyPlayerCaps(player);
+                }, syncExecutor));
+        loadCustomAttributes();
+        registerCommands();
+        registerListeners();
+    }
+
+    /**
+     * Registers vanilla attribute definitions and caps from the primary configuration file.
+     */
+    private void loadDefinitions() {
+        Map<String, me.baddcamden.attributeutils.model.AttributeDefinition> vanillaAttributes = AttributeDefinitionFactory.vanillaAttributes(getConfig());
+        vanillaAttributes.values().forEach(attributeFacade::registerDefinition);
+        AttributeDefinitionFactory.registerConfigCaps(
+                attributeFacade::registerDefinition,
+                getConfig().getConfigurationSection("global-attribute-caps"),
+                vanillaAttributes.keySet());
+    }
+
+    /**
+     * Loads custom attribute definitions from the configured folder, logging and skipping malformed
+     * entries rather than failing the startup.
+     */
+    private void loadCustomAttributes() {
+        if (getConfig().getBoolean("load-custom-attributes-from-folder", true)) {
+            Path customFolder = getDataFolder().toPath().resolve(getConfig().getString("custom-attributes-folder", "custom-attributes"));
+            try {
+                java.nio.file.Files.createDirectories(customFolder);
+            } catch (Exception e) {
+                getLogger().warning("Failed to prepare custom attribute folder: " + e.getMessage());
+            }
+
+            try (java.util.stream.Stream<Path> files = Files.list(customFolder)) {
+                files.filter(path -> {
+                            String name = path.getFileName().toString().toLowerCase(Locale.ROOT);
+                            return name.endsWith(".yml") || name.endsWith(".yaml");
+                        })
+                        .forEach(path -> {
+                            try {
+                                AttributeDefinition definition = parseCustomAttribute(path);
+                                if (definition != null) {
+                                    attributeFacade.registerDefinition(definition);
+                                    getLogger().info("Loaded custom attribute: " + definition.id());
+                                }
+                            } catch (Exception ex) {
+                                getLogger().severe("Failed to load custom attribute from '" + path.getFileName() + "': " + ex.getMessage());
+                            }
+                        });
+            } catch (IOException e) {
+                getLogger().severe("Failed to scan custom attribute folder: " + e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Parses a custom attribute definition from a YAML file and returns a fully constructed
+     * {@link AttributeDefinition} or {@code null} when required fields are missing.
+     */
+    private AttributeDefinition parseCustomAttribute(Path file) {
+        YamlConfiguration config = YamlConfiguration.loadConfiguration(file.toFile());
+
+        String id = config.getString("id");
+        if (id == null || id.isBlank()) {
+            getLogger().warning("Skipping custom attribute '" + file.getFileName() + "': missing 'id'.");
+            return null;
+        }
+
+        String displayName = config.getString("display-name");
+        if (displayName == null || displayName.isBlank()) {
+            getLogger().warning("Skipping custom attribute '" + file.getFileName() + "': missing 'display-name'.");
+            return null;
+        }
+
+        boolean dynamic = config.getBoolean("dynamic", false);
+        double defaultBase = config.getDouble("default-base", 0);
+        double defaultCurrent = config.isSet("default-current") ? config.getDouble("default-current") : defaultBase;
+
+        CapConfig capConfig = parseCapConfig(config.getConfigurationSection("cap"));
+        MultiplierApplicability multipliers = parseMultipliers(config.getConfigurationSection("multipliers"));
+
+        return new AttributeDefinition(
+                id.toLowerCase(Locale.ROOT),
+                displayName,
+                dynamic,
+                defaultBase,
+                defaultCurrent,
+                capConfig,
+                multipliers
+        );
+    }
+
+    /**
+     * Parses configuration values into a {@link CapConfig}, applying defaults when the section is
+     * absent.
+     */
+    private CapConfig parseCapConfig(ConfigurationSection section) {
+        if (section == null) {
+            return new CapConfig(0, Double.MAX_VALUE, Map.of());
+        }
+
+        double min = section.getDouble("min", 0);
+        double max = section.getDouble("max", Double.MAX_VALUE);
+        Map<String, Double> overrides = new LinkedHashMap<>();
+        ConfigurationSection overrideSection = section.getConfigurationSection("overrides");
+        if (overrideSection != null) {
+            for (String key : overrideSection.getKeys(false)) {
+                overrides.put(key.toLowerCase(Locale.ROOT), overrideSection.getDouble(key));
+            }
+        }
+
+        return new CapConfig(min, max, overrides);
+    }
+
+    /**
+     * Builds multiplier applicability rules from configuration, defaulting to allow-all with optional
+     * opt-out lists when unspecified.
+     */
+    private MultiplierApplicability parseMultipliers(ConfigurationSection section) {
+        if (section == null) {
+            return MultiplierApplicability.allowAllMultipliers();
+        }
+
+        boolean applyAll = section.getBoolean("apply-all", true);
+        Set<String> allowed = Set.copyOf(section.getStringList("allowed"));
+        Set<String> ignored = Set.copyOf(section.getStringList("ignored"));
+
+        if (applyAll) {
+            if (!ignored.isEmpty()) {
+                return MultiplierApplicability.optOut(ignored);
+            }
+            return MultiplierApplicability.allowAllMultipliers();
+        }
+
+        return MultiplierApplicability.optIn(allowed);
+    }
+
+    /**
+     * Reads vanilla baseline definitions and wires suppliers that surface default Bukkit attribute
+     * values, food level, maximum air, or static values.
+     */
+    private void registerVanillaBaselines() {
+        ConfigurationSection defaults = getConfig().getConfigurationSection("vanilla-attribute-defaults");
+        if (defaults == null) {
+            getLogger().warning("No vanilla attribute defaults configured; skipping vanilla baselines.");
+            return;
+        }
+
+        vanillaAttributeTargets.clear();
+
+        defaults.getKeys(false).forEach(key -> {
+            ConfigurationSection entry = defaults.getConfigurationSection(key);
+            if (entry == null) {
+                getLogger().warning("Skipping vanilla baseline '" + key + "': value must be a configuration section.");
+                return;
+            }
+
+            if (!entry.isSet("default-base")) {
+                getLogger().warning("Skipping vanilla baseline '" + key + "': missing required 'default-base'.");
+                return;
+            }
+
+            double defaultBase = entry.getDouble("default-base");
+            String provider = entry.getString("provider", "attribute").toLowerCase(java.util.Locale.ROOT);
+
+            VanillaAttributeSupplier supplier;
+            Attribute attribute = null;
+            switch (provider) {
+                case "food-level":
+                    supplier = Player::getFoodLevel;
+                    break;
+                case "maximum-air":
+                    supplier = Player::getMaximumAir;
+                    break;
+                case "static":
+                    supplier = player -> defaultBase;
+                    break;
+                case "attribute":
+                    java.util.List<String> candidates = resolveAttributeCandidates(entry);
+                    if (candidates.isEmpty()) {
+                        getLogger().warning("Vanilla baseline '" + key + "' is missing 'bukkit-attributes'; using default value only.");
+                    }
+                    attribute = resolveAttribute(candidates);
+                    if (attribute == null) {
+                        getLogger().warning("Vanilla baseline '" + key + "' specifies unknown Bukkit attributes: " + candidates);
+                    }
+                    String attributeId = key.toLowerCase(java.util.Locale.ROOT).replace('-', '_');
+                    VanillaAttributeSupplier dynamicSupplier = createDynamicSupplier(attributeId, attribute, defaultBase);
+                    if (dynamicSupplier != null) {
+                        supplier = player -> dynamicSupplier.getVanillaValue(player);
+                        break;
+                    }
+                    Attribute finalAttribute = attribute;
+                    supplier = player -> getAttributeValue(player, finalAttribute, defaultBase);
+                    break;
+                default:
+                    getLogger().warning("Skipping vanilla baseline '" + key + "': unknown provider '" + provider + "'.");
+                    return;
+            }
+
+            String attributeId = key.toLowerCase(java.util.Locale.ROOT).replace('-', '_');
+            if (attribute != null) {
+                vanillaAttributeTargets.put(attributeId, attribute);
+            }
+            attributeFacade.registerVanillaBaseline(attributeId, supplier);
+        });
+    }
+
+    public ItemAttributeHandler getItemAttributeHandler() {
+        return itemAttributeHandler;
+    }
+
+    public EntityAttributeHandler getEntityAttributeHandler() {
+        return entityAttributeHandler;
+    }
+
+    /**
+     * Resolves the current attribute value for a player using Bukkit's API while allowing equipment
+     * modifiers to contribute when a raw attribute value is missing.
+     */
+    private double getAttributeValue(Player player, Attribute attribute, double fallback) {
+        return VanillaAttributeResolver.resolvePlayerAttribute(
+                player,
+                attribute,
+                fallback,
+                () -> computeEquipmentAttribute(player, attribute, fallback)
+        );
+    }
+
+    /**
+     * Creates specialized suppliers for attributes that need to account for equipment contributions
+     * to reflect vanilla mechanics (e.g., armor/attack values).
+     */
+    private VanillaAttributeSupplier createDynamicSupplier(String attributeId, Attribute attribute, double defaultBase) {
+        switch (attributeId) {
+            case "armor":
+                return player -> resolveArmorValue(player, attribute, defaultBase);
+            case "armor_toughness":
+                return player -> resolveArmorToughnessValue(player, attribute, defaultBase);
+            case "knockback_resistance":
+                return player -> resolveKnockbackResistanceValue(player, attribute, defaultBase);
+            case "attack_damage":
+                return player -> resolveAttackDamage(player, attribute, defaultBase);
+            case "attack_knockback":
+                return player -> resolveAttackKnockback(player, attribute, defaultBase);
+            case "attack_speed":
+                return player -> resolveAttackSpeed(player, attribute, defaultBase);
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Resolve armor by reading the configured attribute or a best-effort fallback to the Bukkit
+     * attribute name.
+     */
+    private double resolveArmorValue(Player player, Attribute configuredAttribute, double fallback) {
+        Attribute target = configuredAttribute != null
+                ? configuredAttribute
+                : resolveAttributeByNames("ARMOR");
+        return getAttributeValue(player, target, fallback);
+    }
+
+    /**
+     * Resolve armor toughness by reading the configured attribute or a best-effort fallback to the
+     * Bukkit attribute name.
+     */
+    private double resolveArmorToughnessValue(Player player, Attribute configuredAttribute, double fallback) {
+        Attribute target = configuredAttribute != null
+                ? configuredAttribute
+                : resolveAttributeByNames("ARMOR_TOUGHNESS");
+        return getAttributeValue(player, target, fallback);
+    }
+
+    /**
+     * Resolve knockback resistance using the configured attribute when available.
+     */
+    private double resolveKnockbackResistanceValue(Player player, Attribute configuredAttribute, double fallback) {
+        Attribute target = configuredAttribute != null
+                ? configuredAttribute
+                : resolveAttributeByNames("KNOCKBACK_RESISTANCE");
+        return getAttributeValue(player, target, fallback);
+    }
+
+    /**
+     * Resolve attack damage using the configured attribute when available.
+     */
+    private double resolveAttackDamage(Player player, Attribute configuredAttribute, double fallback) {
+        Attribute target = configuredAttribute != null
+                ? configuredAttribute
+                : resolveAttributeByNames("ATTACK_DAMAGE");
+        return getAttributeValue(player, target, fallback);
+    }
+
+    /**
+     * Resolve attack knockback using the configured attribute when available.
+     */
+    private double resolveAttackKnockback(Player player, Attribute configuredAttribute, double fallback) {
+        Attribute target = configuredAttribute != null
+                ? configuredAttribute
+                : resolveAttributeByNames("ATTACK_KNOCKBACK");
+        return getAttributeValue(player, target, fallback);
+    }
+
+    /**
+     * Resolve attack speed using the configured attribute when available.
+     */
+    private double resolveAttackSpeed(Player player, Attribute configuredAttribute, double fallback) {
+        Attribute target = configuredAttribute != null
+                ? configuredAttribute
+                : resolveAttributeByNames("ATTACK_SPEED");
+        return getAttributeValue(player, target, fallback);
+    }
+
+    /**
+     * Attempts to resolve the first valid Bukkit {@link Attribute} by its enum name, trying each
+     * candidate in order.
+     */
+    private Attribute resolveAttributeByNames(String... names) {
+        for (String name : names) {
+            try {
+                return Attribute.valueOf(name);
+            } catch (IllegalArgumentException ignored) {
+                // try the next option
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Computes attribute values contributed exclusively by equipment modifiers, ignoring plugin
+     * modifiers to avoid double application.
+     */
+    private double computeEquipmentAttribute(Player player, Attribute attribute, double fallback) {
+        if (player == null || attribute == null) {
+            return fallback;
+        }
+
+        org.bukkit.inventory.EntityEquipment equipment = player.getEquipment();
+        if (equipment == null) {
+            return fallback;
+        }
+
+        Map<EquipmentSlot, ItemStack> slots = new HashMap<>();
+        slots.put(EquipmentSlot.HAND, equipment.getItemInMainHand());
+        slots.put(EquipmentSlot.OFF_HAND, equipment.getItemInOffHand());
+        slots.put(EquipmentSlot.HEAD, equipment.getHelmet());
+        slots.put(EquipmentSlot.CHEST, equipment.getChestplate());
+        slots.put(EquipmentSlot.LEGS, equipment.getLeggings());
+        slots.put(EquipmentSlot.FEET, equipment.getBoots());
+
+        double additive = 0d;
+        double multiplicative = 1d;
+
+        for (Map.Entry<EquipmentSlot, ItemStack> entry : slots.entrySet()) {
+            ItemStack item = entry.getValue();
+            if (item == null) {
+                continue;
+            }
+            ItemMeta meta = item.getItemMeta();
+            if (meta == null) {
+                continue;
+            }
+
+            Iterable<AttributeModifier> modifiers = meta.getAttributeModifiers(attribute);
+            if (modifiers == null) {
+                continue;
+            }
+
+            for (AttributeModifier modifier : modifiers) {
+                if (VanillaAttributeResolver.isPluginModifier(modifier)) {
+                    continue;
+                }
+                EquipmentSlot slot = modifier.getSlot();
+                if (slot != null && slot != entry.getKey()) {
+                    continue;
+                }
+                switch (modifier.getOperation()) {
+                    case ADD_NUMBER -> additive += modifier.getAmount();
+                    default -> multiplicative *= 1 + modifier.getAmount(); //VAGUE/IMPROVEMENT NEEDED Different scalar operations may require distinct handling.
+                }
+            }
+        }
+
+        return (fallback + additive) * multiplicative;
+    }
+
+    /**
+     * Attempts to resolve an {@link Attribute} from a list of candidate enum names, returning the
+     * first valid match or {@code null} if none succeed.
+     */
+    private Attribute resolveAttribute(java.util.List<String> candidates) {
+        for (String candidate : candidates) {
+            try {
+                return Attribute.valueOf(candidate);
+            } catch (IllegalArgumentException ignored) {
+                // try the next candidate
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Extracts candidate Bukkit attribute names from configuration, supporting string or list
+     * representations for convenience.
+     */
+    private java.util.List<String> resolveAttributeCandidates(ConfigurationSection entry) {
+        if (entry.isList("bukkit-attributes")) {
+            return entry.getStringList("bukkit-attributes");
+        }
+        if (entry.isString("bukkit-attributes")) {
+            return java.util.List.of(entry.getString("bukkit-attributes"));
+        }
+        return java.util.Collections.emptyList();
+    }
+
+    /**
+     * Registers plugin commands and their executors/tab completers when available in {@code plugin.yml}.
+     */
+    private void registerCommands() {
+        CommandMessages messages = new CommandMessages(this);
+
+        PluginCommand attributesCommand = getCommand("attributes");
+        if (attributesCommand != null) {
+            AttributeCommand attributeCommand = new AttributeCommand(attributeFacade, this);
+            attributesCommand.setExecutor(attributeCommand);
+            attributesCommand.setTabCompleter(attributeCommand);
+        }
+
+        PluginCommand globalsCommand = getCommand("attributeglobals");
+        if (globalsCommand != null) {
+            GlobalAttributeCommand globalAttributeCommand = new GlobalAttributeCommand(this, attributeFacade, persistence, messages, getName(), entityAttributeHandler);
+            globalsCommand.setExecutor(globalAttributeCommand);
+            globalsCommand.setTabCompleter(globalAttributeCommand);
+        }
+
+        PluginCommand modifiersCommand = getCommand("attributemodifiers");
+        if (modifiersCommand != null) {
+            PlayerModifierCommand modifierCommand = new PlayerModifierCommand(this, attributeFacade, entityAttributeHandler);
+            modifiersCommand.setExecutor(modifierCommand);
+            modifiersCommand.setTabCompleter(modifierCommand);
+        }
+
+        PluginCommand itemsCommand = getCommand("attributeitems");
+        if (itemsCommand != null) {
+            ItemAttributeCommand itemAttributeCommand = new ItemAttributeCommand(this, itemAttributeHandler, attributeFacade);
+            itemsCommand.setExecutor(itemAttributeCommand);
+            itemsCommand.setTabCompleter(itemAttributeCommand);
+        }
+
+        PluginCommand entitiesCommand = getCommand("attributeentities");
+        if (entitiesCommand != null) {
+            EntityAttributeCommand entityAttributeCommand = new EntityAttributeCommand(this, entityAttributeHandler, attributeFacade);
+            entitiesCommand.setExecutor(entityAttributeCommand);
+            entitiesCommand.setTabCompleter(entityAttributeCommand);
+        }
+
+        PluginCommand hordeCommand = getCommand("testhorde");
+        if (hordeCommand != null) {
+            TestHordeCommand testHordeCommand = new TestHordeCommand(this, attributeFacade, itemAttributeHandler, entityAttributeHandler);
+            hordeCommand.setExecutor(testHordeCommand);
+        }
+    }
+
+    /**
+     * Hooks listener instances into the Bukkit event system.
+     */
+    private void registerListeners() {
+        getServer().getPluginManager().registerEvents(
+                new AttributeListener(this, attributeFacade, persistence, itemAttributeHandler, entityAttributeHandler),
+                this);
+    }
+
+    /**
+     * Exposes the initialized {@link AttributeFacade} for other components.
+     */
+    public AttributeFacade getAttributeFacade() {
+        return attributeFacade;
+    }
+}
