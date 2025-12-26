@@ -234,7 +234,17 @@ public class AttributeLoreFormatter {
     }
 
     private double computeMultiplierPercent(String normalizedId, double effectiveValue) {
-        return (adjustMultiplierValue(normalizedId, effectiveValue) - 1d) * 100d;
+        double adjusted = adjustMultiplierValue(normalizedId, effectiveValue);
+
+        if (effectiveValue < 0d) {
+            return (adjusted - 1d) * 100d;
+        }
+
+        if (adjusted < 1d) {
+            return adjusted * 100d;
+        }
+
+        return (adjusted - 1d) * 100d;
     }
 
     private double adjustMultiplierValue(String normalizedId, double effectiveValue) {
