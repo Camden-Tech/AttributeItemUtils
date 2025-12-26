@@ -1,6 +1,6 @@
 package com.baddcamden.attributeitemutils.config;
 
-import org.bukkit.attribute.AttributeModifier;
+import me.baddcamden.attributeutils.model.ModifierOperation;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
@@ -17,10 +17,10 @@ import java.util.logging.Logger;
  */
 public class AttributeOperationConfig {
 
-    private final Map<String, AttributeModifier.Operation> attributeOperations;
+    private final Map<String, ModifierOperation> attributeOperations;
     private final Logger logger;
 
-    public AttributeOperationConfig(Map<String, AttributeModifier.Operation> attributeOperations, Logger logger) {
+    public AttributeOperationConfig(Map<String, ModifierOperation> attributeOperations, Logger logger) {
         this.attributeOperations = attributeOperations == null
                 ? Collections.emptyMap()
                 : Collections.unmodifiableMap(attributeOperations);
@@ -32,18 +32,18 @@ public class AttributeOperationConfig {
      */
     public static AttributeOperationConfig fromConfig(FileConfiguration configuration, Logger logger) {
         ConfigurationSection section = configuration.getConfigurationSection("attribute-operations");
-        Map<String, AttributeModifier.Operation> parsed = parseOperations(section, logger);
+        Map<String, ModifierOperation> parsed = parseOperations(section, logger);
         return new AttributeOperationConfig(parsed, logger);
     }
 
-    private static Map<String, AttributeModifier.Operation> parseOperations(ConfigurationSection section, Logger logger) {
+    private static Map<String, ModifierOperation> parseOperations(ConfigurationSection section, Logger logger) {
         if (section == null) {
             return Map.of();
         }
 
-        Map<String, AttributeModifier.Operation> operations = new LinkedHashMap<>();
+        Map<String, ModifierOperation> operations = new LinkedHashMap<>();
         for (String rawKey : section.getKeys(false)) {
-            AttributeModifier.Operation operation = parseOperation(section.getString(rawKey));
+            ModifierOperation operation = parseOperation(section.getString(rawKey));
             if (operation == null) {
                 if (logger != null) {
                     logger.warning("Unknown attribute operation for " + rawKey + ": " + section.getString(rawKey));
@@ -55,12 +55,21 @@ public class AttributeOperationConfig {
         return operations;
     }
 
-    private static AttributeModifier.Operation parseOperation(String raw) {
+    private static ModifierOperation parseOperation(String raw) {
         if (raw == null) {
             return null;
         }
         try {
-            return AttributeModifier.Operation.valueOf(raw.toUpperCase(Locale.ROOT));
+            String normalized = raw.toUpperCase(Locale.ROOT);
+            if (normalized.equals("ADD") || normalized.equals("ADD_NUMBER")) {
+                return ModifierOperation.ADD;
+            }
+            if (normalized.equals("MULTIPLY")
+                    || normalized.equals("ADD_SCALAR")
+                    || normalized.equals("MULTIPLY_SCALAR_1")) {
+                return ModifierOperation.MULTIPLY;
+            }
+            return ModifierOperation.valueOf(normalized);
         } catch (IllegalArgumentException ex) {
             return null;
         }
@@ -81,15 +90,15 @@ public class AttributeOperationConfig {
      * Looks up the configured operation for the provided attribute id, defaulting to additive when
      * no explicit mapping exists.
      */
-    public AttributeModifier.Operation operationFor(String attributeId) {
+    public ModifierOperation operationFor(String attributeId) {
         String normalized = normalizeKey(attributeId);
         if (normalized.isBlank()) {
-            return AttributeModifier.Operation.ADD_NUMBER;
+            return ModifierOperation.ADD;
         }
-        return Objects.requireNonNullElse(attributeOperations.get(normalized), AttributeModifier.Operation.ADD_NUMBER);
+        return Objects.requireNonNullElse(attributeOperations.get(normalized), ModifierOperation.ADD);
     }
 
-    public Map<String, AttributeModifier.Operation> defaults() {
+    public Map<String, ModifierOperation> defaults() {
         return attributeOperations;
     }
 }
