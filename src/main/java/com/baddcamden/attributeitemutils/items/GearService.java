@@ -302,8 +302,8 @@ public class GearService {
                 .collect(Collectors.joining(" "));
     }
 
-    private ModifierOperation operationFor(AttributeDefinition definition,
-                                           Map<String, ModifierOperation> kitOperations) {
+    private AttributeModifier.Operation operationFor(AttributeDefinition definition,
+                                                     Map<String, ModifierOperation> kitOperations) {
         String normalized = attributeAffixConfig.normalizeAttributeKey(definition.id());
         ModifierOperation operation = kitOperations.get(normalized);
         if (operation != null) {
@@ -339,7 +339,7 @@ public class GearService {
 
         private AttributeRoll toAttributeRoll(CommandParsingUtils.NamespacedAttributeKey key,
                                              String criterion,
-                                             ModifierOperation operation) {
+                                             AttributeModifier.Operation operation) {
             return new AttributeRoll(definition, new CommandParsingUtils.AttributeDefinition(key, amount, null, criterion, operation));
         }
     }
