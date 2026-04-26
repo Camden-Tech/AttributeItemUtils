@@ -24,6 +24,7 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -201,6 +202,61 @@ public class ItemAttributeHandler {
         appliedItemModifierKeys.put(ownerId, currentKeyAttributes);
 
         applyVanillaAttributes(entity, touchedAttributes);
+    }
+
+    /**
+     * Indicates whether an item contains plugin-owned attribute metadata.
+     *
+     * @param itemStack item to inspect
+     * @return {@code true} when the item has at least one recognized attr_* value key
+     */
+    public boolean hasAttributeData(ItemStack itemStack) {
+        if (itemStack == null) {
+            return false;
+        }
+
+        ItemMeta meta = itemStack.getItemMeta();
+        if (meta == null) {
+            return false;
+        }
+
+        PersistentDataContainer container = meta.getPersistentDataContainer();
+        for (NamespacedKey key : container.getKeys()) {
+            if (!key.getNamespace().equals(plugin.getName().toLowerCase(Locale.ROOT))) {
+                continue;
+            }
+
+            String keyName = key.getKey();
+            if (!keyName.startsWith("attr_") || keyName.endsWith("_cap") || keyName.endsWith("_criteria") || keyName.endsWith("_operation")) {
+                continue;
+            }
+
+            Double value = container.get(key, PersistentDataType.DOUBLE);
+            if (value != null) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Indicates whether any item in a collection carries plugin-owned attribute metadata.
+     *
+     * @param items items to inspect
+     * @return {@code true} when at least one item has an attribute key
+     */
+    public boolean hasAttributeData(Collection<ItemStack> items) {
+        if (items == null || items.isEmpty()) {
+            return false;
+        }
+
+        for (ItemStack item : items) {
+            if (hasAttributeData(item)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

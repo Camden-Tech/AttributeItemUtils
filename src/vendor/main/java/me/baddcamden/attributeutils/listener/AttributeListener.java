@@ -24,6 +24,9 @@ import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.plugin.Plugin;
 
+import org.bukkit.inventory.ItemStack;
+
+import java.util.Arrays;
 import java.util.concurrent.Executor;
 
 /**
@@ -103,6 +106,11 @@ public class AttributeListener implements Listener {
      */
     @EventHandler
     public void onItemHeld(PlayerItemHeldEvent event) {
+        ItemStack previous = event.getPlayer().getInventory().getItem(event.getPreviousSlot());
+        ItemStack next = event.getPlayer().getInventory().getItem(event.getNewSlot());
+        if (!itemAttributeHandler.hasAttributeData(previous) && !itemAttributeHandler.hasAttributeData(next)) {
+            return;
+        }
         syncExecutor.execute(() -> refreshPlayer(event.getPlayer()));
     }
 
@@ -115,6 +123,14 @@ public class AttributeListener implements Listener {
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         if (event.getWhoClicked() instanceof Player player) {
+            ItemStack clicked = event.getCurrentItem();
+            ItemStack cursor = event.getCursor();
+            ItemStack hotbarSwap = event.getHotbarButton() >= 0 ? player.getInventory().getItem(event.getHotbarButton()) : null;
+            if (!itemAttributeHandler.hasAttributeData(clicked)
+                    && !itemAttributeHandler.hasAttributeData(cursor)
+                    && !itemAttributeHandler.hasAttributeData(hotbarSwap)) {
+                return;
+            }
             syncExecutor.execute(() -> refreshPlayer(player));
         }
     }
@@ -127,6 +143,11 @@ public class AttributeListener implements Listener {
     @EventHandler
     public void onInventoryDrag(InventoryDragEvent event) {
         if (event.getWhoClicked() instanceof Player player) {
+            if (!itemAttributeHandler.hasAttributeData(event.getNewItems().values())
+                    && !itemAttributeHandler.hasAttributeData(event.getCursor())
+                    && !itemAttributeHandler.hasAttributeData(event.getOldCursor())) {
+                return;
+            }
             syncExecutor.execute(() -> refreshPlayer(player));
         }
     }
@@ -138,6 +159,9 @@ public class AttributeListener implements Listener {
      */
     @EventHandler
     public void onPlayerDropItem(PlayerDropItemEvent event) {
+        if (!itemAttributeHandler.hasAttributeData(event.getItemDrop().getItemStack())) {
+            return;
+        }
         syncExecutor.execute(() -> refreshPlayer(event.getPlayer()));
     }
 
@@ -149,6 +173,9 @@ public class AttributeListener implements Listener {
      */
     @EventHandler
     public void onPlayerAttemptPickupItem(PlayerPickupItemEvent event) {
+        if (!itemAttributeHandler.hasAttributeData(event.getItem().getItemStack())) {
+            return;
+        }
         syncExecutor.execute(() -> refreshPlayer(event.getPlayer()));
     }
 
@@ -160,6 +187,9 @@ public class AttributeListener implements Listener {
     @EventHandler
     public void onEntityPickupItem(EntityPickupItemEvent event) {
         if (event.getEntity() instanceof Player player) {
+            if (!itemAttributeHandler.hasAttributeData(event.getItem().getItemStack())) {
+                return;
+            }
             syncExecutor.execute(() -> refreshPlayer(player));
         }
     }
@@ -173,6 +203,10 @@ public class AttributeListener implements Listener {
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
         if (event.getPlayer() instanceof Player player) {
+            if (!itemAttributeHandler.hasAttributeData(Arrays.asList(event.getInventory().getContents()))
+                    && !itemAttributeHandler.hasAttributeData(player.getItemOnCursor())) {
+                return;
+            }
             syncExecutor.execute(() -> refreshPlayer(player));
         }
     }
@@ -186,6 +220,10 @@ public class AttributeListener implements Listener {
     @EventHandler
     public void onCreativeInventory(InventoryCreativeEvent event) {
         if (event.getWhoClicked() instanceof Player player) {
+            if (!itemAttributeHandler.hasAttributeData(event.getCurrentItem())
+                    && !itemAttributeHandler.hasAttributeData(event.getCursor())) {
+                return;
+            }
             syncExecutor.execute(() -> refreshPlayer(player));
         }
     }
@@ -198,6 +236,10 @@ public class AttributeListener implements Listener {
      */
     @EventHandler
     public void onSwapHands(PlayerSwapHandItemsEvent event) {
+        if (!itemAttributeHandler.hasAttributeData(event.getMainHandItem())
+                && !itemAttributeHandler.hasAttributeData(event.getOffHandItem())) {
+            return;
+        }
         syncExecutor.execute(() -> refreshPlayer(event.getPlayer()));
     }
 
