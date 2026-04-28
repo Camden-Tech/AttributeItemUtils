@@ -300,6 +300,7 @@ public class AttributeUtilitiesPlugin extends JavaPlugin {
         ConfigurationSection defaults = getConfig().getConfigurationSection("vanilla-attribute-defaults");
         if (defaults == null) {
             getLogger().warning("No vanilla attribute defaults configured; skipping vanilla baselines.");
+            registerFallbackVanillaBaselines();
             return;
         }
 
@@ -361,6 +362,40 @@ public class AttributeUtilitiesPlugin extends JavaPlugin {
             }
             attributeFacade.registerVanillaBaseline(attributeId, supplier);
         });
+    }
+
+    /**
+     * Registers baseline suppliers for core vanilla combat/defense attributes when an older config
+     * does not define {@code vanilla-attribute-defaults}. This preserves vanilla item behavior so
+     * generated gear supplements weapon/armor stats instead of replacing them.
+     */
+    private void registerFallbackVanillaBaselines() {
+        registerFallbackBaseline("attack_damage", "ATTACK_DAMAGE", "GENERIC_ATTACK_DAMAGE");
+        registerFallbackBaseline("attack_speed", "ATTACK_SPEED", "GENERIC_ATTACK_SPEED");
+        registerFallbackBaseline("attack_knockback", "ATTACK_KNOCKBACK", "GENERIC_ATTACK_KNOCKBACK");
+        registerFallbackBaseline("armor", "ARMOR", "GENERIC_ARMOR");
+        registerFallbackBaseline("armor_toughness", "ARMOR_TOUGHNESS", "GENERIC_ARMOR_TOUGHNESS");
+        registerFallbackBaseline("knockback_resistance", "KNOCKBACK_RESISTANCE", "GENERIC_KNOCKBACK_RESISTANCE");
+    }
+
+    /**
+     * Registers a single fallback baseline supplier bound to the best available Bukkit attribute for
+     * the provided attribute id.
+     */
+    private void registerFallbackBaseline(String attributeId, String... bukkitCandidates) {
+        double defaultBase = attributeFacade.getDefinition(attributeId)
+                .map(AttributeDefinition::defaultBaseValue)
+                .orElse(0d);
+        Attribute attribute = resolveAttributeByNames(bukkitCandidates);
+        if (attribute != null) {
+            vanillaAttributeTargets.put(attributeId, attribute);
+        }
+
+        VanillaAttributeSupplier dynamicSupplier = createDynamicSupplier(attributeId, attribute, defaultBase);
+        VanillaAttributeSupplier supplier = dynamicSupplier != null
+                ? dynamicSupplier
+                : player -> getAttributeValue(player, attribute, defaultBase);
+        attributeFacade.registerVanillaBaseline(attributeId, supplier);
     }
 
     public ItemAttributeHandler getItemAttributeHandler() {
