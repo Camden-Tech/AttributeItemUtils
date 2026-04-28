@@ -51,6 +51,7 @@ kits:
 - Drop chances default to `drops.chance` in `config.yml`, but `EntityChanceHook` can override per-entity.
 - Attribute rolls use `attributes.base-chance` and `attributes.bonus-percent` until capped at `attributes.max-chance`.
 - Enchant rolls use `enchants.base-chance`, respecting `enchants.max-chance` and `enchants.level-bonus` when picking levels.
+- API consumers can call `AttributeChanceConfig#chance(nightsPassed)` / `EnchantChanceConfig#chance(nightsPassed)` to scale chance by configurable `night-bonus-multiplier` values, or use the overloads that accept a manual multiplier.
 
 ## Hooking into AttributeItemUtils
 Other plugins can change runtime behavior by registering hooks or invoking exposed services.
