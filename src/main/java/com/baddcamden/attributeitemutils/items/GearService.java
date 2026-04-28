@@ -19,6 +19,7 @@ import me.baddcamden.attributeutils.handler.item.TriggerCriterion;
 import me.baddcamden.attributeutils.model.AttributeDefinition;
 import me.baddcamden.attributeutils.model.ModifierOperation;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -166,10 +167,11 @@ public class GearService {
      */
     private ItemStack buildAttributedItem(LivingEntity entity, Material material, EquipmentSlot slot, KitConfig kit) {
         List<AttributeDefinition> definitions = attributeFacade.getDefinitions().stream().toList();
+        long nightsPassed = nightsPassed(entity);
         double attributeChance = chanceHooks.attributeChanceFor(entity.getType())
-                .orElse(attributeChanceConfig.chance());
+                .orElse(attributeChanceConfig.chance(nightsPassed));
         double enchantChance = chanceHooks.enchantChanceFor(entity.getType())
-                .orElse(enchantChanceConfig.chance());
+                .orElse(enchantChanceConfig.chance(nightsPassed));
 
         Map<String, ModifierOperation> kitOperations = kit == null
                 ? Map.of()
@@ -255,6 +257,20 @@ public class GearService {
             itemStack.setItemMeta(meta);
         }
         return itemStack;
+    }
+
+    /**
+     * Resolves elapsed full in-game nights for chance scaling.
+     */
+    private long nightsPassed(LivingEntity entity) {
+        if (entity == null) {
+            return 0L;
+        }
+        World world = entity.getWorld();
+        if (world == null) {
+            return 0L;
+        }
+        return Math.max(0L, world.getFullTime() / 24000L);
     }
 
     /**
