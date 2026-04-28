@@ -37,7 +37,8 @@ public class AttributeLoreFormatter {
     private final Plugin plugin;
     private final Logger logger;
     private final File loreFile;
-    private final DecimalFormat decimalFormat = new DecimalFormat("0.##");
+    private final DecimalFormat percentFormat = new DecimalFormat("0.##");
+    private final DecimalFormat additiveFormat = new DecimalFormat("0.####");
 
     private String headerFormat = "{color}{name}";
     private String valueFormat = ChatColor.GRAY + "{sign}{amount}{unit} {name}";
@@ -69,6 +70,9 @@ public class AttributeLoreFormatter {
 
         headerFormat = configuration.getString("formats.header", headerFormat);
         valueFormat = configuration.getString("formats.value", valueFormat);
+        if (!valueFormat.contains("{unit}") && valueFormat.contains("%")) {
+            valueFormat = valueFormat.replaceFirst("%", "{unit}");
+        }
         anySlotMessage = configuration.getString("formats.fulfillment.any-slot", anySlotMessage);
         mainHandMessage = configuration.getString("formats.fulfillment.main-hand", mainHandMessage);
         offHandMessage = configuration.getString("formats.fulfillment.off-hand", offHandMessage);
@@ -207,7 +211,7 @@ public class AttributeLoreFormatter {
     private String formatValueLine(AttributeMeta attributeMeta, double value, boolean percent) {
         String sign = value >= 0 ? "+" : "-";
         double magnitude = Math.abs(value);
-        String amount = decimalFormat.format(magnitude);
+        String amount = (percent ? percentFormat : additiveFormat).format(magnitude);
         boolean includeSignToken = valueFormat.contains("{sign}");
         String amountToken = includeSignToken ? amount : sign + amount;
 
@@ -392,4 +396,3 @@ public class AttributeLoreFormatter {
     private record AttributeMeta(String name, String color) {
     }
 }
-
