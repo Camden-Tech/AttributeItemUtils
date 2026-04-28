@@ -2,11 +2,13 @@ attributes:
   base-chance: 0.02
   bonus-percent: 0.05
   max-chance: 0.95
+  night-bonus-multiplier: 0.0
 attribute-operations:
   # example.multiplier_attribute: MULTIPLY_SCALAR_1
 enchants:
   base-chance: 0.02
   level-bonus: 1
   max-chance: 0.95
+  night-bonus-multiplier: 0.0
 drops:
   chance: 0.015

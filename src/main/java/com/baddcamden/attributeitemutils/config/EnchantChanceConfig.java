@@ -8,14 +8,15 @@ import org.bukkit.configuration.file.FileConfiguration;
  */
 public record EnchantChanceConfig(double baseChance,
                                   int levelBonus,
-                                  double maxChance) {
+                                  double maxChance,
+                                  double nightBonusMultiplier) {
 
     /**
      * Loads enchantment chance tuning from the plugin configuration.
      */
     public static EnchantChanceConfig fromConfig(FileConfiguration configuration) {
         ConfigurationSection section = configuration.getConfigurationSection("enchants");
-        return fromSection(section, new EnchantChanceConfig(0.02d, 1, 0.95d));
+        return fromSection(section, new EnchantChanceConfig(0.02d, 1, 0.95d, 0d));
     }
 
     /**
@@ -29,7 +30,8 @@ public record EnchantChanceConfig(double baseChance,
         return new EnchantChanceConfig(
                 section.getDouble("base-chance", defaults.baseChance),
                 section.getInt("level-bonus", defaults.levelBonus),
-                section.getDouble("max-chance", defaults.maxChance)
+                section.getDouble("max-chance", defaults.maxChance),
+                section.getDouble("night-bonus-multiplier", defaults.nightBonusMultiplier)
         );
     }
 
@@ -38,6 +40,23 @@ public record EnchantChanceConfig(double baseChance,
      */
     public double chance() {
         return clampChance(baseChance);
+    }
+
+    /**
+     * Computes enchant chance after applying a configurable bonus scaled by nights passed.
+     */
+    public double chance(long nightsPassed) {
+        return chance(nightsPassed, nightBonusMultiplier);
+    }
+
+    /**
+     * Computes enchant chance using a caller-provided nightly multiplier override.
+     */
+    public double chance(long nightsPassed, double nightlyMultiplier) {
+        long safeNightsPassed = Math.max(0L, nightsPassed);
+        double safeNightlyMultiplier = Math.max(0d, nightlyMultiplier);
+        double chance = baseChance + (safeNightsPassed * safeNightlyMultiplier);
+        return clampChance(chance);
     }
 
     /**

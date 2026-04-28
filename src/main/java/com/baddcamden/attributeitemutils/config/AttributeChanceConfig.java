@@ -8,14 +8,15 @@ import org.bukkit.configuration.file.FileConfiguration;
  */
 public record AttributeChanceConfig(double baseChance,
                                     double bonusPercent,
-                                    double maxChance) {
+                                    double maxChance,
+                                    double nightBonusMultiplier) {
 
     /**
      * Loads attribute chance tuning from the plugin configuration.
      */
     public static AttributeChanceConfig fromConfig(FileConfiguration configuration) {
         ConfigurationSection section = configuration.getConfigurationSection("attributes");
-        return fromSection(section, new AttributeChanceConfig(0.02d, 0.05d, 0.95d));
+        return fromSection(section, new AttributeChanceConfig(0.02d, 0.05d, 0.95d, 0d));
     }
 
     /**
@@ -29,7 +30,8 @@ public record AttributeChanceConfig(double baseChance,
         return new AttributeChanceConfig(
                 section.getDouble("base-chance", defaults.baseChance),
                 section.getDouble("bonus-percent", defaults.bonusPercent),
-                section.getDouble("max-chance", defaults.maxChance)
+                section.getDouble("max-chance", defaults.maxChance),
+                section.getDouble("night-bonus-multiplier", defaults.nightBonusMultiplier)
         );
     }
 
@@ -38,6 +40,23 @@ public record AttributeChanceConfig(double baseChance,
      */
     public double chance() {
         double chance = baseChance + bonusPercent;
+        return clampChance(chance);
+    }
+
+    /**
+     * Computes the attribute chance after applying a configurable bonus scaled by nights passed.
+     */
+    public double chance(long nightsPassed) {
+        return chance(nightsPassed, nightBonusMultiplier);
+    }
+
+    /**
+     * Computes the attribute chance using a caller-provided nightly multiplier override.
+     */
+    public double chance(long nightsPassed, double nightlyMultiplier) {
+        long safeNightsPassed = Math.max(0L, nightsPassed);
+        double safeNightlyMultiplier = Math.max(0d, nightlyMultiplier);
+        double chance = baseChance + bonusPercent + (safeNightsPassed * safeNightlyMultiplier);
         return clampChance(chance);
     }
 
