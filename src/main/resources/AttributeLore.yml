@@ -1,6 +1,6 @@
 formats:
   header: "&6{color}{name}"
-  value: "&7{amount}% {color}{name}"
+  value: "&7{amount}{unit} {color}{name}"
   fulfillment:
     any-slot: "&8Applies in any slot."
     main-hand: "&8Only when held in main hand."
