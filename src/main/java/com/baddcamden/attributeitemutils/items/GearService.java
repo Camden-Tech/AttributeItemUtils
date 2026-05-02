@@ -128,14 +128,25 @@ public class GearService {
 
     /**
      * Populates the given entity's equipment using the provided kit and applies attributes, enchants, and drop chances.
+     * Uses one target-weight point per passed night.
      */
     public void applyKit(LivingEntity entity, KitConfig kit) {
+        applyKit(entity, kit, 1.0d);
+    }
+
+    /**
+     * Populates the given entity's equipment using the provided kit and applies attributes, enchants, and drop chances.
+     * The target weight is shifted by passed nights multiplied by the supplied multiplier.
+     */
+    public void applyKit(LivingEntity entity, KitConfig kit, double nightTargetWeightMultiplier) {
+        long nightsPassed = nightsPassed(entity);
+        double effectiveTargetWeight = kit.targetWeight() + (nightsPassed * nightTargetWeightMultiplier);
         double dropChance = chanceHooks.dropChanceFor(entity.getType())
                 .orElse(dropChanceConfigSource.defaultChance());
         Map<EquipmentSlot, ItemStack> equipment = new EnumMap<EquipmentSlot, ItemStack>(EquipmentSlot.class);
         for (GearSlot slot : GearSlot.values()) {
             EquipmentSlot equipmentSlot = mapSlot(slot);
-            WeightedItem selection = selector.select(kit.items().getOrDefault(slot, java.util.List.of()), kit.targetWeight(), kit.steepness(), kit.range());
+            WeightedItem selection = selector.select(kit.items().getOrDefault(slot, java.util.List.of()), effectiveTargetWeight, kit.steepness(), kit.range());
             Material material = selection == null ? Material.AIR : selection.material();
             ItemStack stack = material == Material.AIR ? null : new ItemStack(material);
             logger.info("[GEAR] Built base item for " + equipmentSlot + " -> " + (stack == null ? "none" : stack.getType().name()));
