@@ -85,7 +85,7 @@ public class GearConfigLoader {
             gearConfig.setDefaults(defaults);
             gearConfig.options().copyDefaults(true);
         } catch (IOException ex) {
-            plugin.getLogger().warning("Unable to load default Gear.yml: " + ex.getMessage());
+            // Ignore and continue with on-disk values only.
         }
     }
 
@@ -101,7 +101,6 @@ public class GearConfigLoader {
             if (mat == null) return Optional.empty();
             return Optional.of(new WeightedItem(mat, weight));
         } catch (NumberFormatException ex) {
-            plugin.getLogger().warning("Unable to parse weight entry: " + raw);
             return Optional.empty();
         }
     }
@@ -145,7 +144,6 @@ public class GearConfigLoader {
             }
             return ModifierOperation.valueOf(normalized);
         } catch (IllegalArgumentException ex) {
-            plugin.getLogger().warning("Unknown attribute operation '" + raw + "' in Gear.yml");
             return null;
         }
     }
